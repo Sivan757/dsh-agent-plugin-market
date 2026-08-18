@@ -11,7 +11,7 @@
  */
 import { mkdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { discoverSourceList, discoverSuitesInSource, listMdFiles } from './discovery.js'
+import { discoverLspEntries, discoverSourceList, discoverSuitesInSource, listMdFiles } from './discovery.js'
 import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
 import { expandHome, isDirectory, resolveProjectRoot, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
 import { loadState, saveState, EMPTY_STATE } from './state.js'
@@ -76,11 +76,16 @@ export class SuiteManager {
       })),
       mcpServers: suite.mcp === undefined ? [] : Object.entries(suite.mcp.servers).map(([key, server]) => ({ key, ...server })),
       hooks: suite.surfaces.hooks,
-      commands: await listMdFiles(`${suite.root}/commands`),
-      agents: await listMdFiles(`${suite.root}/agents`),
-      lsp: suite.surfaces.lsp,
+      commands: await this.commandPreviews(`${suite.root}/commands`),
+      agents: await this.agentPreviews(`${suite.root}/agents`),
+      lsp: await this.lspPreviews(suite.root),
       errors: suite.errors,
     }
+  }
+
+  private async readPreview(path: string, capBytes = 64 * 1024): Promise<string> {
+    const text = await readFile(path, 'utf8')
+    return text.length > capBytes ? `${text.slice(0, capBytes)}\n… (truncated)` : text
   }
 
   /** One skill's full SKILL.md text for the market detail modal. */
@@ -339,6 +344,66 @@ export class SuiteManager {
       })
     }
     return suites
+  }
+
+  private async commandPreviews(dir: string): Promise<Array<{ name: string; description?: string; content: string }>> {
+    const names = await listMdFiles(dir)
+    const previews: Array<{ name: string; description?: string; content: string }> = []
+    for (const name of names) {
+      const file = `${dir}/${name}`
+      try {
+        const content = await this.readPreview(file)
+        const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content)
+        let description: string | undefined
+        if (match !== null) {
+          const yaml = (await import('yaml')).parse(match[1])
+          if (typeof yaml === 'object' && yaml !== null) {
+            const desc = (yaml as Record<string, unknown>)['description']
+            if (typeof desc === 'string') description = desc
+          }
+        }
+        previews.push({ name: name.slice(0, -3), ...description === undefined ? {} : { description }, content })
+      } catch {
+        // unreadable command files are skipped in previews
+      }
+    }
+    return previews
+  }
+
+  private async agentPreviews(dir: string): Promise<Array<{ name: string; description?: string; content: string }>> {
+    const names = await listMdFiles(dir)
+    const previews: Array<{ name: string; description?: string; content: string }> = []
+    for (const name of names) {
+      const file = `${dir}/${name}`
+      try {
+        const content = await this.readPreview(file)
+        const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content)
+        let description: string | undefined
+        if (match !== null) {
+          const yaml = (await import('yaml')).parse(match[1])
+          if (typeof yaml === 'object' && yaml !== null) {
+            const desc = (yaml as Record<string, unknown>)['description']
+            if (typeof desc === 'string') description = desc
+          }
+        }
+        previews.push({ name: name.slice(0, -3), ...description === undefined ? {} : { description }, content })
+      } catch {
+        // unreadable agent files are skipped in previews
+      }
+    }
+    return previews
+  }
+
+  private async lspPreviews(root: string): Promise<Array<{ name: string; content: string }>> {
+    const previews: Array<{ name: string; content: string }> = []
+    for (const entry of await discoverLspEntries(root)) {
+      try {
+        previews.push({ name: entry.name, content: await this.readPreview(entry.path) })
+      } catch {
+        // unreadable LSP files are skipped in previews
+      }
+    }
+    return previews
   }
 
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {

@@ -102,19 +102,11 @@
 
 .sourceTabsScroll {
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  gap: 6px;
   flex: 1;
   min-width: 0;
-  scrollbar-width: thin;
-}
-
-.sourceTabsScroll .tab,
-.sourceTabsScroll .tabOn,
-.srcTab,
-.srcTabOn {
-  flex-shrink: 0;
+  align-content: flex-start;
 }
 
 .sourceActions {
@@ -122,50 +114,67 @@
   gap: 4px;
   padding-left: 10px;
   flex-shrink: 0;
-  padding-bottom: 6px;
+  align-items: flex-start;
+  padding-top: 2px;
 }
 
 .srcTab,
 .srcTabOn {
   display: inline-flex;
   align-items: center;
-  border-bottom: 2px solid transparent;
+  border: 1px solid var(--dsw-alias-border-l3, #d9dde3);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-layer-1, #fff);
 }
 
 .srcTabMain {
   border: none;
   background: none;
   font: inherit;
-  font-size: 13px;
-  color: var(--dsw-alias-label-secondary, #6b7280);
-  padding: 7px 6px 7px 12px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary, #1f2328);
+  padding: 4px 2px 4px 12px;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.srcTabOn .srcTabMain {
+.srcTabMain:hover {
   color: var(--dsw-alias-brand-primary, #4f6ef7);
-  font-weight: 600;
 }
 
 .srcTabOn {
-  border-bottom-color: var(--dsw-alias-brand-primary, #4f6ef7);
+  background: var(--dsw-alias-brand-primary, #4f6ef7);
+  border-color: var(--dsw-alias-brand-primary, #4f6ef7);
+}
+
+.srcTabOn .srcTabMain {
+  color: #fff;
+  font-weight: 600;
 }
 
 .srcTabDel {
   border: none;
   background: none;
   font: inherit;
-  font-size: 13px;
-  line-height: 1;
+  font-size: 12px;
+  line-height: 20px;
   color: var(--dsw-alias-label-tertiary, #9ca3af);
-  padding: 7px 10px 7px 2px;
+  padding: 4px 10px 4px 2px;
   cursor: pointer;
-  border-radius: 6px;
 }
 
 .srcTabDel:hover {
   color: var(--dsw-alias-state-error-primary, #dc2626);
+}
+
+.srcTabOn .srcTabDel {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.srcTabOn .srcTabDel:hover {
+  color: #fff;
 }
 
 /* --- card grid ----------------------------------------------------------------- */

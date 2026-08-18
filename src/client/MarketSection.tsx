@@ -178,12 +178,12 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     confirm === undefined ? null : h(Modal, {
       open: true,
       onClose: () => setConfirm(undefined),
-      title: confirm.kind === 'uninstall' ? t('uninstallConfirmTitle') : t('removeSourceConfirmTitle'),
+      title: confirm.kind === 'uninstall' ? t('uninstallConfirmTitle') : `${t('removeSourceConfirmTitle')}「${confirm.sourceId}」`,
       closeLabel: t('cancel'),
       description: confirm.kind === 'uninstall' ? t('uninstallConfirmDesc') : t('removeSourceConfirmDesc'),
       footer: h('div', { className: css.modalFooter },
         h(Button, { variant: 'ghost', onClick: () => setConfirm(undefined) }, t('cancel')),
-        h(Button, { variant: 'primary', onClick: () => { void confirmAction() } }, t('confirm')),
+        h(Button, { variant: 'primary', onClick: () => { void confirmAction() } }, t('confirmDelete')),
       ),
     }),
     detail === undefined ? null : h(SuiteDetailModal, {

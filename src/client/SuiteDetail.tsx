@@ -26,6 +26,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
   const [skillText, setSkillText] = useState<string | undefined>(undefined)
   const [skillLoading, setSkillLoading] = useState(false)
   const [openMcp, setOpenMcp] = useState<string | undefined>(undefined)
+  const [openPreview, setOpenPreview] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     let cancelled = false
@@ -131,15 +132,40 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
             h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('commandsSection')} (${detail.commands.length})`),
               detail.commands.length === 0 ? h('div', { className: css.sidebarEmpty }, '—')
-                : detail.commands.map(name => h('div', { key: name, className: css.mono }, name)),
+                : detail.commands.map(command => h(PreviewRow, {
+                  key: `c:${command.name}`,
+                  t,
+                  name: `/${command.name}`,
+                  description: command.description,
+                  open: openPreview === `c:${command.name}`,
+                  onToggle: () => setOpenPreview(openPreview === `c:${command.name}` ? undefined : `c:${command.name}`),
+                  children: h(MarkdownText, { text: command.content }),
+                })),
             ),
             h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('agentsSection')} (${detail.agents.length})`),
               detail.agents.length === 0 ? h('div', { className: css.sidebarEmpty }, '—')
-                : detail.agents.map(name => h('div', { key: name, className: css.mono }, name)),
+                : detail.agents.map(agent => h(PreviewRow, {
+                  key: `a:${agent.name}`,
+                  t,
+                  name: agent.name,
+                  description: agent.description,
+                  open: openPreview === `a:${agent.name}`,
+                  onToggle: () => setOpenPreview(openPreview === `a:${agent.name}` ? undefined : `a:${agent.name}`),
+                  children: h(MarkdownText, { text: agent.content }),
+                })),
             ),
             h('section', { className: css.detailSection },
-              h('h4', { className: css.detailHead }, `${t('hooksLabel')} ${detail.hooks} · ${t('surfaceLsp')} ${detail.lsp}`),
+              h('h4', { className: css.detailHead }, `${t('lspSection')} (${detail.lsp.length}) · ${t('hooksLabel')} ${detail.hooks}`),
+              detail.lsp.length === 0 ? h('div', { className: css.sidebarEmpty }, '—')
+                : detail.lsp.map(entry => h(PreviewRow, {
+                  key: `l:${entry.name}`,
+                  t,
+                  name: entry.name,
+                  open: openPreview === `l:${entry.name}`,
+                  onToggle: () => setOpenPreview(openPreview === `l:${entry.name}` ? undefined : `l:${entry.name}`),
+                  children: h('pre', { className: css.mono }, entry.content),
+                })),
             ),
             detail.errors.length === 0 ? null : h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('errors')} (${detail.errors.length})`),
@@ -152,4 +178,27 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
 function mcpSummary(server: McpServerDetail): string {
   if (server.type === 'stdio') return server.command ?? server.type
   return server.url ?? server.type
+}
+
+function PreviewRow(props: {
+  t: Translate
+  name: string
+  description?: string
+  open: boolean
+  onToggle: () => void
+  children: ReactNode
+}): ReactNode {
+  const { t: _t, name, description, open, onToggle, children } = props
+  return h('div', { className: css.detailItem },
+    h('button', {
+      type: 'button',
+      className: open ? css.detailItemOpen : css.detailItemRow,
+      onClick: onToggle,
+    },
+      h('span', { className: css.detailItemName }, name),
+      description === undefined ? null : h('span', { className: css.detailItemDesc }, description),
+      h('span', { className: css.detailChevron }, open ? '▾' : '▸'),
+    ),
+    open ? h('div', { className: css.skillContent }, children) : null,
+  )
 }

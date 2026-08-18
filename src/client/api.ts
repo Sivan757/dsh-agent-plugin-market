@@ -57,6 +57,26 @@ export interface SuiteSkillMeta {
   path: string
 }
 
+/** One CC command with its full template for preview. */
+export interface CommandPreview {
+  name: string
+  description?: string
+  content: string
+}
+
+/** One CC agent definition with its full text for preview. */
+export interface AgentPreview {
+  name: string
+  description?: string
+  content: string
+}
+
+/** One LSP definition file (JSON) for preview. */
+export interface LspPreview {
+  name: string
+  content: string
+}
+
 /** One validated mcp.json server entry. */
 export interface McpServerDetail {
   key: string
@@ -86,9 +106,9 @@ export interface SuiteDetail {
   skills: SuiteSkillMeta[]
   mcpServers: McpServerDetail[]
   hooks: number
-  commands: string[]
-  agents: string[]
-  lsp: number
+  commands: CommandPreview[]
+  agents: AgentPreview[]
+  lsp: LspPreview[]
   errors: string[]
 }
 

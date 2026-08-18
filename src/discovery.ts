@@ -314,16 +314,7 @@ async function countSurfaces(root: string, skills: SuiteSkill[], mcp: McpSuiteCo
   }
   const commands = await countMdFiles(join(root, 'commands'))
   const agents = await countMdFiles(join(root, 'agents'))
-  let lsp = 0
-  try {
-    for (const entry of await readdir(root, { withFileTypes: true })) {
-      if (!entry.isDirectory() || !/^[a-z0-9-]+(\.[a-z0-9-]+){2,}$/.test(entry.name)) continue
-      const lspDir = join(root, entry.name, 'lsp')
-      if (await isDirectory(lspDir)) lsp += (await listChildDirs(lspDir)).length
-    }
-  } catch {
-    // unreadable root contributes zero LSP surfaces
-  }
+  const lsp = (await discoverLspEntries(root)).length
   return {
     skills: skills.length,
     mcp: mcp === undefined ? 0 : Object.keys(mcp.servers).length,
@@ -332,6 +323,43 @@ async function countSurfaces(root: string, skills: SuiteSkill[], mcp: McpSuiteCo
     agents,
     lsp,
   }
+}
+
+export interface LspEntry {
+  name: string
+  path: string
+}
+
+/** LSP definitions: `.claude-plugin/lsp/*.json` plus reverse-domain `lsp/` dirs. */
+export async function discoverLspEntries(root: string): Promise<LspEntry[]> {
+  const entries: LspEntry[] = []
+  try {
+    const claudeLsp = join(root, '.claude-plugin', 'lsp')
+    for (const entry of await readdir(claudeLsp)) {
+      if (!entry.endsWith('.json')) continue
+      entries.push({ name: entry.slice(0, -5), path: join(claudeLsp, entry) })
+    }
+  } catch {
+    // no .claude-plugin/lsp directory
+  }
+  try {
+    for (const entry of await readdir(root, { withFileTypes: true })) {
+      if (!entry.isDirectory() || !/^[a-z0-9-]+(\.[a-z0-9-]+){2,}$/.test(entry.name)) continue
+      const lspDir = join(root, entry.name, 'lsp')
+      let names: string[]
+      try {
+        names = await readdir(lspDir)
+      } catch {
+        continue
+      }
+      for (const name of names) {
+        entries.push({ name, path: join(lspDir, name) })
+      }
+    }
+  } catch {
+    // unreadable root contributes no LSP entries
+  }
+  return entries
 }
 
 async function countHookEntries(path: string): Promise<number> {

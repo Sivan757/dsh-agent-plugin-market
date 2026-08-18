@@ -113,3 +113,26 @@ describe('agents compat (agent-<name> skills)', () => {
     expect(definition!.content).toContain('forwarding wrapper')
   })
 })
+
+describe('HooksMountRegistry (CC hooks compat)', () => {
+  it('mounts one bridge per suite with the suite hook config path', async () => {
+    const mounted: Array<{ config: Record<string, unknown> }> = []
+    const ctx = {
+      plugin: (_plugin: unknown, config: Record<string, unknown>) => {
+        mounted.push({ config })
+        return { await: async () => {}, dispose: async () => {} }
+      },
+      logger: { warn: () => {} },
+    }
+    const registry = new (await import('../src/hooks-mounts.js')).HooksMountRegistry(ctx as never)
+    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource('/Users/sivan/workspace/dsh-agent-plugin/tests/fixtures/cc-commands', 'cc', 'user')
+    suites[0]!.enabled = true
+    const diagnostics = await registry.reconcile(suites)
+    expect(diagnostics).toEqual([])
+    expect(mounted).toHaveLength(1)
+    expect(mounted[0]!.config['configPath']).toContain('hooks.json')
+    expect(mounted[0]!.config['pluginRoot']).toContain('cc-commands')
+    await registry.disposeAll()
+    expect(mounted).toHaveLength(1)
+  })
+})
