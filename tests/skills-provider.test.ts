@@ -125,3 +125,28 @@ describe('source editing (updateSource)', () => {
     await expect(manager.updateSource('nope', { url: 'https://example.com/x.git' })).rejects.toThrow('unknown source')
   })
 })
+
+describe('source id auto-derivation', () => {
+  it('derives a single-suite repo id from its suite manifest name', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-id-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    await manager.load()
+    const source = await manager.addSource({ url: join(fixtures, 'v1-suite'), local: true })
+    expect(source.id).toBe('v1-suite') // manifest name, not the fixtures basename
+  })
+
+  it('derives a multi-suite repo id from its basename and dedupes collisions', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-id2-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    await manager.load()
+    // Two different parents, same basename -> both derive "agent-plugins"; the second gets a suffix.
+    const parentA = await mkdtemp(join(tmpdir(), 'id2-a-'))
+    const parentB = await mkdtemp(join(tmpdir(), 'id2-b-'))
+    await mkdir(join(parentA, 'agent-plugins'))
+    await mkdir(join(parentB, 'agent-plugins'))
+    const first = await manager.addSource({ url: `${parentA}/agent-plugins`, local: true })
+    expect(first.id).toBe('agent-plugins')
+    const second = await manager.addSource({ url: `${parentB}/agent-plugins`, local: true })
+    expect(second.id).toBe('agent-plugins-2')
+  })
+})

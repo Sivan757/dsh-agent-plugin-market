@@ -139,7 +139,7 @@ export async function fetchSkillContent(sourceId: string, suiteId: string, skill
   return response.json() as Promise<SkillContent>
 }
 
-export async function postAction(path: string, body: Record<string, unknown>): Promise<void> {
+export async function postAction(path: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
   const response = await fetch(`/api/agent-plugin/${path}`, {
     method: 'POST',
     credentials: 'same-origin',
@@ -150,4 +150,5 @@ export async function postAction(path: string, body: Record<string, unknown>): P
   if (!response.ok || payload.ok !== true) {
     throw new Error(payload.error ?? `request failed: ${response.status}`)
   }
+  return payload
 }

@@ -100,8 +100,19 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
   })
 
   post(`${API_PREFIX}sources/add`, async (body) => {
-    const source = parseSource(body)
-    await manager.addSource(source)
+    const url = String(body['url'] ?? '').trim()
+    if (url === '') throw new Error('missing source url')
+    const local = body['local'] === true
+    if (local) {
+      const expanded = expandHome(url)
+      if (!url.startsWith('~/') && url !== '~' && !isAbsolute(expanded)) throw new Error('local source url must be an absolute path or start with ~/')
+    }
+    const branch = body['branch']
+    const source = await manager.addSource({
+      url: local ? expandHome(url) : url,
+      ...typeof branch === 'string' && branch.trim() !== '' ? { branch: branch.trim() } : {},
+      ...local ? { local: true } : {},
+    })
     return { source }
   })
 
@@ -160,22 +171,6 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
 
 type RouteHandler = (request: IncomingMessage, response: ServerResponse) => void | Promise<void>
 type JsonAction = (body: Record<string, unknown>) => Promise<Record<string, unknown>>
-
-function parseSource(body: Record<string, unknown>): SourceRef {
-  const id = body['id']
-  const url = body['url']
-  if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new Error('source id must match [a-z0-9][a-z0-9-]*')
-  if (typeof url !== 'string' || url.trim() === '') throw new Error('missing source url')
-  const branch = body['branch']
-  const local = body['local'] === true
-  if (local) {
-    const path = url.trim()
-    const expanded = expandHome(path)
-    if (!path.startsWith('~/') && path !== '~' && !isAbsolute(expanded)) throw new Error('local source url must be an absolute path or start with ~/')
-    return { id, url: expanded, local: true }
-  }
-  return { id, url: url.trim(), ...typeof branch === 'string' && branch !== '' ? { branch } : {} }
-}
 
 function parseTarget(body: Record<string, unknown>): { sourceId: string; suiteId: string } {
   const sourceId = body['sourceId']

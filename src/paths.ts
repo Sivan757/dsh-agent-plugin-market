@@ -85,3 +85,11 @@ export function sanitizeId(raw: string): string {
   const cleaned = raw.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '').replace(/-{2,}/g, '-')
   return cleaned === '' ? 'unnamed' : cleaned
 }
+
+/** Derive a source id from a repository URL or local path: last path segment, `.git` stripped. */
+export function deriveSourceId(url: string): string {
+  const trimmed = url.trim().replace(/\/+$/, '')
+  let base = trimmed.split(/[/\\]/).at(-1) ?? ''
+  if (base.endsWith('.git')) base = base.slice(0, -4)
+  return sanitizeId(base)
+}

@@ -9,11 +9,11 @@
  * which is where the runtime consumers (skill registry invalidation, MCP
  * mount reconciliation) pick the new enabled set up.
  */
-import { mkdir, readFile } from 'node:fs/promises'
+import { mkdir, readFile, rename } from 'node:fs/promises'
 import { join } from 'node:path'
 import { discoverLspEntries, discoverSourceList, discoverSuitesInSource, listMdFiles } from './discovery.js'
 import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
-import { expandHome, isDirectory, resolveProjectRoot, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
+import { deriveSourceId, expandHome, isDirectory, resolveProjectRoot, sanitizeId, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
 import { loadState, saveState, EMPTY_STATE } from './state.js'
 import type { InstalledEntry, OverviewPayload, SourceOverview, SourceRef, Suite, SuiteDimension, SuiteState } from './types.js'
 
@@ -183,17 +183,62 @@ export class SuiteManager {
 
   // ---- mutations ----
 
-  /** Add a source and clone it immediately; clone failure is recorded as the action error. */
-  async addSource(source: SourceRef): Promise<void> {
+  /**
+   * Add a source and clone it immediately. The id is derived automatically:
+   * a single-suite repository takes its suite manifest name, otherwise the
+   * repository's last path segment is used (`.git` stripped, sanitized);
+   * collisions get a numeric suffix.
+   */
+  async addSource(input: { url: string; branch?: string; local?: boolean }): Promise<SourceRef> {
     return this.enqueue(async () => {
-      if (this.state.sources.some(existing => existing.id === source.id)) {
-        throw new Error(`source id "${source.id}" already exists`)
+      const baseId = this.uniqueSourceId(deriveSourceId(input.url))
+      const source: SourceRef = {
+        id: baseId,
+        url: input.url,
+        ...input.branch === undefined ? {} : { branch: input.branch },
+        ...input.local === true ? { local: true } : {},
+      }
+      if (input.local === true) {
+        const dir = expandHome(input.url)
+        if (!await isDirectory(dir)) throw new Error(`local source directory ${dir} is missing`)
+        const suites = await discoverSuitesInSource(dir, baseId, 'user')
+        source.id = await this.preferredSourceId(baseId, suites, dir)
+      } else {
+        await this.ensureClone(source)
+        const checkout = this.sourceCheckoutPath(source)
+        const suites = await discoverSuitesInSource(checkout, baseId, 'user')
+        source.id = await this.preferredSourceId(baseId, suites, checkout)
       }
       this.state = { ...this.state, sources: [...this.state.sources, source] }
       await saveState(this.statePath, this.state)
-      await this.ensureClone(source)
       this.options.onChanged()
+      return source
     })
+  }
+
+  /** Single-suite repos prefer the suite manifest name; others keep the derived base id. */
+  private async preferredSourceId(baseId: string, suites: Suite[], checkoutDir: string): Promise<string> {
+    if (suites.length !== 1) return baseId
+    const suiteNameId = sanitizeId(suites[0]!.manifest.name)
+    if (suiteNameId === baseId || this.state.sources.some(source => source.id === suiteNameId)) return baseId
+    const oldDir = sourceCheckoutDir(this.options.userRoot, baseId)
+    const newDir = sourceCheckoutDir(this.options.userRoot, suiteNameId)
+    if (oldDir !== checkoutDir && await isDirectory(oldDir) && !await isDirectory(newDir)) {
+      try {
+        await rename(oldDir, newDir)
+      } catch {
+        return baseId
+      }
+    }
+    return suiteNameId
+  }
+
+  private uniqueSourceId(derived: string): string {
+    if (!this.state.sources.some(source => source.id === derived)) return derived
+    for (let suffix = 2; ; suffix++) {
+      const candidate = `${derived}-${suffix}`
+      if (!this.state.sources.some(source => source.id === candidate)) return candidate
+    }
   }
 
   /**

@@ -207,14 +207,27 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
       editor,
       busy: busy !== undefined,
       onClose: () => setEditor(undefined),
-      onSave: async (id, url, branch, local) => {
-        const ok = editor.mode === 'edit'
-          ? await action(`s:edit:${id}`, 'sources/update', { id, url, ...branch === '' ? {} : { branch }, ...{ local } })
-          : await action(`s:add:${id}`, 'sources/add', { id, url, ...branch === '' ? {} : { branch }, ...local ? { local: true } : {} })
-        if (ok) {
-          setEditor(undefined)
-          if (editor.mode === 'add') setCategory(id)
+      onSave: async (url, branch, local) => {
+        const key = editor.mode === 'edit' ? `s:edit:${editor.source.id}` : `s:add:${url}`
+        const body = { url, ...branch === '' ? {} : { branch }, local }
+        if (editor.mode === 'add') {
+          setBusy(key)
+          try {
+            const payload = await postAction('sources/add', body)
+            const derived = (payload['source'] as { id?: string } | undefined)?.id
+            await refresh()
+            setEditor(undefined)
+            if (derived !== undefined) setCategory(derived)
+            return true
+          } catch (error) {
+            setToast({ key: Date.now(), message: `${t('actionFail')}: ${error instanceof Error ? error.message : String(error)}` })
+            return false
+          } finally {
+            setBusy(undefined)
+          }
         }
+        const ok = await action(key, 'sources/update', { id: editor.source.id, ...body })
+        if (ok) setEditor(undefined)
         return ok
       },
       onRemove: async (id) => {
@@ -255,14 +268,14 @@ function SourceEditorModal(props: {
   editor: Exclude<EditorState, undefined>
   busy: boolean
   onClose: () => void
-  onSave: (id: string, url: string, branch: string, local: boolean) => Promise<boolean>
+  onSave: (url: string, branch: string, local: boolean) => Promise<boolean>
   onRemove: (id: string) => void
 }): ReactNode {
   const { t, editor } = props
   const [local, setLocal] = useState(editor.mode === 'edit' && editor.source.local === true)
   const [url, setUrl] = useState(editor.mode === 'edit' ? editor.source.url : '')
   const [branch, setBranch] = useState(editor.mode === 'edit' ? (editor.source.branch ?? '') : '')
-  const [id, setId] = useState(editor.mode === 'edit' ? editor.source.id : '')
+  const id = editor.mode === 'edit' ? editor.source.id : ''
   const title = editor.mode === 'edit' ? t('editSourceTitle') : t('addSourceTitle')
   return h(Modal, {
     open: true,
@@ -281,7 +294,7 @@ function SourceEditorModal(props: {
       h(Button, {
         variant: 'primary',
         disabled: props.busy,
-        onClick: () => { void props.onSave(id.trim(), url.trim(), branch.trim(), local) },
+        onClick: () => { void props.onSave(url.trim(), branch.trim(), local) },
       }, t('save')),
     ),
     children: h('div', { className: css.editorForm },
@@ -298,14 +311,15 @@ function SourceEditorModal(props: {
         }, t('sourceModeLocal')),
       ),
       h('div', { className: css.fieldGroup },
-        h('label', { className: css.fieldLabel }, t('sourceIdPh')),
+        h('label', { className: css.fieldLabel }, editor.mode === 'edit' ? t('sourceIdPh') : t('idAutoLabel')),
         editor.mode === 'edit'
           ? h('div', { className: css.staticId },
               h('span', { className: css.staticIdValue }, id),
               h('span', { className: css.fieldHint }, t('idFixed')),
             )
-          : h(Input, { placeholder: t('sourceIdPh'), value: id, onChange: event => setId((event.target as HTMLInputElement).value) }),
-        editor.mode === 'add' ? h('span', { className: css.fieldHint }, t('idHint')) : null,
+          : h('div', { className: css.staticId },
+              h('span', { className: css.staticIdValue }, t('idAutoHint')),
+            ),
       ),
       h('div', { className: css.fieldGroup },
         h('label', { className: css.fieldLabel }, local ? t('sourceUrlLocalPh') : t('sourceUrlPh')),
