@@ -54,6 +54,12 @@
   flex: 1;
 }
 
+.searchGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .searchWrap {
   flex: 0 0 260px;
 }
@@ -63,6 +69,7 @@
   gap: 2px;
   border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
   align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .tab,
