@@ -1,7 +1,7 @@
 {
   "name": "dsh-agent-plugins-market",
   "description": "Agent Plugins Market for DeepSeek Harness: install, browse and inject Agent Plugins (agent-plugins.org v1.0.0 portable suites) — skills, MCP servers, hooks, commands — from git repo sources, with a market page in the Web GUI.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
