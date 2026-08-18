@@ -129,8 +129,8 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     h('div', { className: css.body },
       h(SourcesPanel, {
         t, sources: overview.sources, busy, action, openRemoveSource,
-        onAdd: async (id, url, branch) => {
-          const ok = await action(`s:add:${id}`, 'sources/add', { id, url, ...branch === '' ? {} : { branch } })
+        onAdd: async (id, url, branch, local) => {
+          const ok = await action(`s:add:${id}`, 'sources/add', { id, url, ...branch === '' ? {} : { branch }, ...local ? { local: true } : {} })
           if (ok) {
             setSearch('')
           }
@@ -179,11 +179,12 @@ function SourcesPanel(props: {
   busy: string | undefined
   action: (key: string, path: string, body: Record<string, unknown>) => Promise<boolean>
   openRemoveSource: (source: SourceOverview) => void
-  onAdd: (id: string, url: string, branch: string) => Promise<boolean>
+  onAdd: (id: string, url: string, branch: string, local: boolean) => Promise<boolean>
   onRefreshAll: () => Promise<void>
 }): ReactNode {
   const { t } = props
   const [adding, setAdding] = useState(false)
+  const [local, setLocal] = useState(false)
   const [id, setId] = useState('')
   const [url, setUrl] = useState('')
   const [branch, setBranch] = useState('')
@@ -194,13 +195,17 @@ function SourcesPanel(props: {
       h(Button, { variant: 'ghost', size: 'sm', onClick: () => setAdding(!adding) }, t('addSource')),
     ),
     adding ? h('div', { className: css.addForm },
+      h('div', { className: css.modeRow },
+        h(TabButton, { t, active: !local, label: t('sourceModeGit'), onClick: () => setLocal(false) }),
+        h(TabButton, { t, active: local, label: t('sourceModeLocal'), onClick: () => setLocal(true) }),
+      ),
       h(Input, { placeholder: t('sourceIdPh'), value: id, onChange: event => setId((event.target as HTMLInputElement).value) }),
-      h(Input, { placeholder: t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
-      h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
+      h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
+      local ? null : h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
       h(Button, {
         variant: 'primary', size: 'sm',
         disabled: props.busy !== undefined,
-        onClick: () => { void props.onAdd(id.trim(), url.trim(), branch.trim()).then(ok => { if (ok) { setId(''); setUrl(''); setBranch(''); setAdding(false) } }) },
+        onClick: () => { void props.onAdd(id.trim(), url.trim(), branch.trim(), local).then(ok => { if (ok) { setId(''); setUrl(''); setBranch(''); setAdding(false) } }) },
       }, t('add')),
     ) : null,
     props.sources.length === 0
@@ -210,7 +215,8 @@ function SourcesPanel(props: {
           h('span', { className: css.sourceName }, source.id),
           h('span', { className: css.sourceCount }, String(source.suiteIds.length)),
           h(StateDot, { state: source.cloned ? 'done' : 'ongoing' }),
-          h('span', { className: css.sourceStatus }, source.cloned ? t('sourceCloned') : t('sourceNotCloned')),
+          h('span', { className: css.sourceStatus },
+            source.local === true ? `${t('sourceLocal')} · ${source.cloned ? t('sourceCloned') : t('sourceNotCloned')}` : (source.cloned ? t('sourceCloned') : t('sourceNotCloned'))),
         ),
         h('div', { className: css.sourceActions },
           h(Button, {

@@ -62,6 +62,8 @@ pnpm add dsh-agent-plugin   # 在某个 dsh profile 中
 
 或在市场页侧栏直接添加。`config.userRoot`（默认 `~/.dsh/agent-plugins`，尊重 `$DSH_HOME`）与 `config.dataRoot`（默认 `~/.dsh/agent-plugins-data`，即 `${PLUGIN_DATA}`）同样可配置。
 
+源也可以**直接读取本地目录**而不克隆：`{ id: jeecg-wip, url: '/Users/me/work/jeecg-plugin', local: true }`（支持 `~/…` 展开）。本地源实时反映工作树（含未提交改动），刷新即原地重扫，移除源绝不会删除该目录。
+
 ## 项目维度
 
 市场页管理用户维度。项目级安装：把源 clone 到 `<项目>/.dsh/agent-plugins/.sources/<源id>/`，并在 `<项目>/.dsh/agent-plugins/state.json` 记录启用项（`{"version":1,"sources":[],"installed":{"<源id>/<套件id>":{"enabled":true}}}`）。技能提供器与会话启动清单只在该项目内的会话中加载这些套件。
@@ -74,7 +76,7 @@ pnpm add dsh-agent-plugin   # 在某个 dsh profile 中
 
 ## 安全模型
 
-- 源克隆走 `git` + `execFile`（无 shell），`--depth 1`，`--ff-only` 拉取，120 秒超时。
+- git 源克隆走 `git` + `execFile`（无 shell），`--depth 1`，`--ff-only` 拉取，120 秒超时。本地源原地读取：不克隆、不拉取、移除时绝不删除目录。
 - 变更类 HTTP 路由仅接受同源 POST，JSON 请求体上限 64 KiB。
 - 便携包路径必须 `./` 开头且解析后留在套件根内（拒绝 symlink 逃逸）；`${PLUGIN_ROOT}` / `${PLUGIN_DATA}` 按套件根与数据目录展开；`${NAME}` 从进程环境展开（文档化扩展）。
 - 第三方套件故障永远受控：坏清单、非法技能、逃逸 MCP 路径、不支持的传输（legacy HTTP+SSE）、MCP 挂载失败，都以逐套件诊断形式出现在市场页。

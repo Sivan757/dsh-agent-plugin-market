@@ -4,6 +4,8 @@ export interface SourceOverview {
   id: string
   url: string
   branch?: string
+  /** Local-directory source (read directly, never cloned or deleted). */
+  local?: boolean
   cloned: boolean
   lockCommit?: string
   error?: string

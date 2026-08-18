@@ -9,12 +9,11 @@
  * which is where the runtime consumers (skill registry invalidation, MCP
  * mount reconciliation) pick the new enabled set up.
  */
-import { mkdir, readdir } from 'node:fs/promises'
-import { isDirectory } from './paths.js'
+import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { discoverSuitesInSource } from './discovery.js'
+import { discoverSourceList, discoverSuitesInSource } from './discovery.js'
 import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
-import { resolveProjectRoot, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
+import { expandHome, isDirectory, resolveProjectRoot, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
 import { loadState, saveState, EMPTY_STATE } from './state.js'
 import type { InstalledEntry, OverviewPayload, SourceOverview, SourceRef, Suite, SuiteDimension, SuiteState } from './types.js'
 
@@ -52,21 +51,27 @@ export class SuiteManager {
     const suites = await this.discoverDimension('user', this.options.userRoot)
     const sourceRows: SourceOverview[] = []
     for (const source of this.state.sources) {
-      const checkout = sourceCheckoutDir(this.options.userRoot, source.id)
+      const checkout = this.sourceCheckoutPath(source)
       let cloned = false
       let lockCommit: string | undefined
       let error: string | undefined
-      try {
-        lockCommit = await gitHead(checkout)
-        cloned = true
-      } catch {
-        // not cloned yet (or a broken checkout); the clone attempt records its own error on refresh
+      if (source.local === true) {
+        cloned = await isDirectory(checkout)
+        if (!cloned) error = `local source directory ${checkout} is missing`
+      } else {
+        try {
+          lockCommit = await gitHead(checkout)
+          cloned = true
+        } catch {
+          // not cloned yet (or a broken checkout); the clone attempt records its own error on refresh
+        }
       }
       const sourceSuites = suites.filter(suite => suite.sourceId === source.id)
       sourceRows.push({
         id: source.id,
         url: source.url,
         ...source.branch === undefined ? {} : { branch: source.branch },
+        ...source.local === true ? { local: true } : {},
         cloned,
         ...lockCommit === undefined ? {} : { lockCommit },
         ...error === undefined ? {} : { error },
@@ -142,7 +147,10 @@ export class SuiteManager {
         installed: Object.fromEntries(Object.entries(this.state.installed).filter(([key]) => !key.startsWith(`${sourceId}/`))),
       }
       await saveState(this.statePath, this.state)
-      await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
+      const source = this.state.sources.find(entry => entry.id === sourceId)
+      if (source === undefined || source.local !== true) {
+        await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
+      }
       this.options.onChanged()
     })
   }
@@ -152,6 +160,12 @@ export class SuiteManager {
     return this.enqueue(async () => {
       const targets = sourceId === undefined ? this.state.sources : this.state.sources.filter(source => source.id === sourceId)
       for (const source of targets) {
+        if (source.local === true) {
+          if (!await isDirectory(expandHome(source.url))) {
+            throw new Error(`local source directory ${expandHome(source.url)} is missing`)
+          }
+          continue
+        }
         const checkout = sourceCheckoutDir(this.options.userRoot, source.id)
         try {
           await gitHead(checkout)
@@ -170,7 +184,7 @@ export class SuiteManager {
     return this.enqueue(async () => {
       const source = this.state.sources.find(entry => entry.id === sourceId)
       if (source === undefined) throw new Error(`unknown source "${sourceId}"`)
-      const checkout = sourceCheckoutDir(this.options.userRoot, sourceId)
+      const checkout = this.sourceCheckoutPath(source)
       if (!await isDirectory(checkout)) await this.ensureClone(source)
       const suites = await discoverSuitesInSource(checkout, sourceId, 'user')
       const suite = suites.find(entry => entry.id === suiteId)
@@ -218,33 +232,33 @@ export class SuiteManager {
   }
 
   private async ensureClone(source: SourceRef): Promise<void> {
+    if (source.local === true) {
+      if (!await isDirectory(expandHome(source.url))) {
+        throw new Error(`local source directory ${expandHome(source.url)} is missing`)
+      }
+      return
+    }
     const checkout = sourceCheckoutDir(this.options.userRoot, source.id)
     await mkdir(sourcesDir(this.options.userRoot), { recursive: true })
     await gitClone(source.url, source.branch, checkout)
   }
 
+  /** The filesystem location one source is read from. */
+  private sourceCheckoutPath(source: SourceRef): string {
+    return source.local === true ? expandHome(source.url) : sourceCheckoutDir(this.options.userRoot, source.id)
+  }
+
   private async discoverDimension(dimension: SuiteDimension, dimensionRoot: string): Promise<Suite[]> {
-    const checkoutRoot = sourcesDir(dimensionRoot)
-    let entries: import('node:fs').Dirent[]
-    try {
-      entries = await readdir(checkoutRoot, { withFileTypes: true })
-    } catch {
-      return []
-    }
+    const discovered = await discoverSourceList(this.state.sources, dimension, dimensionRoot)
     const suites: Suite[] = []
-    for (const entry of entries) {
-      if (!entry.isDirectory() || entry.name.startsWith('.')) continue
-      const checkout = join(checkoutRoot, entry.name)
-      const discovered = await discoverSuitesInSource(checkout, entry.name, dimension)
-      for (const suite of discovered) {
-        const installed = this.state.installed[installKey(suite.sourceId, suite.id)]
-        suites.push({
-          ...suite,
-          enabled: dimension === 'user' && installed?.enabled === true,
-          ...installed?.lockCommit === undefined ? {} : { lockCommit: installed.lockCommit },
-          ...installed?.installedAt === undefined ? {} : { installedAt: installed.installedAt },
-        })
-      }
+    for (const suite of discovered) {
+      const installed = this.state.installed[installKey(suite.sourceId, suite.id)]
+      suites.push({
+        ...suite,
+        enabled: dimension === 'user' && installed?.enabled === true,
+        ...installed?.lockCommit === undefined ? {} : { lockCommit: installed.lockCommit },
+        ...installed?.installedAt === undefined ? {} : { installedAt: installed.installedAt },
+      })
     }
     return suites
   }

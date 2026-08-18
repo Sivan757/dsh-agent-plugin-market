@@ -12,13 +12,13 @@
  * resource base points at the skill directory, so CC-authored skills work
  * verbatim under the harness.
  */
-import { readFile, readdir } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { SkillCandidate, SkillDefinition, SkillLookupOptions, SkillProvider, SkillSource } from '@deepseek-ai/dsh-skill'
 import type { SuiteManager } from './manager.js'
 import { loadState } from './state.js'
-import { resolveProjectRoot, sourcesDir, STATE_FILE_NAME } from './paths.js'
-import { discoverSuitesInSource } from './discovery.js'
+import { resolveProjectRoot, STATE_FILE_NAME } from './paths.js'
+import { discoverSourceList } from './discovery.js'
 import { parseSkillFrontmatter, stripFrontmatter } from './skills-parse.js'
 import type { Suite, SuiteSkill } from './types.js'
 
@@ -108,20 +108,11 @@ export class SuiteSkillProvider implements SkillProvider {
     const projectRoot = await resolveProjectRoot(cwd)
     const state = await loadState(join(projectRoot, STATE_FILE_NAME))
     const located: LocatedSkill[] = []
-    let entries: import('node:fs').Dirent[]
-    try {
-      entries = await readdir(sourcesDir(projectRoot), { withFileTypes: true })
-    } catch {
-      return []
-    }
-    for (const entry of entries) {
-      if (!entry.isDirectory() || entry.name.startsWith('.')) continue
-      const checkout = join(sourcesDir(projectRoot), entry.name)
-      for (const suite of await discoverSuitesInSource(checkout, entry.name, 'project')) {
-        if (state.installed[`${entry.name}/${suite.id}`]?.enabled !== true) continue
-        for (const skill of suite.skills) {
-          located.push({ rank: PROJECT_RANK, source: SUITE_PROJECT_SOURCE, suite, skill })
-        }
+    const suites = await discoverSourceList(state.sources, 'project', projectRoot)
+    for (const suite of suites) {
+      if (state.installed[`${suite.sourceId}/${suite.id}`]?.enabled !== true) continue
+      for (const skill of suite.skills) {
+        located.push({ rank: PROJECT_RANK, source: SUITE_PROJECT_SOURCE, suite, skill })
       }
     }
     return located

@@ -1,7 +1,7 @@
 {
   "name": "dsh-agent-plugin",
   "description": "Agent Plugin (套件) manager for DeepSeek Harness: agent-plugins.org v1.0.0 portable suites from git repo sources, runtime skills/MCP injection, and a market page in the Web GUI.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",

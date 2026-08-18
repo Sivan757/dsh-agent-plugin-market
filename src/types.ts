@@ -12,10 +12,12 @@
 export interface SourceRef {
   /** Stable local id; `[a-z0-9][a-z0-9-]*`, unique across sources. */
   id: string
-  /** Git URL to clone. */
+  /** Git URL to clone, or a local directory path when `local` is set. */
   url: string
-  /** Optional branch to pin. */
+  /** Optional branch to pin (git sources only). */
   branch?: string
+  /** Read the source directory directly instead of cloning it. */
+  local?: boolean
 }
 
 /** The manifest layout a suite root was discovered under. */
@@ -148,6 +150,9 @@ export interface SourceOverview {
   id: string
   url: string
   branch?: string
+  /** Local-directory source (read directly, never cloned or deleted). */
+  local?: boolean
+  /** Whether the checkout (or local directory) is present. */
   cloned: boolean
   lockCommit?: string
   error?: string

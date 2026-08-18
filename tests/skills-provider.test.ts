@@ -67,3 +67,39 @@ describe('SuiteSkillProvider', () => {
     expect(candidates[0]!.rank).toBe(250)
   })
 })
+
+describe('local-directory sources (local: true)', () => {
+  it('discovers, installs, injects, and never deletes the local directory', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-local-'))
+    const localRepo = join(fixtures, 'v1-suite')
+    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    await manager.load()
+    await manager.mergeSources([{ id: 'local-repo', url: localRepo, local: true }])
+    await manager.install('local-repo', 'v1-suite')
+    await manager.setEnabled('local-repo', 'v1-suite', true)
+    const overview = await manager.overview()
+    const source = overview.sources.find(entry => entry.id === 'local-repo')!
+    expect(source.local).toBe(true)
+    expect(source.cloned).toBe(true)
+    expect(overview.totals).toMatchObject({ all: 1, installed: 1, enabled: 1 })
+    const provider = new SuiteSkillProvider(manager)
+    const candidates = await provider.list({})
+    expect(candidates.map(candidate => candidate.name)).toEqual(['greet'])
+    await manager.removeSource('local-repo')
+    // The local directory must survive removal.
+    const marker = join(localRepo, 'plugin.json')
+    expect(await (await import('node:fs/promises')).stat(marker)).toBeTruthy()
+    expect(await manager.overview()).toMatchObject({ totals: { all: 0, installed: 0, enabled: 0 } })
+  })
+
+  it('reports a missing local directory instead of cloning it', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-local2-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    await manager.load()
+    await manager.mergeSources([{ id: 'gone', url: join(tmpdir(), 'does-not-exist-xyz'), local: true }])
+    const overview = await manager.overview()
+    expect(overview.sources[0]!.cloned).toBe(false)
+    expect(overview.sources[0]!.error).toContain('missing')
+    await expect(manager.install('gone', 'anything')).rejects.toThrow('missing')
+  })
+})

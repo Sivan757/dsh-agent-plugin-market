@@ -16,9 +16,9 @@
  */
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { isAbsolute, join, resolve } from 'node:path'
-import { isDirectory, sanitizeId } from './paths.js'
+import { expandHome, isDirectory, sanitizeId, sourcesDir } from './paths.js'
 import { parseSkillFrontmatter } from './skills-parse.js'
-import type { McpSuiteConfig, Suite, SuiteDimension, SuiteManifest, SuiteSkill, SuiteSurfaceCounts } from './types.js'
+import type { McpSuiteConfig, SourceRef, Suite, SuiteDimension, SuiteManifest, SuiteSkill, SuiteSurfaceCounts } from './types.js'
 import { isRecognizedSchema, validateMcpJson, validatePluginManifest } from './validate.js'
 
 interface MarketplaceEntry {
@@ -365,4 +365,30 @@ async function countMdFiles(dir: string): Promise<number> {
 /** Whether a suite root path lies outside the checkout (defense for malformed marketplace sources). */
 export function isOutside(root: string, candidate: string): boolean {
   return isAbsolute(candidate) ? !candidate.startsWith(root) : false
+}
+
+/**
+ * Discover every suite of one dimension's configured sources, plus manual
+ * checkouts present under the dimension's `.sources/` that no source entry
+ * names. Local sources read their directory directly; git sources read
+ * their clone; a missing checkout contributes nothing.
+ */
+export async function discoverSourceList(sources: SourceRef[], dimension: SuiteDimension, dimensionRoot: string): Promise<Suite[]> {
+  const checkoutRoot = sourcesDir(dimensionRoot)
+  const bySource = new Map<string, Suite[]>()
+  const listed = new Set(sources.map(source => source.id))
+  try {
+    for (const entry of await readdir(checkoutRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith('.') || listed.has(entry.name)) continue
+      bySource.set(entry.name, await discoverSuitesInSource(join(checkoutRoot, entry.name), entry.name, dimension))
+    }
+  } catch {
+    // a missing checkout root simply has no manual checkouts
+  }
+  for (const source of sources) {
+    const checkout = source.local === true ? expandHome(source.url) : join(checkoutRoot, source.id)
+    if (!await isDirectory(checkout)) continue
+    bySource.set(source.id, await discoverSuitesInSource(checkout, source.id, dimension))
+  }
+  return [...bySource.values()].flat()
 }

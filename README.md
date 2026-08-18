@@ -62,6 +62,8 @@ Sources persist in `~/.dsh/agent-plugins/state.json`. Seed them from cordis conf
 
 or add them in the market page's source panel. `config.userRoot` (`~/.dsh/agent-plugins` by default, honoring `$DSH_HOME`) and `config.dataRoot` (`~/.dsh/agent-plugins-data`, backing `${PLUGIN_DATA}`) are also available.
 
+A source may also read a **local directory directly** instead of cloning: `{ id: jeecg-wip, url: '/Users/me/work/jeecg-plugin', local: true }` (`~/…` expands). Local sources reflect the working tree as it is — including uncommitted changes — refresh rescans in place, and removing the source never deletes the directory.
+
 ## Project dimension
 
 The market page manages the user dimension. For a project-scoped install, clone a source into `<project>/.dsh/agent-plugins/.sources/<sourceId>/` and record enabled suites in `<project>/.dsh/agent-plugins/state.json` (`{"version":1,"sources":[],"installed":{"<sourceId>/<suiteId>":{"enabled":true}}}`). The skill provider and the session-start catalog pick those suites up only when a session runs inside that project.
@@ -74,7 +76,7 @@ The market page manages the user dimension. For a project-scoped install, clone 
 
 ## Security model
 
-- Sources are cloned through `git` via `execFile` (no shell), depth 1, `--ff-only` pulls, 120 s timeouts.
+- Git sources are cloned through `git` via `execFile` (no shell), depth 1, `--ff-only` pulls, 120 s timeouts. Local sources are read in place: no clone, no pull, no deletion on removal.
 - Mutating HTTP routes accept same-origin POSTs only; JSON bodies are capped at 64 KiB.
 - Portable-suite paths must start with `./` and resolve inside the suite root (symlink escapes rejected); `${PLUGIN_ROOT}` / `${PLUGIN_DATA}` expand against the suite root and its data directory; `${NAME}` expands from the process environment (documented extension).
 - A broken third-party suite never takes the host down: bad manifests, invalid skills, escaping MCP paths, unsupported transports (legacy HTTP+SSE), and MCP mount failures are per-suite diagnostics surfaced on the market page.

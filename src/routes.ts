@@ -6,7 +6,9 @@
  * cross-site form or fetch cannot trigger a clone, an uninstall, or an
  * enable/disable against a local profile.
  */
+import { isAbsolute } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { expandHome } from './paths.js'
 import type { SuiteManager } from './manager.js'
 import type { SourceRef } from './types.js'
 
@@ -119,6 +121,13 @@ function parseSource(body: Record<string, unknown>): SourceRef {
   if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new Error('source id must match [a-z0-9][a-z0-9-]*')
   if (typeof url !== 'string' || url.trim() === '') throw new Error('missing source url')
   const branch = body['branch']
+  const local = body['local'] === true
+  if (local) {
+    const path = url.trim()
+    const expanded = expandHome(path)
+    if (!path.startsWith('~/') && path !== '~' && !isAbsolute(expanded)) throw new Error('local source url must be an absolute path or start with ~/')
+    return { id, url: expanded, local: true }
+  }
   return { id, url: url.trim(), ...typeof branch === 'string' && branch !== '' ? { branch } : {} }
 }
 
