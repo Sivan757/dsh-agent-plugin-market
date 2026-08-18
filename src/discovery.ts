@@ -38,7 +38,7 @@ import {
 export { repoName, listMdFiles, discoverLspEntries }
 export type { LspEntry }
 
-const CONTAINER_DIRS = ['plugins', 'skills'] as const
+const CONTAINER_DIRS = ['plugins', 'external_plugins', 'skills'] as const
 const DOT_DIRS = new Set(['.git', '.github', '.claude', '.cursor', '.kimi', '.plugin', '.sources', 'node_modules'])
 
 /** Discover every suite under one cloned source checkout. */
@@ -60,22 +60,34 @@ interface SuiteHint {
 
 /**
  * Resolve the suite roots of one checkout. A marketplace manifest is the
- * authoritative list; otherwise a single-suite root, a flat/manifest-dir
- * scan, or a manifest-less skill collection applies.
+ * authoritative list; manifest-less marketplace entries still surface when
+ * they carry skills, and manifest-bearing container dirs the marketplace did
+ * not list (e.g. official example plugins) are supplemented. Without a
+ * marketplace: a single-suite root, a flat/manifest-dir scan, or a
+ * manifest-less skill collection applies.
  */
 async function suiteRoots(checkoutDir: string): Promise<Array<[string, SuiteHint | undefined]>> {
   const marketplace = await readMarketplace(checkoutDir)
   if (marketplace !== undefined && marketplace.entries.length > 0) {
     const roots: Array<[string, SuiteHint | undefined]> = []
+    const seen = new Set<string>()
     for (const entry of marketplace.entries) {
-      if (typeof entry.source === 'string') {
-        const dir = resolve(checkoutDir, entry.source)
-        if (await hasSuiteManifest(dir)) {
-          roots.push([dir, { name: entry.name, version: entry.version, description: entry.description }])
-        }
+      if (typeof entry.source !== 'string') continue
+      const dir = resolve(checkoutDir, entry.source)
+      const hint = { name: entry.name, version: entry.version, description: entry.description }
+      if (await hasSuiteManifest(dir) || await hasSkillFiles(dir)) {
+        roots.push([dir, hint])
+        seen.add(dir)
       }
       // External URL sources are not present in the clone; the overview
       // records them as unavailable, so discovery skips them here.
+    }
+    for (const container of CONTAINER_DIRS) {
+      const containerDir = join(checkoutDir, container)
+      if (!await isDirectory(containerDir)) continue
+      for (const child of await listChildDirs(containerDir)) {
+        if (!seen.has(child) && await hasSuiteManifest(child)) roots.push([child, undefined])
+      }
     }
     return roots
   }

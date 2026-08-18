@@ -99,7 +99,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
             h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('skillsSection')} (${detail.skills.length})`),
               detail.skills.length === 0
-                ? h('div', { className: css.sidebarEmpty }, t('noSkills'))
+                ? h('div', { className: css.sidebarEmpty }, '—')
                 : detail.skills.map(skill => h('div', { key: skill.name, className: css.detailItem },
                     h('button', {
                       type: 'button',

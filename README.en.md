@@ -30,7 +30,7 @@ English | [简体中文](README.md)
 | Codex | `.codex-plugin/plugin.json` | — |
 | Skill collection (manifest-less) | none (synthetic) | flat `SKILL.md` directory collections |
 
-One repo may carry several dialects at once (vercel/vercel-plugin ships all of them); the suite identity comes from the highest-precedence manifest while surfaces are scanned from the directories. `mcp.json`, `.mcp.json`, and unknown MCP transports are tolerated per server.
+One repo may carry several dialects at once (vercel/vercel-plugin ships all of them); the suite identity comes from the highest-precedence manifest while surfaces are scanned from the directories. `mcp.json` is validated strictly against the agent-plugins.org schema; `.mcp.json` is parsed leniently — top-level server-map shorthand, `type: http` / `local` / omitted `type` (stdio by `command`) normalization, `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${NAME:-default}` placeholders, and unknown transports are tolerated per server. The marketplace manifest is authoritative for the suite set; manifest-less marketplace entries that carry skills and manifest-bearing container dirs not listed there are supplemented.
 
 ## Install
 

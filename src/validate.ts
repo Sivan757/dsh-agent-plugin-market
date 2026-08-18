@@ -128,51 +128,70 @@ export async function validateMcpJson(pluginRoot: string, raw: unknown, options?
     if (schemaErrors.length > 0) return { errors: schemaErrors }
   }
 
-  const servers = record['mcpServers']
-  if (typeof servers !== 'object' || servers === null) return { errors: ['mcp.json is missing mcpServers'] }
+  // Lenient native-client files may omit the `mcpServers` wrapper and put the
+  // server map at the top level (Claude Code `.mcp.json` shorthand).
+  let servers = record['mcpServers']
+  if (typeof servers !== 'object' || servers === null) {
+    if (strict || record['$schema'] !== undefined || !Object.values(record).every(value => typeof value === 'object' && value !== null)) {
+      return { errors: ['mcp.json is missing mcpServers'] }
+    }
+    servers = record
+  }
   const valid: Record<string, McpServer> = {}
   for (const [name, value] of Object.entries(servers as Record<string, unknown>)) {
     if (typeof value !== 'object' || value === null) {
       errors.push(`server "${name}": not an object`)
       continue
     }
-    const server = value as McpServer & { type?: unknown }
-    if (typeof server.type !== 'string' || !KNOWN_MCP_TRANSPORTS.has(server.type)) {
+    const server = value as { type?: unknown; command?: unknown; cwd?: unknown }
+    // Claude Code dialects: `http`/`streamable-http` are the same remote
+    // transport, and `local` or a missing `type` (with `command`) mean stdio.
+    let type = typeof server.type === 'string' ? server.type : server.command !== undefined ? 'stdio' : undefined
+    if (type === 'local') type = 'stdio'
+    if (type === 'http') type = 'streamable-http'
+    if (type === undefined || !KNOWN_MCP_TRANSPORTS.has(type)) {
       errors.push(`server "${name}": unsupported transport ${JSON.stringify(server.type)} (supported: stdio, streamable-http, sse)`)
       continue
     }
-    if (server.type !== 'stdio') {
-      valid[name] = server
+    if (type !== 'stdio') {
+      valid[name] = { ...server, type } as McpServer
       continue
     }
+    const stdioServer = server as { command: string; cwd?: string }
     const problems: string[] = []
-    if (server.command.includes('/')) {
-      if (!server.command.startsWith('./')) {
-        problems.push(`command "${server.command}" must be a bare executable name or a plugin-relative path beginning with "./"`)
+    if (typeof stdioServer.command !== 'string') {
+      errors.push(`server "${name}": stdio servers require a command`)
+      continue
+    }
+    if (stdioServer.command.includes('/')) {
+      if (!stdioServer.command.startsWith('./')) {
+        problems.push(`command "${stdioServer.command}" must be a bare executable name or a plugin-relative path beginning with "./"`)
       } else {
-        const reason = await pathContainmentError(pluginRoot, server.command)
+        const reason = await pathContainmentError(pluginRoot, stdioServer.command)
         if (reason !== undefined) problems.push(reason)
       }
     }
-    if (server.cwd !== undefined && !server.cwd.startsWith('${PLUGIN_DATA}')) {
-      const reason = await pathContainmentError(pluginRoot, server.cwd)
+    if (stdioServer.cwd !== undefined && !stdioServer.cwd.startsWith('${PLUGIN_DATA}')) {
+      const reason = await pathContainmentError(pluginRoot, stdioServer.cwd)
       if (reason !== undefined) problems.push(reason)
     }
     if (problems.length > 0) {
       errors.push(...problems.map(problem => `server "${name}": ${problem}`))
     } else {
-      valid[name] = server
+      valid[name] = { ...server, type: 'stdio' } as McpServer
     }
   }
   return { config: { schema: typeof record['$schema'] === 'string' ? record['$schema'] : 'native-client', servers: valid }, errors }
 }
 
-/** Expand `${PLUGIN_ROOT}`, `${PLUGIN_DATA}`, and `${NAME}` (process env) in one string. */
+/** Expand `${PLUGIN_ROOT}`, `${PLUGIN_DATA}`, and `${NAME}` (process env) in one string.
+ *  Claude Code aliases `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` and
+ *  `${NAME:-default}` fallbacks are honored for unset/empty env vars. */
 export function expandPlaceholders(value: string, pluginRoot: string, pluginData: string, env: NodeJS.ProcessEnv = process.env): string {
-  return value.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (match, name: string) => {
-    if (name === 'PLUGIN_ROOT') return pluginRoot
-    if (name === 'PLUGIN_DATA') return pluginData
-    return env[name] ?? ''
+  return value.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}/g, (match, name: string, fallback?: string) => {
+    if (name === 'PLUGIN_ROOT' || name === 'CLAUDE_PLUGIN_ROOT') return pluginRoot
+    if (name === 'PLUGIN_DATA' || name === 'CLAUDE_PLUGIN_DATA') return pluginData
+    return env[name] || fallback || ''
   })
 }
 

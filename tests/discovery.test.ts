@@ -30,9 +30,15 @@ describe('discovery: agent-plugins.org v1 layout', () => {
 describe('discovery: Claude Code marketplace layout', () => {
   it('uses the marketplace manifest and skips external-url entries', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'cc-marketplace'), 'cc', 'user')
-    expect(suites.map(suite => suite.id)).toEqual(['jeecg-one', 'jeecg-two'])
+    expect(suites.map(suite => suite.id)).toEqual(['jeecg-one', 'jeecg-two', 'jeecg-three', 'extra-plugin'])
     expect(suites[0]!.manifest.layout).toBe('claude-code')
     expect(suites[0]!.skills[0]!.name).toBe('jeecg-one')
+    // A manifest-less marketplace entry still surfaces as a skill collection.
+    expect(suites[2]!.manifest.layout).toBe('skill-collection')
+    expect(suites[2]!.skills[0]!.name).toBe('jeecg-three')
+    // A manifest-bearing container dir the marketplace did not list is supplemented.
+    expect(suites[3]!.manifest.layout).toBe('claude-code')
+    expect(suites[3]!.manifest.name).toBe('extra-plugin')
   })
 })
 
@@ -95,12 +101,47 @@ describe('validate: manifest and mcp.json', () => {
     const reason = await pathContainmentError('/tmp/root', '../escape')
     expect(reason).toContain('must begin')
   })
+
+  it('reads a top-level server map leniently (Claude Code .mcp.json shorthand)', async () => {
+    const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
+      github: { type: 'http', url: 'https://api.example.com/mcp', headers: { Authorization: 'Bearer ${TOKEN:-x}' } },
+    }, { strict: false })
+    expect(errors).toEqual([])
+    expect(config!.servers['github']).toMatchObject({ type: 'streamable-http', url: 'https://api.example.com/mcp' })
+  })
+
+  it('treats a command-only server as stdio (Claude Code default)', async () => {
+    const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
+      mcpServers: { local: { command: 'bun', args: ['start'] } },
+    }, { strict: false })
+    expect(errors).toEqual([])
+    expect(config!.servers['local']).toMatchObject({ type: 'stdio', command: 'bun' })
+  })
+
+  it('normalizes the Claude Code local transport to stdio', async () => {
+    const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
+      mcpServers: { script: { type: 'local', command: 'node', args: ['server.js'] } },
+    }, { strict: false })
+    expect(errors).toEqual([])
+    expect(config!.servers['script']).toMatchObject({ type: 'stdio', command: 'node' })
+  })
 })
 
 describe('validate: placeholder expansion', () => {
   it('expands PLUGIN_ROOT, PLUGIN_DATA, and process env', () => {
     expect(expandPlaceholders('${PLUGIN_ROOT}/a ${PLUGIN_DATA}/b ${HOME}/c', '/p', '/d', { HOME: '/h' })).toBe('/p/a /d/b /h/c')
     expect(expandPlaceholders('${UNSET_VAR}', '/p', '/d')).toBe('')
+  })
+
+  it('honors Claude Code ${NAME:-default} fallbacks', () => {
+    expect(expandPlaceholders('${API_KEY:-none}', '/p', '/d', {})).toBe('none')
+    expect(expandPlaceholders('${API_KEY:-none}', '/p', '/d', { API_KEY: 'real' })).toBe('real')
+    expect(expandPlaceholders('${API_KEY:-none}', '/p', '/d', { API_KEY: '' })).toBe('none')
+    expect(expandPlaceholders('${API_KEY:-}', '/p', '/d', {})).toBe('')
+  })
+
+  it('expands Claude Code CLAUDE_PLUGIN_ROOT/DATA aliases', () => {
+    expect(expandPlaceholders('--cwd ${CLAUDE_PLUGIN_ROOT} ${CLAUDE_PLUGIN_DATA}/x', '/p', '/d')).toBe('--cwd /p /d/x')
   })
 })
 
@@ -162,14 +203,15 @@ describe('multi-client manifest paradigms (vercel-style)', () => {
     expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['foo'])
   })
 
-  it('discovers a kimi-only repo, honoring declared skills and skipping unknown transport', async () => {
+  it('discovers a kimi-only repo, honoring declared skills and mapping http to streamable-http', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'kimi-only'), 'k', 'user')
     expect(suites).toHaveLength(1)
     expect(suites[0]!.manifest.layout).toBe('kimi')
     expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['bar'])
     expect(suites[0]!.mcp).toBeDefined()
-    expect(Object.keys(suites[0]!.mcp!.servers)).toEqual([])
-    expect(suites[0]!.errors.some(error => error.includes('unsupported transport'))).toBe(true)
+    expect(Object.keys(suites[0]!.mcp!.servers)).toEqual(['k'])
+    expect(suites[0]!.mcp!.servers['k']).toMatchObject({ type: 'streamable-http', url: 'https://x' })
+    expect(suites[0]!.errors).toEqual([])
   })
 
   it('discovers a universal-only repo', async () => {
@@ -179,11 +221,12 @@ describe('multi-client manifest paradigms (vercel-style)', () => {
     expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['baz'])
   })
 
-  it('reads .mcp.json leniently: keeps known transports, drops http with a diagnostic', async () => {
+  it('reads .mcp.json leniently: maps http to streamable-http and keeps known transports', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'dot-mcp'), 'd', 'user')
     expect(suites).toHaveLength(1)
     expect(suites[0]!.mcp).toBeDefined()
-    expect(Object.keys(suites[0]!.mcp!.servers)).toEqual(['good'])
-    expect(suites[0]!.errors.some(error => error.includes('httpSrv'))).toBe(true)
+    expect(Object.keys(suites[0]!.mcp!.servers)).toEqual(['httpSrv', 'good'])
+    expect(suites[0]!.mcp!.servers['httpSrv']).toMatchObject({ type: 'streamable-http', url: 'https://mcp.example.com' })
+    expect(suites[0]!.errors).toEqual([])
   })
 })

@@ -30,7 +30,7 @@
 | Codex | `.codex-plugin/plugin.json` | — |
 | 技能集合（无清单） | 无（合成） | 扁平 `SKILL.md` 目录集合 |
 
-一个仓库可同时携带多种清单（如 vercel/vercel-plugin 全部都有）；套件身份取优先级最高的清单，内容面（skills/commands/agents/hooks/mcp）按目录扫描。`mcp.json` 与 `.mcp.json`、未知 transport 逐 server 容错。
+一个仓库可同时携带多种清单（如 vercel/vercel-plugin 全部都有）；套件身份取优先级最高的清单，内容面（skills/commands/agents/hooks/mcp）按目录扫描。`mcp.json` 严格按 agent-plugins.org schema 校验；`.mcp.json` 宽容解析——支持顶层 server map 简写、`type: http`/`local`/省略 type（按 command 判 stdio）归一化，`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${NAME:-default}` 占位符，未知 transport 逐 server 容错。marketplace 清单权威决定套件集合，无清单但含技能的市场条目与容器内未列出的清单插件也会被补全。
 
 ## 安装
 
