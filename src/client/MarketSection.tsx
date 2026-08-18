@@ -190,6 +190,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
       suiteId: detail.suiteId,
       onClose: () => setDetail(undefined),
     }),
+
     editor === undefined ? null : h(SourceEditorModal, {
       t,
       editor,
@@ -235,11 +236,15 @@ function SourceEditorModal(props: {
     open: true,
     onClose: props.onClose,
     title,
+    description: t('editorHint'),
     closeLabel: t('cancel'),
+    className: css.editorDialog,
     footer: h('div', { className: css.modalFooter },
-      editor.mode === 'edit'
-        ? h(Button, { variant: 'ghost', onClick: () => props.onRemove(id) }, `🗑 ${t('remove')}`)
-        : null,
+      h('div', { className: css.modalFooterLeft },
+        editor.mode === 'edit'
+          ? h(Button, { variant: 'ghost', onClick: () => props.onRemove(id) }, `🗑 ${t('remove')}`)
+          : null,
+      ),
       h(Button, { variant: 'ghost', onClick: props.onClose }, t('cancel')),
       h(Button, {
         variant: 'primary',
@@ -249,15 +254,37 @@ function SourceEditorModal(props: {
     ),
     children: h('div', { className: css.editorForm },
       h('div', { className: css.modeRow },
-        h(TabButton, { t, active: !local, label: t('sourceModeGit'), onClick: () => setLocal(false) }),
-        h(TabButton, { t, active: local, label: t('sourceModeLocal'), onClick: () => setLocal(true) }),
+        h('button', {
+          type: 'button',
+          className: local ? css.seg : css.segOn,
+          onClick: () => setLocal(false),
+        }, t('sourceModeGit')),
+        h('button', {
+          type: 'button',
+          className: local ? css.segOn : css.seg,
+          onClick: () => setLocal(true),
+        }, t('sourceModeLocal')),
       ),
-      h('label', { className: css.fieldLabel }, t('sourceIdPh')),
-      h(Input, { placeholder: t('sourceIdPh'), value: id, readOnly: editor.mode === 'edit', onChange: event => setId((event.target as HTMLInputElement).value) }),
-      h('label', { className: css.fieldLabel }, local ? t('sourceUrlLocalPh') : t('sourceUrlPh')),
-      h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
-      local ? null : h('label', { className: css.fieldLabel }, t('branchPh')),
-      local ? null : h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
+      h('div', { className: css.fieldGroup },
+        h('label', { className: css.fieldLabel }, t('sourceIdPh')),
+        editor.mode === 'edit'
+          ? h('div', { className: css.staticId },
+              h('span', { className: css.staticIdValue }, id),
+              h('span', { className: css.fieldHint }, t('idFixed')),
+            )
+          : h(Input, { placeholder: t('sourceIdPh'), value: id, onChange: event => setId((event.target as HTMLInputElement).value) }),
+        editor.mode === 'add' ? h('span', { className: css.fieldHint }, t('idHint')) : null,
+      ),
+      h('div', { className: css.fieldGroup },
+        h('label', { className: css.fieldLabel }, local ? t('sourceUrlLocalPh') : t('sourceUrlPh')),
+        h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
+        h('span', { className: css.fieldHint }, local ? t('urlLocalHint') : t('urlGitHint')),
+      ),
+      local ? null : h('div', { className: css.fieldGroup },
+        h('label', { className: css.fieldLabel }, t('branchPh')),
+        h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
+        h('span', { className: css.fieldHint }, t('branchHint')),
+      ),
     ),
   })
 }
