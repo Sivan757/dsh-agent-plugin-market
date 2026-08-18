@@ -88,7 +88,7 @@ export class HooksMountRegistry {
     try {
       await handle.dispose()
     } catch (error) {
-      this.ctx.logger?.warn(`[dsh-agent-plugin] hooks unmount ${suiteId} failed: ${error instanceof Error ? error.message : String(error)}`)
+      this.ctx.logger?.warn(`[dsh-agent-plugin-market] hooks unmount ${suiteId} failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }

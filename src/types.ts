@@ -1,5 +1,5 @@
 /**
- * Shared shapes for the dsh-agent-plugin suite (套件) manager.
+ * Shared shapes for the dsh-agent-plugin-market Agent Plugin manager.
  *
  * A suite is the portable Agent Plugin package defined by the
  * agent-plugins.org v1.0.0 specification, plus the two dialect layouts this

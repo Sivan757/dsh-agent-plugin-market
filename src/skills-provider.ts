@@ -105,7 +105,7 @@ export class SuiteSkillProvider implements SkillProvider {
     if (locator.kind === 'agent') {
       const suiteName = locator.suiteRoot.split(/[\\/]/).at(-1) ?? 'suite'
       const content = [
-        `## 子代理定义（来自套件 ${suiteName}，Claude Code agents 格式）`,
+        `## 子代理定义（来自 Agent Plugin ${suiteName}，Claude Code agents 格式）`,
         '',
         '当任务匹配下方描述时，通过 subagent 工具创建子代理并将「定义正文」原样作为指令执行。',
         '',

@@ -5,7 +5,7 @@
  * The injected catalog is a durable user message queued through
  * `agent.inject()` on `agent/session-start` (the same path the hooks bridge
  * uses for SessionStart context), carrying the base `{kind:'plugin'}`
- * message source with `plugin: 'dsh-agent-plugin'` so transcripts attribute
+ * message source with `plugin: 'dsh-agent-plugin-market'` so transcripts attribute
  * it and it lands in the session log — model-visible means logged.
  */
 import type { Context } from '@deepseek-ai/cordis'
@@ -20,7 +20,7 @@ interface InboxAgent {
 }
 
 const PLUGIN_SOURCE_KIND = 'plugin'
-const PLUGIN_SOURCE_ID = 'dsh-agent-plugin'
+const PLUGIN_SOURCE_ID = 'dsh-agent-plugin-market'
 
 /** Render the enabled-suite catalog for one dimension section. */
 function renderSection(label: string, suites: Suite[]): string {
@@ -42,10 +42,10 @@ function renderSection(label: string, suites: Suite[]): string {
 /** Build the injected catalog text for the enabled suites of one agent. */
 function catalogText(user: Suite[], project: Suite[]): string {
   const sections = [
-    '当前会话可用的套件（Agent Plugin）：',
-    renderSection('用户级套件', user),
-    renderSection('项目级套件', project),
-    '使用 skill 工具或 agent_plugins 工具查询套件提供的技能与 MCP 工具。',
+    '当前会话可用的 Agent Plugin：',
+    renderSection('用户级', user),
+    renderSection('项目级', project),
+    '使用 skill 工具或 agent_plugins 工具查询 Agent Plugin 提供的技能与 MCP 工具。',
   ].filter(section => section !== '')
   return sections.join('\n\n')
 }
@@ -90,9 +90,9 @@ export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => vo
     const parameters = {
       type: 'object',
       properties: {
-        action: { type: 'string', enum: ['list', 'info'], description: 'list: 列出全部套件；info: 查看单个套件详情' },
-        suiteId: { type: 'string', description: 'info 动作时必填：套件 id' },
-        sourceId: { type: 'string', description: 'info 动作时可选：套件所属仓库源 id' },
+        action: { type: 'string', enum: ['list', 'info'], description: 'list: 列出全部 Agent Plugin；info: 查看单个 Agent Plugin 详情' },
+        suiteId: { type: 'string', description: 'info 动作时必填：Agent Plugin id' },
+        sourceId: { type: 'string', description: 'info 动作时可选：Agent Plugin 所属仓库源 id' },
       },
       required: ['action'],
       additionalProperties: false,
@@ -108,7 +108,7 @@ export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => vo
     }
     const dispose = tools.tools.register({
       name: 'agent_plugins',
-      description: '查询当前会话启用的套件（Agent Plugin）：列出套件清单、技能与 MCP 工具前缀；技能正文通过 skill 工具加载。',
+      description: '查询当前会话启用的 Agent Plugin：列出插件清单、技能与 MCP 工具前缀；技能正文通过 skill 工具加载。',
       parameters,
       renderIntent: 'generic',
       output: {
@@ -148,13 +148,13 @@ function listPayload(suites: Suite[]): Record<string, unknown> {
     mcpServers: suites.flatMap(suite => suite.mcp === undefined
       ? []
       : Object.keys(suite.mcp.servers).map(key => ({ suiteId: suite.id, server: key, tools: `mcp__${deriveServerName(suite.id, key)}__*` }))),
-    note: '技能正文通过 skill 工具按 name 加载；MCP 工具名形如 mcp__<套件>__<server>__<工具>。',
+    note: '技能正文通过 skill 工具按 name 加载；MCP 工具名形如 mcp__<plugin>__<server>__<tool>。',
   }
 }
 
 function infoPayload(suites: Suite[], record: Record<string, unknown>): Record<string, unknown> {
   const suiteId = record['suiteId']
   const suite = suites.find(entry => entry.id === suiteId)
-  if (suite === undefined) return { suites: [], skills: [], mcpServers: [], note: `未找到套件 "${String(suiteId)}"（仅列出用户级已启用套件）` }
+  if (suite === undefined) return { suites: [], skills: [], mcpServers: [], note: `未找到 Agent Plugin "${String(suiteId)}"（仅列出用户级已启用 Agent Plugin）` }
   return listPayload([suite])
 }

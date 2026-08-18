@@ -80,12 +80,12 @@ export class CommandMountRegistry {
           handler: (invocation) => {
             const agent = invocation.agent as InboxAgent
             const text = [
-              `[套件命令 /${spec.name}（来自套件 ${spec.suiteId}）]`,
+              `[Agent Plugin 命令 /${spec.name}（来自 ${spec.suiteId}）]`,
               '',
               spec.body.replaceAll('$ARGUMENTS', invocation.rawInput.trim()),
             ].join('\n')
-            agent.followup({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'dsh-agent-plugin' } })
-            return { kind: 'success', text: `/${spec.name} 已转交模型执行（套件 ${spec.suiteId}）` }
+            agent.followup({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'dsh-agent-plugin-market' } })
+            return { kind: 'success', text: `/${spec.name} 已转交模型执行（${spec.suiteId}）` }
           },
         })
         this.live.set(key, disposer)

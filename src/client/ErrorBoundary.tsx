@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: unknown): void {
-    console.warn('[dsh-agent-plugin] preview render failed:', error, info)
+    console.warn('[dsh-agent-plugin-market] preview render failed:', error, info)
   }
 
   override render(): ReactNode {

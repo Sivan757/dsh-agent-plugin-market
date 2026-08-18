@@ -1,5 +1,5 @@
 /**
- * The 套件市场 settings section.
+ * The Agent Plugin Market settings section.
  *
  * Layout: repository sources run along the TOP as chips (全部 first), with
  * edit-current / add / refresh-all controls on the right; below sit search,
