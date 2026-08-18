@@ -121,7 +121,13 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     children: h('div', { className: css.market },
     h('div', { className: css.sourceTabsRow },
       h('div', { className: css.sourceTabsScroll },
-        h(TabButton, { t, active: category === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setCategory('all') }),
+        h(SourceTab, {
+          key: '__all__',
+          t,
+          active: category === 'all',
+          label: `${t('tabAll')} ${overview.totals.all}`,
+          onSelect: () => setCategory('all'),
+        }),
         ...overview.sources.map(source => h(SourceTab, {
           key: source.id,
           t,
@@ -230,12 +236,12 @@ function SourceTab(props: {
   active: boolean
   label: string
   onSelect: () => void
-  onDelete: () => void
+  onDelete?: () => void
 }): ReactNode {
   const { t, active, label, onSelect, onDelete } = props
   return h('div', { className: active ? css.srcTabOn : css.srcTab },
     h('button', { type: 'button', className: css.srcTabMain, onClick: onSelect }, label),
-    h('button', {
+    onDelete === undefined ? null : h('button', {
       type: 'button',
       className: css.srcTabDel,
       title: t('remove'),
