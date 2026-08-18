@@ -103,25 +103,36 @@
 .sourceTabsScroll {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
   align-content: flex-start;
 }
 
+.sourceTabsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1, #fff);
+}
+
 .sourceActions {
   display: flex;
   gap: 4px;
-  padding-left: 10px;
   flex-shrink: 0;
-  align-items: flex-start;
-  padding-top: 2px;
+  align-items: center;
 }
 
 .srcTab,
 .srcTabOn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 120px;
   border: 1px solid var(--dsw-alias-border-l3, #d9dde3);
   border-radius: 999px;
   overflow: hidden;
@@ -194,6 +205,26 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+}
+
+.list .card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.list .cardTop {
+  flex: 0 0 auto;
+}
+
+.list .cardDesc {
+  flex: 1;
+  min-height: 0;
+  -webkit-line-clamp: 1;
+}
+
+.list .cardActions {
+  flex: 0 0 auto;
 }
 
 .empty {

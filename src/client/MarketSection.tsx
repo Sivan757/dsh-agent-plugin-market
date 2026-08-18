@@ -16,6 +16,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { fetchOverview, postAction, type OverviewData, type SourceOverview, type SuiteCardData } from './api.js'
 import type { Translate } from './index.js'
+import { ErrorBoundary } from './ErrorBoundary.js'
 import { SuiteDetailModal } from './SuiteDetail.js'
 import css from './market.module.css'
 
@@ -115,7 +116,9 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
 
   const selectedSource = category === 'all' ? undefined : overview.sources.find(source => source.id === category)
 
-  return h('div', { className: css.market },
+  return h(ErrorBoundary, {
+    fallback: error => h('div', { className: css.empty }, `${t('actionFail')}: ${error.message}`),
+    children: h('div', { className: css.market },
     h('div', { className: css.sourceTabsRow },
       h('div', { className: css.sourceTabsScroll },
         h(TabButton, { t, active: category === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setCategory('all') }),
@@ -214,6 +217,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
       },
     }),
   )
+  })
 }
 
 function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: boolean; label: string; onClick: () => void }): ReactNode {

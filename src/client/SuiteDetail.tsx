@@ -9,6 +9,7 @@
 import { createElement as h, useEffect, useState, type ReactNode } from 'react'
 import { Button, Modal, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import { fetchSkillContent, fetchSuiteDetail, type McpServerDetail, type SuiteDetail } from './api.js'
+import { ErrorBoundary } from './ErrorBoundary.js'
 import type { Translate } from './index.js'
 import css from './market.module.css'
 
@@ -75,7 +76,9 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
     footer: h('div', { className: css.modalFooter },
       h(Button, { variant: 'ghost', onClick: onClose }, t('cancel')),
     ),
-    children: error !== undefined
+    children: h(ErrorBoundary, {
+      fallback: boundaryError => h('div', { className: css.warnLine }, `${t('actionFail')}: ${boundaryError.message}`),
+      children: error !== undefined
       ? h('div', { className: css.warnLine }, error)
       : detail === undefined
         ? h('div', { className: css.empty }, t('loading'))
@@ -185,6 +188,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
               detail.errors.map((entry, index) => h('div', { key: index, className: css.warnLine }, entry)),
             ),
           ),
+      }),
   })
 }
 
