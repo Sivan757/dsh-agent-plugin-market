@@ -9,9 +9,6 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 0;
-  height: 100%;
-  max-height: calc(100vh - 260px);
   gap: 14px;
   color: var(--dsw-alias-label-primary, #1f2328);
 }
@@ -196,25 +193,23 @@
 /* --- card grid ----------------------------------------------------------------- */
 
 .grid {
-  flex: 1;
-  min-height: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
   gap: 12px;
   min-width: 0;
   align-content: start;
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding-right: 4px;
 }
 
 .list {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding-right: 4px;
