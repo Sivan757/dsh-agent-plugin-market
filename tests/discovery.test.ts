@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { discoverSuitesInSource } from '../src/discovery.js'
+import { SuiteManager } from '../src/manager.js'
 import { validateMcpJson, validatePluginManifest, expandPlaceholders, pathContainmentError } from '../src/validate.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -108,5 +111,22 @@ describe('discovery: manifest-less skill collection layout', () => {
     expect(suites[0]!.manifest.layout).toBe('skill-collection')
     expect(suites[0]!.skills[0]!.name).toBe('order-crud')
     expect(suites[0]!.skills[0]!.description).toContain('order CRUD code')
+  })
+})
+
+
+describe('suite detail and skill content (market detail endpoints)', () => {
+  it('lists skills, mcp servers, and file lists from the v1 fixture', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-det-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    await manager.load()
+    await manager.mergeSources([{ id: 'demo', url: join(fixtures, 'v1-suite'), local: true }])
+    const detail = await manager.suiteDetail('demo', 'v1-suite')
+    expect(detail).toMatchObject({ name: 'v1-suite', version: '1.2.3', layout: 'agent-plugin-v1' })
+    expect((detail['skills'] as Array<{ name: string }>).map(skill => skill.name)).toEqual(['greet'])
+    expect((detail['mcpServers'] as Array<{ key: string }>).map(server => server.key)).toEqual(['toolbox', 'remote'])
+    const content = await manager.skillContent('demo', 'v1-suite', 'greet')
+    expect(content.content).toContain('${CLAUDE_PLUGIN_ROOT}')
+    await expect(manager.suiteDetail('demo', 'missing')).rejects.toThrow('not found')
   })
 })

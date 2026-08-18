@@ -68,6 +68,37 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     sendJson(response, 200, { sources: manager.sources })
   })
 
+  get(`${API_PREFIX}suite`, async (request, response) => {
+    const query = queryOf(request)
+    const sourceId = query.get('sourceId')
+    const suiteId = query.get('suiteId')
+    if (sourceId === null || suiteId === null) {
+      sendJson(response, 400, { ok: false, error: 'missing sourceId or suiteId' })
+      return
+    }
+    try {
+      sendJson(response, 200, await manager.suiteDetail(sourceId, suiteId))
+    } catch (error) {
+      sendJson(response, 404, { ok: false, error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
+  get(`${API_PREFIX}skill`, async (request, response) => {
+    const query = queryOf(request)
+    const sourceId = query.get('sourceId')
+    const suiteId = query.get('suiteId')
+    const skill = query.get('skill')
+    if (sourceId === null || suiteId === null || skill === null) {
+      sendJson(response, 400, { ok: false, error: 'missing sourceId, suiteId, or skill' })
+      return
+    }
+    try {
+      sendJson(response, 200, await manager.skillContent(sourceId, suiteId, skill))
+    } catch (error) {
+      sendJson(response, 404, { ok: false, error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
   post(`${API_PREFIX}sources/add`, async (body) => {
     const source = parseSource(body)
     await manager.addSource(source)
@@ -187,6 +218,11 @@ function readJsonBody(request: IncomingMessage): Promise<unknown | undefined> {
     })
     request.on('error', () => resolve(undefined))
   })
+}
+
+/** Parse the query string of one request into a URLSearchParams. */
+function queryOf(request: IncomingMessage): URLSearchParams {
+  return new URL(request.url ?? '/', 'http://dsh.local').searchParams
 }
 
 function sendJson(response: ServerResponse, status: number, payload: unknown): void {

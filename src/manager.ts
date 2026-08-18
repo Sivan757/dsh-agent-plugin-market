@@ -9,9 +9,9 @@
  * which is where the runtime consumers (skill registry invalidation, MCP
  * mount reconciliation) pick the new enabled set up.
  */
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { discoverSourceList, discoverSuitesInSource } from './discovery.js'
+import { discoverSourceList, discoverSuitesInSource, listMdFiles } from './discovery.js'
 import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
 import { expandHome, isDirectory, resolveProjectRoot, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
 import { loadState, saveState, EMPTY_STATE } from './state.js'
@@ -44,6 +44,59 @@ export class SuiteManager {
   /** The user-dimension suite root this manager operates. */
   get userRoot(): string {
     return this.options.userRoot
+  }
+
+  /**
+   * One suite's full detail for the market detail modal: manifest fields,
+   * skill metadata, validated mcp.json servers, and per-surface file lists.
+   */
+  async suiteDetail(sourceId: string, suiteId: string): Promise<Record<string, unknown>> {
+    const suites = await this.discoverDimension('user', this.options.userRoot)
+    const suite = suites.find(entry => entry.sourceId === sourceId && entry.id === suiteId)
+    if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
+    const installed = this.state.installed[installKey(sourceId, suiteId)]
+    return {
+      sourceId,
+      suiteId: suite.id,
+      name: suite.manifest.name,
+      version: suite.manifest.version ?? null,
+      description: suite.manifest.description ?? null,
+      author: suite.manifest.author ?? null,
+      keywords: suite.manifest.keywords ?? [],
+      layout: suite.manifest.layout,
+      dimension: suite.dimension,
+      root: suite.root,
+      installed: installed !== undefined,
+      enabled: installed?.enabled === true,
+      skills: suite.skills.map(skill => ({
+        name: skill.name,
+        description: skill.description,
+        ...skill.whenToUse === undefined ? {} : { whenToUse: skill.whenToUse },
+        path: skill.file,
+      })),
+      mcpServers: suite.mcp === undefined ? [] : Object.entries(suite.mcp.servers).map(([key, server]) => ({ key, ...server })),
+      hooks: suite.surfaces.hooks,
+      commands: await listMdFiles(`${suite.root}/commands`),
+      agents: await listMdFiles(`${suite.root}/agents`),
+      lsp: suite.surfaces.lsp,
+      errors: suite.errors,
+    }
+  }
+
+  /** One skill's full SKILL.md text for the market detail modal. */
+  async skillContent(sourceId: string, suiteId: string, skillName: string): Promise<{ name: string; description: string; content: string; path: string }> {
+    const suites = await this.discoverDimension('user', this.options.userRoot)
+    const suite = suites.find(entry => entry.sourceId === sourceId && entry.id === suiteId)
+    if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
+    const skill = suite.skills.find(entry => entry.name === skillName)
+    if (skill === undefined) throw new Error(`skill "${skillName}" not found in suite "${suiteId}"`)
+    let content: string
+    try {
+      content = await readFile(skill.file, 'utf8')
+    } catch (error) {
+      throw new Error(`skill file unreadable: ${error instanceof Error ? error.message : String(error)}`)
+    }
+    return { name: skill.name, description: skill.description, content, path: skill.file }
   }
 
   /** The full market overview: fresh discovery merged with install entries. */

@@ -353,13 +353,18 @@ async function countHookEntries(path: string): Promise<number> {
 }
 
 async function countMdFiles(dir: string): Promise<number> {
+  return (await listMdFiles(dir)).length
+}
+
+/** File names under a suite's commands/ or agents/ directory. */
+export async function listMdFiles(dir: string): Promise<string[]> {
   let entries: string[]
   try {
     entries = await readdir(dir)
   } catch {
-    return 0
+    return []
   }
-  return entries.filter(name => name.endsWith('.md')).length
+  return entries.filter(name => name.endsWith('.md')).sort()
 }
 
 /** Whether a suite root path lies outside the checkout (defense for malformed marketplace sources). */

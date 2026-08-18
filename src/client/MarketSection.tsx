@@ -16,6 +16,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { fetchOverview, postAction, type OverviewData, type SourceOverview, type SuiteCardData } from './api.js'
 import type { Translate } from './index.js'
+import { SuiteDetailModal } from './SuiteDetail.js'
 import css from './market.module.css'
 
 export interface MarketSectionProps {
@@ -55,6 +56,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const [toast, setToast] = useState<ToastState | undefined>(undefined)
   const [confirm, setConfirm] = useState<ConfirmState | undefined>(undefined)
   const [editor, setEditor] = useState<EditorState>(undefined)
+  const [detail, setDetail] = useState<{ sourceId: string; suiteId: string } | undefined>(undefined)
 
   const refresh = useCallback(async () => {
     try {
@@ -114,27 +116,26 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const selectedSource = category === 'all' ? undefined : overview.sources.find(source => source.id === category)
 
   return h('div', { className: css.market },
-    h('div', { className: css.sourceBar },
-      h(SourceChip, { t, active: category === 'all', label: t('tabAll'), count: overview.totals.all, onClick: () => setCategory('all') }),
-      ...overview.sources.map(source => h(SourceChip, {
+    h('div', { className: css.sourceTabs },
+      h(TabButton, { t, active: category === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setCategory('all') }),
+      ...overview.sources.map(source => h(TabButton, {
         key: source.id,
         t,
         active: category === source.id,
-        label: source.id,
-        count: source.suiteIds.length,
-        meta: source.local === true ? t('sourceLocal') : undefined,
-        broken: source.cloned === false,
+        label: `${source.id}${source.local === true ? ` · ${t('sourceLocal')}` : ''} ${source.suiteIds.length}${source.cloned === false ? ' ⚠' : ''}`,
         onClick: () => setCategory(source.id),
       })),
       h('div', { className: css.spacer }),
-      h(Button, {
-        variant: 'ghost', size: 'sm',
-        disabled: selectedSource === undefined || busy !== undefined,
-        title: selectedSource === undefined ? '' : selectedSource.url,
-        onClick: () => setEditor(selectedSource === undefined ? undefined : { mode: 'edit', source: selectedSource }),
-      }, t('editSource')),
-      h(Button, { variant: 'ghost', size: 'sm', onClick: () => setEditor({ mode: 'add' }) }, `+ ${t('addSource')}`),
-      h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void action('s:refresh:all', 'sources/refresh', {}) } }, t('refreshAll')),
+      h('div', { className: css.sourceActions },
+        h(Button, {
+          variant: 'ghost', size: 'sm',
+          disabled: selectedSource === undefined || busy !== undefined,
+          title: selectedSource === undefined ? '' : selectedSource.url,
+          onClick: () => setEditor(selectedSource === undefined ? undefined : { mode: 'edit', source: selectedSource }),
+        }, t('editSource')),
+        h(Button, { variant: 'ghost', size: 'sm', onClick: () => setEditor({ mode: 'add' }) }, `+ ${t('addSource')}`),
+        h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void action('s:refresh:all', 'sources/refresh', {}) } }, t('refreshAll')),
+      ),
     ),
     h('header', { className: css.header },
       h('div', { className: css.titleRow },
@@ -164,6 +165,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
             key: `${suite.sourceId}/${suite.suiteId}`,
             t, suite,
             busy: busy !== undefined,
+            onOpen: () => setDetail({ sourceId: suite.sourceId, suiteId: suite.suiteId }),
             onInstall: () => { void action(`i:${suite.suiteId}`, 'install', { sourceId: suite.sourceId, suiteId: suite.suiteId }) },
             onToggle: () => { void action(`e:${suite.suiteId}`, 'set-enabled', { sourceId: suite.sourceId, suiteId: suite.suiteId, enabled: !suite.enabled }) },
             onRefresh: () => { void action(`r:${suite.suiteId}`, 'sources/refresh', { id: suite.sourceId }) },
@@ -181,6 +183,12 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
         h(Button, { variant: 'ghost', onClick: () => setConfirm(undefined) }, t('cancel')),
         h(Button, { variant: 'primary', onClick: () => { void confirmAction() } }, t('confirm')),
       ),
+    }),
+    detail === undefined ? null : h(SuiteDetailModal, {
+      t,
+      sourceId: detail.sourceId,
+      suiteId: detail.suiteId,
+      onClose: () => setDetail(undefined),
     }),
     editor === undefined ? null : h(SourceEditorModal, {
       t,
@@ -207,27 +215,6 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
 
 function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: boolean; label: string; onClick: () => void }): ReactNode {
   return h('button', { type: 'button', className: active ? css.tabOn : css.tab, onClick }, label)
-}
-
-function SourceChip(props: {
-  t: Translate
-  active: boolean
-  label: string
-  count: number
-  meta?: string
-  broken?: boolean
-  onClick: () => void
-}): ReactNode {
-  return h('button', {
-    type: 'button',
-    className: props.active ? css.chipOn : css.chip,
-    onClick: props.onClick,
-  },
-    h('span', { className: css.chipLabel }, props.label),
-    props.meta === undefined ? null : h('span', { className: css.catMeta }, props.meta),
-    h('span', { className: css.chipCount }, String(props.count)),
-    props.broken === true ? h('span', { className: css.catBroken }, '⚠') : null,
-  )
 }
 
 function SourceEditorModal(props: {
@@ -279,6 +266,7 @@ function SuiteCard(props: {
   t: Translate
   suite: SuiteCardData
   busy: boolean
+  onOpen: () => void
   onInstall: () => void
   onToggle: () => void
   onRefresh: () => void
@@ -294,7 +282,8 @@ function SuiteCard(props: {
     [t('surfaceLsp'), suite.surfaces.lsp],
   ] as Array<[string, number]>).filter(([, count]) => count > 0)
   const layoutLabel = suite.layout === 'agent-plugin-v1' ? t('layoutV1') : suite.layout === 'claude-code' ? t('layoutCC') : suite.layout === 'codex' ? t('layoutCodex') : t('layoutSkills')
-  return h('article', { className: css.card },
+  const stop = (callback: () => void) => (event: { stopPropagation(): void }) => { event.stopPropagation(); callback() }
+  return h('article', { className: css.card, onClick: props.onOpen },
     h('div', { className: css.cardTop },
       h('div', { className: css.cardTitle },
         h('span', { className: css.cardName }, suite.name),
@@ -307,15 +296,15 @@ function SuiteCard(props: {
             title: suite.enabled ? t('disable') : t('enable'),
             className: suite.enabled ? css.toggleOn : css.toggleOff,
             disabled: busy,
-            onClick: props.onToggle,
+            onClick: stop(props.onToggle),
             'aria-pressed': suite.enabled,
           }, suite.enabled ? '●' : '○')
           : h(Button, {
             variant: 'primary', size: 'sm', disabled: busy,
-            onClick: props.onInstall,
+            onClick: stop(props.onInstall),
           }, t('install')),
-        suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('refresh'), disabled: busy, onClick: props.onRefresh }, '↻') : null,
-        suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('uninstall'), disabled: busy, onClick: props.onUninstall }, '🗑') : null,
+        suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('refresh'), disabled: busy, onClick: stop(props.onRefresh) }, '↻') : null,
+        suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('uninstall'), disabled: busy, onClick: stop(props.onUninstall) }, '🗑') : null,
       ),
     ),
     h('p', { className: css.desc }, suite.description ?? ''),

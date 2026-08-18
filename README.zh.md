@@ -12,7 +12,7 @@ DeepSeek Harness 的 **套件（Agent Plugin）** 管理器。实现 [Agent Plug
   - 技能（skills）——注册一个 `ctx.skills` 的 SkillProvider。项目套件 rank 250、用户套件 rank 450，各级自带 `.dsh/skills`（100/400）仍然优先。`SKILL.md` 正文中的 `${CLAUDE_PLUGIN_ROOT}` 被替换为套件根目录，Claude Code 生态的技能原样可用。严格 YAML 拒绝的 frontmatter（描述里含未加引号的 `: `）会回退到宽松按行解析；仍缺 kebab-case 名称或描述时丢弃该技能并给出逐套件诊断。
   - MCP——启用中的用户级套件，其 `mcp.json` 每个合法 server 都会通过 `ctx.plugin` 动态挂载为 `dsh-mcp-client` 子插件，工具名形如 `mcp__<套件>__<server>__<工具>`；每次启用/禁用/安装/卸载后自动对账（reconcile）。
   - 上下文——会话启动时经 `agent.inject()` 注入启用套件清单（用户级 + 项目级分段），带 `{kind:'plugin', plugin:'dsh-agent-plugin'}` 来源落入会话日志；模型可用 `agent_plugins` 工具查询套件、技能与 MCP 工具前缀。
-- **套件市场页**：Web GUI 设置面板内的 section（与 dshmarket 相同的 `settings.section` 席位），含搜索、全部/已安装/未安装、分类侧栏（全部 + 每源一行，增删刷新）、套件卡片与标签计数、启停开关、刷新、卸载。
+- **套件市场页**：Web GUI 设置面板内的 section（与 dshmarket 相同的 `settings.section` 席位）。仓库源作为顶部标签条（全部 + 每源一个 tab，可横向滚动），右侧是编辑当前源/新增/刷新全部；下方是搜索、状态标签与卡片网格。套件卡片可点击：详情弹窗列出技能（每条可展开 SKILL.md 正文）、mcp.json 服务（每条可展开完整配置）、命令/子代理文件清单、hooks/LSP 计数与校验诊断。
 
 ## 支持的套件布局
 
