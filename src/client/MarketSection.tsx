@@ -135,17 +135,20 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
           label: `${source.id}${source.local === true ? ` · ${t('sourceLocal')}` : ''} ${source.suiteIds.length}${source.cloned === false ? ' ⚠' : ''}`,
           onSelect: () => setCategory(source.id),
           onDelete: () => setConfirm({ kind: 'removeSource', sourceId: source.id }),
+          onEdit: selectedSource?.id === source.id ? () => setEditor({ mode: 'edit', source: source }) : undefined,
         })),
-      ),
-      h('div', { className: css.sourceActions },
-        h(Button, {
-          variant: 'ghost', size: 'sm',
-          disabled: selectedSource === undefined || busy !== undefined,
-          title: selectedSource === undefined ? '' : selectedSource.url,
-          onClick: () => setEditor(selectedSource === undefined ? undefined : { mode: 'edit', source: selectedSource }),
-        }, t('editSource')),
-        h(Button, { variant: 'ghost', size: 'sm', onClick: () => setEditor({ mode: 'add' }) }, `+ ${t('addSource')}`),
-        h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void action('s:refresh:all', 'sources/refresh', {}) } }, t('refreshAll')),
+        h(SourceTab, {
+          key: '__add__',
+          t,
+          label: `+ ${t('addSource')}`,
+          onSelect: () => setEditor({ mode: 'add' }),
+        }),
+        h(SourceTab, {
+          key: '__refresh__',
+          t,
+          label: t('refreshAll'),
+          onSelect: () => { void action('s:refresh:all', 'sources/refresh', {}) },
+        }),
       ),
     ),
     h('header', { className: css.header },
@@ -246,14 +249,21 @@ function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: bo
 /** A source tab with a trailing delete control (deletion confirms at the section level). */
 function SourceTab(props: {
   t: Translate
-  active: boolean
+  active?: boolean
   label: string
   onSelect: () => void
   onDelete?: () => void
+  onEdit?: () => void
 }): ReactNode {
-  const { t, active, label, onSelect, onDelete } = props
+  const { t, active = false, label, onSelect, onDelete, onEdit } = props
   return h('div', { className: active ? css.srcTabOn : css.srcTab },
     h('button', { type: 'button', className: css.srcTabMain, onClick: onSelect }, label),
+    onEdit === undefined ? null : h('button', {
+      type: 'button',
+      className: css.srcTabEdit,
+      title: t('editSource'),
+      onClick: (event: { stopPropagation(): void }) => { event.stopPropagation(); onEdit() },
+    }, '✎'),
     onDelete === undefined ? null : h('button', {
       type: 'button',
       className: css.srcTabDel,

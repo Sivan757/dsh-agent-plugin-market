@@ -112,11 +112,28 @@
   gap: 8px;
 }
 
-.sourceActions {
-  display: flex;
-  gap: 6px;
+.srcTabEdit {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary, #9ca3af);
+  padding: 4px 2px 4px 2px;
+  cursor: pointer;
   flex-shrink: 0;
-  align-items: center;
+}
+
+.srcTabEdit:hover {
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.srcTabOn .srcTabEdit {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.srcTabOn .srcTabEdit:hover {
+  color: #fff;
 }
 
 .srcTab,
