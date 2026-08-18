@@ -1,19 +1,18 @@
 /**
- * The 套件市场 section: search + status tabs over the host's
- * `/api/agent-plugin/*` routes, a repository-source sidebar, and suite cards
- * with install / enable-toggle / refresh / uninstall actions.
+ * The 套件市场 panel: a top-level center-column page.
  *
- * The section is the sole owner of its copy and layout: primitives provide
- * controls and CSS-module classes provide the market chrome, matching the
- * settings-dialog convention.
+ * Layout follows the market convention this plugin is modeled on: search +
+ * status tabs on top, a category sidebar (全部 first, then one row per
+ * repository source), and a responsive card grid. Colors ride the dsh
+ * `--dsw-alias-*` tokens with light-mode fallbacks so the page follows the
+ * active theme.
  */
-import { createElement as h, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createElement as h, useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import {
   Button,
   Input,
   Modal,
   Pill,
-  StateDot,
   Toast,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -26,6 +25,7 @@ export interface MarketSectionProps {
 }
 
 type Tab = 'all' | 'installed' | 'uninstalled'
+type Category = 'all' | string
 type ViewMode = 'grid' | 'list'
 
 interface ToastState {
@@ -46,6 +46,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<Tab>('all')
+  const [category, setCategory] = useState<Category>('all')
   const [view, setView] = useState<ViewMode>('grid')
   const [busy, setBusy] = useState<string | undefined>(undefined)
   const [toast, setToast] = useState<ToastState | undefined>(undefined)
@@ -82,13 +83,14 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase()
     return overview.suites.filter((suite) => {
+      if (category !== 'all' && suite.sourceId !== category) return false
       if (tab === 'installed' && !suite.installed) return false
       if (tab === 'uninstalled' && suite.installed) return false
       if (needle === '') return true
       const haystack = `${suite.name} ${suite.description ?? ''} ${suite.keywords.join(' ')}`.toLowerCase()
       return haystack.includes(needle)
     })
-  }, [overview, search, tab])
+  }, [overview, search, tab, category])
 
   const openUninstall = useCallback((suite: SuiteCardData) => {
     setConfirm({ kind: 'uninstall', sourceId: suite.sourceId, suiteId: suite.suiteId })
@@ -112,6 +114,8 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     h('header', { className: css.header },
       h('div', { className: css.titleRow },
         h('h2', { className: css.title }, t('nav')),
+        h('p', { className: css.sub }, t('subtitle')),
+        h('div', { className: css.spacer }),
         h('div', { className: css.searchWrap },
           h(Input, { placeholder: t('searchPh'), value: search, onChange: event => setSearch((event.target as HTMLInputElement).value) })),
       ),
@@ -128,7 +132,8 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     ),
     h('div', { className: css.body },
       h(SourcesPanel, {
-        t, sources: overview.sources, busy, action, openRemoveSource,
+        t, sources: overview.sources, totals: overview.totals, category, onCategory: setCategory,
+        busy, action, openRemoveSource,
         onAdd: async (id, url, branch, local) => {
           const ok = await action(`s:add:${id}`, 'sources/add', { id, url, ...branch === '' ? {} : { branch }, ...local ? { local: true } : {} })
           if (ok) {
@@ -170,19 +175,22 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
 }
 
 function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: boolean; label: string; onClick: () => void }): ReactNode {
-  return h('button', { type: 'button', className: active ? css.tabActive : css.tab, onClick }, label)
+  return h('button', { type: 'button', className: active ? css.tabOn : css.tab, onClick }, label)
 }
 
 function SourcesPanel(props: {
   t: Translate
   sources: SourceOverview[]
+  totals: OverviewData['totals']
+  category: Category
+  onCategory: (category: Category) => void
   busy: string | undefined
   action: (key: string, path: string, body: Record<string, unknown>) => Promise<boolean>
   openRemoveSource: (source: SourceOverview) => void
   onAdd: (id: string, url: string, branch: string, local: boolean) => Promise<boolean>
   onRefreshAll: () => Promise<void>
 }): ReactNode {
-  const { t } = props
+  const { t, category, onCategory } = props
   const [adding, setAdding] = useState(false)
   const [local, setLocal] = useState(false)
   const [id, setId] = useState('')
@@ -191,8 +199,21 @@ function SourcesPanel(props: {
   return h('aside', { className: css.sidebar },
     h('div', { className: css.sidebarHead },
       h('h3', { className: css.sidebarTitle }, t('market')),
-      h(Button, { variant: 'ghost', size: 'sm', onClick: () => { void props.onRefreshAll() } }, t('refreshAll')),
-      h(Button, { variant: 'ghost', size: 'sm', onClick: () => setAdding(!adding) }, t('addSource')),
+      h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void props.onRefreshAll() } }, '↻'),
+      h(Button, { variant: 'ghost', size: 'sm', onClick: () => setAdding(!adding) }, `+ ${t('addSource')}`),
+    ),
+    h('div', { className: css.cats },
+      h(CategoryRow, { t, active: category === 'all', label: t('tabAll'), count: props.totals.all, onClick: () => onCategory('all') }),
+      ...props.sources.map(source => h(CategoryRow, {
+        key: source.id,
+        t,
+        active: category === source.id,
+        label: source.id,
+        count: source.suiteIds.length,
+        meta: source.local === true ? t('sourceLocal') : undefined,
+        broken: source.cloned === false,
+        onClick: () => onCategory(source.id),
+      })),
     ),
     adding ? h('div', { className: css.addForm },
       h('div', { className: css.modeRow },
@@ -208,28 +229,27 @@ function SourcesPanel(props: {
         onClick: () => { void props.onAdd(id.trim(), url.trim(), branch.trim(), local).then(ok => { if (ok) { setId(''); setUrl(''); setBranch(''); setAdding(false) } }) },
       }, t('add')),
     ) : null,
-    props.sources.length === 0
-      ? h('div', { className: css.sidebarEmpty }, '—')
-      : props.sources.map(source => h('div', { key: source.id, className: css.sourceRow },
-        h('div', { className: css.sourceMain },
-          h('span', { className: css.sourceName }, source.id),
-          h('span', { className: css.sourceCount }, String(source.suiteIds.length)),
-          h(StateDot, { state: source.cloned ? 'done' : 'ongoing' }),
-          h('span', { className: css.sourceStatus },
-            source.local === true ? `${t('sourceLocal')} · ${source.cloned ? t('sourceCloned') : t('sourceNotCloned')}` : (source.cloned ? t('sourceCloned') : t('sourceNotCloned'))),
-        ),
-        h('div', { className: css.sourceActions },
-          h(Button, {
-            variant: 'ghost', size: 'sm', title: t('refresh'),
-            disabled: props.busy !== undefined || !source.cloned,
-            onClick: () => { void props.action(`s:${source.id}`, 'sources/refresh', { id: source.id }) },
-          }, '↻'),
-          h(Button, {
-            variant: 'ghost', size: 'sm', title: t('remove'),
-            onClick: () => props.openRemoveSource(source),
-          }, '🗑'),
-        ),
-      )),
+  )
+}
+
+function CategoryRow(props: {
+  t: Translate
+  active: boolean
+  label: string
+  count: number
+  meta?: string
+  broken?: boolean
+  onClick: () => void
+}): ReactNode {
+  return h('button', {
+    type: 'button',
+    className: props.active ? css.catOn : css.cat,
+    onClick: props.onClick,
+  },
+    h('span', { className: css.catLabel }, props.label),
+    props.meta === undefined ? null : h('span', { className: css.catMeta }, props.meta),
+    h('span', { className: css.catCount }, String(props.count)),
+    props.broken === true ? h('span', { className: css.catBroken }, '⚠') : null,
   )
 }
 
@@ -256,7 +276,7 @@ function SuiteCard(props: {
     h('div', { className: css.cardTop },
       h('div', { className: css.cardTitle },
         h('span', { className: css.cardName }, suite.name),
-        suite.version === undefined ? null : h(Pill, { className: css.cardVersion }, `v${suite.version}`),
+        suite.version === undefined ? null : h('span', { className: css.version }, `v${suite.version}`),
       ),
       h('div', { className: css.cardActions },
         suite.installed
@@ -276,15 +296,15 @@ function SuiteCard(props: {
         suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('uninstall'), disabled: busy, onClick: props.onUninstall }, '🗑') : null,
       ),
     ),
-    h('p', { className: css.cardDesc }, suite.description ?? ''),
-    h('div', { className: css.cardMeta },
-      suite.dimension === 'user' ? h(Pill, { className: css.badge }, t('dimensionUser')) : h(Pill, { className: css.badge }, t('dimensionProject')),
-      h(Pill, { className: css.badge }, layoutLabel),
-      suite.installed ? h(Pill, { className: suite.enabled ? css.badgeOn : css.badge }, t('installedBadge')) : null,
-      ...tags.map(([label, count]) => h(Pill, { key: label, className: css.badge }, `${label} ${count}`)),
+    h('p', { className: css.desc }, suite.description ?? ''),
+    h('div', { className: css.meta },
+      h('span', { className: css.src }, `${suite.sourceId} · ${suite.dimension === 'user' ? t('dimensionUser') : t('dimensionProject')}`),
+      h('span', { className: css.tag }, layoutLabel),
+      suite.installed ? h('span', { className: suite.enabled ? css.okState : css.tag }, suite.enabled ? `✓ ${t('installedBadge')}` : t('installedBadge')) : null,
+      ...tags.map(([label, count]) => h('span', { key: label, className: css.tag }, `${label} ${count}`)),
       suite.errors.length === 0 ? null : h(Tooltip, {
         label: suite.errors.slice(0, 8).join('；'),
-        children: h(Pill, { className: css.badgeWarn }, `⚠ ${t('errors')} ${suite.errors.length}`),
+        children: h('span', { className: css.warnLine }, `⚠ ${t('errors')} ${suite.errors.length}`) as unknown as ReactElement,
       }),
     ),
   )
