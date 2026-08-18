@@ -1,5 +1,5 @@
 /**
- * Static preview of the Agent Plugin Market section for the project
+ * Static preview of the Agent Plugins Market section for the project
  * screenshot: renders the real MarketSection component with mocked data.
  */
 import { createElement as h } from 'react'

@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 
-const root = '/Users/sivan/workspace/dsh-agent-plugin-market/scripts/preview'
+const root = '/Users/sivan/workspace/dsh-agent-plugins-market/scripts/preview'
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.map': 'application/json' }
 const server = createServer(async (req, res) => {
   const path = req.url === '/' ? '/preview.html' : req.url

@@ -1,5 +1,5 @@
 /**
- * dsh-agent-plugin-market host entry: the Agent Plugin Market manager.
+ * dsh-agent-plugins-market host entry: the Agent Plugins Market manager.
  *
  * Function plugin (named exports, no default export). It registers one skill
  * provider feeding enabled suites into `ctx.skills`, reconciles enabled
@@ -23,7 +23,7 @@ import { mountSuiteRoutes } from './routes.js'
 import { SuiteSkillProvider } from './skills-provider.js'
 import type { SourceRef } from './types.js'
 
-export const name = 'dsh-agent-plugin-market'
+export const name = 'dsh-agent-plugins-market'
 export const inject = ['skills']
 
 /** Host configuration. */
@@ -49,26 +49,26 @@ export function apply(ctx: Context, config: Config = {}): void {
       try {
         const diagnostics = await mounts.reconcile(await manager.enabledUserSuites())
         for (const diagnostic of diagnostics) {
-          ctx.logger?.warn(`[dsh-agent-plugin-market] suite "${diagnostic.suiteId}" mcp server "${diagnostic.serverKey}": ${diagnostic.reason}`)
+          ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" mcp server "${diagnostic.serverKey}": ${diagnostic.reason}`)
         }
       } catch (error) {
-        ctx.logger?.warn(`[dsh-agent-plugin-market] mcp reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+        ctx.logger?.warn(`[dsh-agent-plugins-market] mcp reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
       }
       try {
         const diagnostics = await commandMounts.reconcile(await manager.enabledUserSuites())
         for (const diagnostic of diagnostics) {
-          if (diagnostic.reason !== '') ctx.logger?.warn(`[dsh-agent-plugin-market] suite "${diagnostic.suiteId}" command "${diagnostic.command}": ${diagnostic.reason}`)
+          if (diagnostic.reason !== '') ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" command "${diagnostic.command}": ${diagnostic.reason}`)
         }
       } catch (error) {
-        ctx.logger?.warn(`[dsh-agent-plugin-market] command reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+        ctx.logger?.warn(`[dsh-agent-plugins-market] command reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
       }
       try {
         const diagnostics = await hookMounts.reconcile(await manager.enabledUserSuites())
         for (const diagnostic of diagnostics) {
-          ctx.logger?.warn(`[dsh-agent-plugin-market] suite "${diagnostic.suiteId}" hooks: ${diagnostic.reason}`)
+          ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" hooks: ${diagnostic.reason}`)
         }
       } catch (error) {
-        ctx.logger?.warn(`[dsh-agent-plugin-market] hooks reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+        ctx.logger?.warn(`[dsh-agent-plugins-market] hooks reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     })()
   }
@@ -92,7 +92,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const disposeContext = mountSuiteContext(ctx, manager)
 
   ctx.inject(['webServer', 'loader'], (hostCtx) => {
-    hostCtx.effect(() => mountSuiteRoutes(hostCtx, manager), 'dsh-agent-plugin-market: http routes')
+    hostCtx.effect(() => mountSuiteRoutes(hostCtx, manager), 'dsh-agent-plugins-market: http routes')
   })
 
   ctx.effect(() => () => {
@@ -100,5 +100,5 @@ export function apply(ctx: Context, config: Config = {}): void {
     void hookMounts.disposeAll()
     commandMounts.disposeAll()
     disposeContext()
-  }, 'dsh-agent-plugin-market: lifecycle')
+  }, 'dsh-agent-plugins-market: lifecycle')
 }

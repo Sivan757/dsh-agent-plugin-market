@@ -1,10 +1,10 @@
-# Agent Plugin 市场（dsh-agent-plugin-market）
+# Agent Plugins 市场（dsh-agent-plugins-market）
 
 [English](README.en.md) | 简体中文
 
-**DeepSeek Harness 的 Agent Plugin 管理器与市场**：从 git 仓库源安装、浏览、注入 Agent Plugin（套件）——技能（skills）、MCP 服务器、hooks、命令、子代理——兼容 agent-plugins.org v1.0.0 便携包与 Claude Code / Codex / Cursor / Kimi 生态。
+**DeepSeek Harness 的 Agent Plugins 管理器与市场**：从 git 仓库源安装、浏览、注入 Agent Plugins（套件）——技能（skills）、MCP 服务器、hooks、命令、子代理——兼容 agent-plugins.org v1.0.0 便携包与 Claude Code / Codex / Cursor / Kimi 生态。
 
-![Agent Plugin 市场截图](docs/screenshot.png)
+![Agent Plugins 市场截图](docs/screenshot.png)
 
 ## 它能做什么
 
@@ -35,7 +35,7 @@
 ## 安装
 
 ```sh
-pnpm add dsh-agent-plugin-market   # 在某个 dsh profile 中
+pnpm add dsh-agent-plugins-market   # 在某个 dsh profile 中
 ```
 
 把本包加入 profile 的 `dsh.profile.bundles`（包内 `cordis.patch.yml` 自动插入插件行）：
@@ -43,19 +43,19 @@ pnpm add dsh-agent-plugin-market   # 在某个 dsh profile 中
 ```jsonc
 // ~/.dsh/profiles/<profile>/package.json
 {
-  "dependencies": { "dsh-agent-plugin-market": "^0.4.0" },
-  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugin-market"] } }
+  "dependencies": { "dsh-agent-plugins-market": "^0.4.0" },
+  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugins-market"] } }
 }
 ```
 
-重启 dsh，在 设置 → Agent Plugin 市场 中管理。
+重启 dsh，在 设置 → Agent Plugins 市场 中管理。
 
 ## 配置仓库源
 
 源持久化在 `~/.dsh/agent-plugins/state.json`，也可用 cordis 配置预置（也是"持久种子"，启动时自动补齐缺失源）：
 
 ```yaml
-- id: dsh-agent-plugin-market
+- id: dsh-agent-plugins-market
   config:
     sources:
       - { id: agent-plugins, url: 'https://github.com/Sivan757/agent-plugins.git' }

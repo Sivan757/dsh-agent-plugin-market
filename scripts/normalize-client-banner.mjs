@@ -46,4 +46,4 @@ const wrapped = [
 ].join('\n')
 
 writeFileSync(bundlePath, wrapped)
-console.log(`[dsh-agent-plugin] wrapped client bundle for ${id}`)
+console.log(`[dsh-agent-plugins] wrapped client bundle for ${id}`)

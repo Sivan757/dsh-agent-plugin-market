@@ -6,7 +6,7 @@ import { loadState, saveState, EMPTY_STATE } from '../src/state.js'
 
 describe('state: persisted suite state', () => {
   it('round-trips sources and install entries through the state file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-state-'))
+    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-state-'))
     const path = join(dir, 'state.json')
     await saveState(path, {
       version: 1,
@@ -20,7 +20,7 @@ describe('state: persisted suite state', () => {
   })
 
   it('returns an empty state for a missing or wrong-version file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-state2-'))
+    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-state2-'))
     expect(await loadState(join(dir, 'nope.json'))).toEqual(EMPTY_STATE)
     const path = join(dir, 'state.json')
     await saveState(path, { version: 2, sources: [] } as never)
@@ -28,7 +28,7 @@ describe('state: persisted suite state', () => {
   })
 
   it('drops malformed source rows during normalization', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-state3-'))
+    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-state3-'))
     const path = join(dir, 'state.json')
     await saveState(path, {
       version: 1,
@@ -42,7 +42,7 @@ describe('state: persisted suite state', () => {
 
 describe('state: local source round-trip', () => {
   it('preserves the local flag through save and load', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-state4-'))
+    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-state4-'))
     const path = join(dir, 'state.json')
     await saveState(path, {
       version: 1,

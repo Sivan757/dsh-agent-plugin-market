@@ -1,5 +1,5 @@
 /**
- * Agent Plugin Market section styles. Colors ride the dsh --dsw-alias-* tokens with
+ * Agent Plugins Market section styles. Colors ride the dsh --dsw-alias-* tokens with
  * light-mode fallbacks so the page follows the active theme; the section
  * lives inside the settings dialog, so it scrolls within the dialog and
  * never takes over the app frame.

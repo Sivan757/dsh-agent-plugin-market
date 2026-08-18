@@ -12,7 +12,7 @@ import { expandHome } from './paths.js'
 import type { SuiteManager } from './manager.js'
 import type { SourceRef } from './types.js'
 
-const API_PREFIX = '/api/agent-plugin/'
+const API_PREFIX = '/api/agent-plugins/'
 const MAX_BODY_BYTES = 64 * 1024
 
 export interface WebServerService {

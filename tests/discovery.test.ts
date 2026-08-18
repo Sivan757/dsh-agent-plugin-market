@@ -52,11 +52,18 @@ describe('discovery: containment of broken content', () => {
     expect(suite.errors.some(error => error.includes('escape'))).toBe(true)
   })
 
-  it('drops skills with non-kebab frontmatter names', async () => {
+  it('drops skills with non-normalizable frontmatter names', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'bad-skill'), 'bs', 'user')
     expect(suites).toHaveLength(1)
     expect(suites[0]!.skills).toEqual([])
     expect(suites[0]!.errors.some(error => error.includes('bad-name'))).toBe(true)
+  })
+
+  it('normalizes display-style frontmatter names to kebab-case (codex plugins)', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'display-name-skill'), 'ds', 'user')
+    expect(suites).toHaveLength(1)
+    expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['presentations'])
+    expect(suites[0]!.errors).toEqual([])
   })
 })
 
@@ -158,7 +165,7 @@ describe('discovery: manifest-less skill collection layout', () => {
 
 describe('suite detail and skill content (market detail endpoints)', () => {
   it('lists skills, mcp servers, and file lists from the v1 fixture', async () => {
-    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-det-'))
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-det-'))
     const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'demo', url: join(fixtures, 'v1-suite'), local: true }])
@@ -184,7 +191,7 @@ describe('category-nested skill collections', () => {
 
 describe('suite detail: hooks preview entries', () => {
   it('flattens CC hooks.json into event/matcher/command entries', async () => {
-    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-hooks-'))
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-hooks-'))
     const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'cc', url: join(fixtures, 'cc-commands'), local: true }])

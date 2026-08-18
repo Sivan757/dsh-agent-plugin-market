@@ -1,5 +1,5 @@
 /**
- * dsh-agent-plugin-market client: registers the Agent Plugin Market section inside the Web
+ * dsh-agent-plugins-market client: registers the Agent Plugins Market section inside the Web
  * GUI's settings dialog (the same settings.section seat dshmarket uses).
  * Mirrors the market's integration contract: the bundle's only externals are
  * react and the injected `dsh.client.inject` module table, so it cannot reach
@@ -10,7 +10,7 @@ import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import { en, zh } from './locales.js'
 import { MarketSection } from './MarketSection.js'
 
-const NS = 'dsh-agent-plugin-market'
+const NS = 'dsh-agent-plugins-market'
 
 export type Translate = (key: string) => string
 
@@ -33,7 +33,7 @@ interface SuiteClientContext {
   slots: SlotsService
 }
 
-export const name = 'dsh-agent-plugin-market'
+export const name = 'dsh-agent-plugins-market'
 export const inject = ['slots', 'locale']
 
 /** Primitives this section renders with; absent exports degrade the whole section. */
@@ -45,12 +45,12 @@ export function missingPrimitives(module: Record<string, unknown>, required: rea
 }
 
 export function apply(ctx: SuiteClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-agent-plugin: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-agent-plugins: dictionaries')
   const t = ctx.locale.bind(NS)
 
   const gaps = missingPrimitives(primitives as unknown as Record<string, unknown>)
   if (gaps.length > 0) {
-    console.warn(`[dsh-agent-plugin-market] host ui-primitives missing ${gaps.join(', ')} — Agent Plugin Market section disabled (dsh web >= 0.1.0-rc.6 required)`)
+    console.warn(`[dsh-agent-plugins-market] host ui-primitives missing ${gaps.join(', ')} — Agent Plugins Market section disabled (dsh web >= 0.1.0-rc.6 required)`)
     return
   }
 

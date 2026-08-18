@@ -24,13 +24,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: unknown): void {
-    console.warn('[dsh-agent-plugin-market] preview render failed:', error, info)
+    console.warn('[dsh-agent-plugins-market] preview render failed:', error, info)
   }
 
   override render(): ReactNode {
     if (this.state.error !== undefined) {
       return this.props.fallback === undefined
-        ? h('pre', { className: 'dsh-agent-plugin-fallback' }, `预览渲染失败：${this.state.error.message}`)
+        ? h('pre', { className: 'dsh-agent-plugins-fallback' }, `预览渲染失败：${this.state.error.message}`)
         : this.props.fallback(this.state.error)
     }
     return this.props.children

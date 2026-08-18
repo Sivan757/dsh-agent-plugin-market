@@ -1,4 +1,4 @@
-/** Typed fetch helpers over the host's `/api/agent-plugin/*` routes. */
+/** Typed fetch helpers over the host's `/api/agent-plugins/*` routes. */
 
 export interface SourceOverview {
   id: string
@@ -44,7 +44,7 @@ export interface OverviewData {
 }
 
 export async function fetchOverview(): Promise<OverviewData> {
-  const response = await fetch('/api/agent-plugin/overview', { credentials: 'same-origin' })
+  const response = await fetch('/api/agent-plugins/overview', { credentials: 'same-origin' })
   if (!response.ok) throw new Error(`overview failed: ${response.status}`)
   return response.json() as Promise<OverviewData>
 }
@@ -128,19 +128,19 @@ export interface SkillContent {
 }
 
 export async function fetchSuiteDetail(sourceId: string, suiteId: string): Promise<SuiteDetail> {
-  const response = await fetch(`/api/agent-plugin/suite?sourceId=${encodeURIComponent(sourceId)}&suiteId=${encodeURIComponent(suiteId)}`, { credentials: 'same-origin' })
+  const response = await fetch(`/api/agent-plugins/suite?sourceId=${encodeURIComponent(sourceId)}&suiteId=${encodeURIComponent(suiteId)}`, { credentials: 'same-origin' })
   if (!response.ok) throw new Error(`suite detail failed: ${response.status}`)
   return response.json() as Promise<SuiteDetail>
 }
 
 export async function fetchSkillContent(sourceId: string, suiteId: string, skill: string): Promise<SkillContent> {
-  const response = await fetch(`/api/agent-plugin/skill?sourceId=${encodeURIComponent(sourceId)}&suiteId=${encodeURIComponent(suiteId)}&skill=${encodeURIComponent(skill)}`, { credentials: 'same-origin' })
+  const response = await fetch(`/api/agent-plugins/skill?sourceId=${encodeURIComponent(sourceId)}&suiteId=${encodeURIComponent(suiteId)}&skill=${encodeURIComponent(skill)}`, { credentials: 'same-origin' })
   if (!response.ok) throw new Error(`skill content failed: ${response.status}`)
   return response.json() as Promise<SkillContent>
 }
 
 export async function postAction(path: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const response = await fetch(`/api/agent-plugin/${path}`, {
+  const response = await fetch(`/api/agent-plugins/${path}`, {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'content-type': 'application/json' },

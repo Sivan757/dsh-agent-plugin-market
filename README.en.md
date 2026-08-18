@@ -1,10 +1,10 @@
-# Agent Plugin Market (dsh-agent-plugin-market)
+# Agent Plugins Market (dsh-agent-plugins-market)
 
 English | [简体中文](README.md)
 
-**Agent Plugin manager & market for DeepSeek Harness**: install, browse and inject Agent Plugins — skills, MCP servers, hooks, commands, subagents — from git repo sources, compatible with agent-plugins.org v1.0.0 portable packages and the Claude Code / Codex / Cursor / Kimi ecosystems.
+**Agent Plugins manager & market for DeepSeek Harness**: install, browse and inject Agent Plugins — skills, MCP servers, hooks, commands, subagents — from git repo sources, compatible with agent-plugins.org v1.0.0 portable packages and the Claude Code / Codex / Cursor / Kimi ecosystems.
 
-![Agent Plugin Market screenshot](docs/screenshot.png)
+![Agent Plugins Market screenshot](docs/screenshot.png)
 
 ## What it does
 
@@ -35,7 +35,7 @@ One repo may carry several dialects at once (vercel/vercel-plugin ships all of t
 ## Install
 
 ```sh
-pnpm add dsh-agent-plugin-market   # inside a dsh profile
+pnpm add dsh-agent-plugins-market   # inside a dsh profile
 ```
 
 Add the package to the profile's `dsh.profile.bundles` (the package's `cordis.patch.yml` inserts the plugin row):
@@ -43,19 +43,19 @@ Add the package to the profile's `dsh.profile.bundles` (the package's `cordis.pa
 ```jsonc
 // ~/.dsh/profiles/<profile>/package.json
 {
-  "dependencies": { "dsh-agent-plugin-market": "^0.4.0" },
-  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugin-market"] } }
+  "dependencies": { "dsh-agent-plugins-market": "^0.4.0" },
+  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugins-market"] } }
 }
 ```
 
-Restart dsh and open Settings → Agent Plugin Market.
+Restart dsh and open Settings → Agent Plugins Market.
 
 ## Configure sources
 
 Sources persist in `~/.dsh/agent-plugins/state.json`; cordis config seeds them (and re-adds missing ids on every boot):
 
 ```yaml
-- id: dsh-agent-plugin-market
+- id: dsh-agent-plugins-market
   config:
     sources:
       - { id: agent-plugins, url: 'https://github.com/Sivan757/agent-plugins.git' }

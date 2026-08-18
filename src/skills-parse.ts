@@ -22,6 +22,15 @@ export function isSkillName(name: string): boolean {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)
 }
 
+/**
+ * Normalize a display-style skill name into kebab-case (e.g. "Presentations"
+ * → "presentations"), or `undefined` when nothing usable remains.
+ */
+export function normalizeSkillName(name: string): string | undefined {
+  const normalized = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return normalized === '' ? undefined : normalized
+}
+
 function parseBoolean(value: unknown): boolean | undefined {
   if (typeof value === 'boolean') return value
   if (typeof value === 'string') {
@@ -63,10 +72,13 @@ export function parseSkillFrontmatter(text: string, expectedName: string | undef
   }
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return 'frontmatter is not an object'
   const record = raw as Record<string, unknown>
-  const name = record['name']
+  const rawName = record['name']
   const description = record['description']
-  if (typeof name !== 'string' || !isSkillName(name)) return 'frontmatter name is missing or not kebab-case'
-  if (expectedName !== undefined && name !== expectedName) return `frontmatter name "${name}" does not match skill directory "${expectedName}"`
+  // Codex plugins ship display names in `name` (e.g. "Presentations"); the
+  // skill identity is its kebab form, so normalize instead of dropping.
+  const name = typeof rawName === 'string' && !isSkillName(rawName) ? normalizeSkillName(rawName) : rawName
+  if (name === undefined || typeof name !== 'string') return 'frontmatter name is missing or not kebab-case'
+  if (expectedName !== undefined && name !== expectedName) return `frontmatter name "${rawName}" does not match skill directory "${expectedName}"`
   if (typeof description !== 'string' || description.trim() === '') return 'frontmatter description is missing or empty'
 
   const disableModel = parseBoolean(record['disable-model-invocation'])

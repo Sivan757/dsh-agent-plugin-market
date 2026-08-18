@@ -1,4 +1,4 @@
 # dsh bundle patch: inserts this plugin into a profile's layer stack.
 - insert:
-    - id: dsh-agent-plugin-market
-      name: 'dsh-agent-plugin-market'
+    - id: dsh-agent-plugins-market
+      name: 'dsh-agent-plugins-market'

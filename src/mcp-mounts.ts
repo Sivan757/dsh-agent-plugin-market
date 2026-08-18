@@ -109,7 +109,7 @@ export class McpMountRegistry {
     try {
       await live.disposer()
     } catch (error) {
-      this.ctx.logger?.warn(`[dsh-agent-plugin-market] unmount ${live.suiteId}/${live.serverKey} failed: ${error instanceof Error ? error.message : String(error)}`)
+      this.ctx.logger?.warn(`[dsh-agent-plugins-market] unmount ${live.suiteId}/${live.serverKey} failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
