@@ -106,19 +106,41 @@ export async function validatePluginManifest(raw: unknown): Promise<string[]> {
  *   or schema body drops the whole file, while per-server path problems
  *   invalidate only their server.
  */
-export async function validateMcpJson(pluginRoot: string, raw: unknown): Promise<{ config?: McpSuiteConfig; errors: string[] }> {
+const KNOWN_MCP_TRANSPORTS = new Set(['stdio', 'streamable-http', 'sse'])
+
+export interface McpValidateOptions {
+  /** Strict portable mode (`mcp.json`): `$schema` required and schema-validated.
+   *  Lenient mode (`.mcp.json`, native client file): no `$schema` requirement,
+   *  unknown transports skipped per server, known transports still validated. */
+  strict?: boolean
+}
+
+export async function validateMcpJson(pluginRoot: string, raw: unknown, options?: McpValidateOptions): Promise<{ config?: McpSuiteConfig; errors: string[] }> {
   if (typeof raw !== 'object' || raw === null) return { errors: ['mcp.json is not a JSON object'] }
   const record = raw as Record<string, unknown>
   const errors: string[] = []
-  if (!isRecognizedSchema(record['$schema'])) {
-    return { errors: [`unrecognized mcp.json $schema ${JSON.stringify(record['$schema'])}; this manager supports agent-plugins 1.0.0 only`] }
+  const strict = options?.strict !== false
+  if (strict) {
+    if (!isRecognizedSchema(record['$schema'])) {
+      return { errors: [`unrecognized mcp.json $schema ${JSON.stringify(record['$schema'])}; this manager supports agent-plugins 1.0.0 only`] }
+    }
+    const schemaErrors = await validateAgainstSchema(MCP_SCHEMA_ID, raw)
+    if (schemaErrors.length > 0) return { errors: schemaErrors }
   }
-  const schemaErrors = await validateAgainstSchema(MCP_SCHEMA_ID, raw)
-  if (schemaErrors.length > 0) return { errors: schemaErrors }
 
-  const servers = record['mcpServers'] as Record<string, McpServer>
+  const servers = record['mcpServers']
+  if (typeof servers !== 'object' || servers === null) return { errors: ['mcp.json is missing mcpServers'] }
   const valid: Record<string, McpServer> = {}
-  for (const [name, server] of Object.entries(servers)) {
+  for (const [name, value] of Object.entries(servers as Record<string, unknown>)) {
+    if (typeof value !== 'object' || value === null) {
+      errors.push(`server "${name}": not an object`)
+      continue
+    }
+    const server = value as McpServer & { type?: unknown }
+    if (typeof server.type !== 'string' || !KNOWN_MCP_TRANSPORTS.has(server.type)) {
+      errors.push(`server "${name}": unsupported transport ${JSON.stringify(server.type)} (supported: stdio, streamable-http, sse)`)
+      continue
+    }
     if (server.type !== 'stdio') {
       valid[name] = server
       continue
@@ -142,7 +164,7 @@ export async function validateMcpJson(pluginRoot: string, raw: unknown): Promise
       valid[name] = server
     }
   }
-  return { config: { schema: record['$schema'] as string, servers: valid }, errors }
+  return { config: { schema: typeof record['$schema'] === 'string' ? record['$schema'] : 'native-client', servers: valid }, errors }
 }
 
 /** Expand `${PLUGIN_ROOT}`, `${PLUGIN_DATA}`, and `${NAME}` (process env) in one string. */

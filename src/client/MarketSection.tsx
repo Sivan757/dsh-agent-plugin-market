@@ -372,7 +372,7 @@ function SuiteCard(props: {
     [t('surfaceAgents'), suite.surfaces.agents],
     [t('surfaceLsp'), suite.surfaces.lsp],
   ] as Array<[string, number]>).filter(([, count]) => count > 0)
-  const layoutLabel = suite.layout === 'agent-plugin-v1' ? t('layoutV1') : suite.layout === 'claude-code' ? t('layoutCC') : suite.layout === 'codex' ? t('layoutCodex') : t('layoutSkills')
+  const layoutLabel = suite.layout === 'agent-plugin-v1' ? t('layoutV1') : suite.layout === 'claude-code' ? t('layoutCC') : suite.layout === 'codex' ? t('layoutCodex') : suite.layout === 'universal' ? t('layoutUniversal') : suite.layout === 'cursor' ? t('layoutCursor') : suite.layout === 'kimi' ? t('layoutKimi') : t('layoutSkills')
   const stop = (callback: () => void) => (event: { stopPropagation(): void }) => { event.stopPropagation(); callback() }
   return h('article', { className: css.card, onClick: props.onOpen },
     h('div', { className: css.cardTop },

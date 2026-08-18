@@ -135,6 +135,18 @@ describe('source id auto-derivation', () => {
     expect(source.id).toBe('v1-suite') // manifest name, not the fixtures basename
   })
 
+  it('prefers the suite repo JSON name even when the basename differs', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-id3-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    await manager.load()
+    // Local dir whose basename (misc-repo) differs from the manifest name (vercel-plugin).
+    const parent = await mkdtemp(join(tmpdir(), 'id3-p-'))
+    await mkdir(join(parent, 'misc-repo'))
+    await cp(join(fixtures, 'cursor-only'), join(parent, 'misc-repo'), { recursive: true })
+    const source = await manager.addSource({ url: join(parent, 'misc-repo'), local: true })
+    expect(source.id).toBe('cursor-only') // manifest name, not basename
+  })
+
   it('derives a multi-suite repo id from its basename and dedupes collisions', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-id2-'))
     const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })

@@ -9,9 +9,9 @@
  * which is where the runtime consumers (skill registry invalidation, MCP
  * mount reconciliation) pick the new enabled set up.
  */
-import { mkdir, readFile, rename } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { discoverLspEntries, discoverSourceList, discoverSuitesInSource, listMdFiles } from './discovery.js'
+import { discoverLspEntries, discoverSourceList, discoverSuitesInSource, listMdFiles, repoName } from './discovery.js'
 import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
 import { deriveSourceId, expandHome, isDirectory, resolveProjectRoot, sanitizeId, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
 import { loadState, saveState, EMPTY_STATE } from './state.js'
@@ -184,10 +184,10 @@ export class SuiteManager {
   // ---- mutations ----
 
   /**
-   * Add a source and clone it immediately. The id is derived automatically:
-   * a single-suite repository takes its suite manifest name, otherwise the
-   * repository's last path segment is used (`.git` stripped, sanitized);
-   * collisions get a numeric suffix.
+   * Add a source and clone it immediately. The id is derived from the suite
+   * repository's own JSON (marketplace plugin entry name first, then the
+   * root manifest name, then the repo basename), sanitized; collisions get a
+   * numeric suffix.
    */
   async addSource(input: { url: string; branch?: string; local?: boolean }): Promise<SourceRef> {
     return this.enqueue(async () => {
@@ -198,39 +198,18 @@ export class SuiteManager {
         ...input.branch === undefined ? {} : { branch: input.branch },
         ...input.local === true ? { local: true } : {},
       }
+      const checkout = this.sourceCheckoutPath(source)
       if (input.local === true) {
-        const dir = expandHome(input.url)
-        if (!await isDirectory(dir)) throw new Error(`local source directory ${dir} is missing`)
-        const suites = await discoverSuitesInSource(dir, baseId, 'user')
-        source.id = await this.preferredSourceId(baseId, suites, dir)
+        if (!await isDirectory(checkout)) throw new Error(`local source directory ${checkout} is missing`)
       } else {
         await this.ensureClone(source)
-        const checkout = this.sourceCheckoutPath(source)
-        const suites = await discoverSuitesInSource(checkout, baseId, 'user')
-        source.id = await this.preferredSourceId(baseId, suites, checkout)
       }
+      source.id = this.uniqueSourceId(sanitizeId(await repoName(checkout)))
       this.state = { ...this.state, sources: [...this.state.sources, source] }
       await saveState(this.statePath, this.state)
       this.options.onChanged()
       return source
     })
-  }
-
-  /** Single-suite repos prefer the suite manifest name; others keep the derived base id. */
-  private async preferredSourceId(baseId: string, suites: Suite[], checkoutDir: string): Promise<string> {
-    if (suites.length !== 1) return baseId
-    const suiteNameId = sanitizeId(suites[0]!.manifest.name)
-    if (suiteNameId === baseId || this.state.sources.some(source => source.id === suiteNameId)) return baseId
-    const oldDir = sourceCheckoutDir(this.options.userRoot, baseId)
-    const newDir = sourceCheckoutDir(this.options.userRoot, suiteNameId)
-    if (oldDir !== checkoutDir && await isDirectory(oldDir) && !await isDirectory(newDir)) {
-      try {
-        await rename(oldDir, newDir)
-      } catch {
-        return baseId
-      }
-    }
-    return suiteNameId
   }
 
   private uniqueSourceId(derived: string): string {

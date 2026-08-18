@@ -153,3 +153,37 @@ describe('suite detail: hooks preview entries', () => {
     expect(hooks.entries[0]).toMatchObject({ event: 'PreToolUse', matcher: 'Bash', command: 'echo hi' })
   })
 })
+
+describe('multi-client manifest paradigms (vercel-style)', () => {
+  it('discovers a cursor-only repo and honors its declared skills path', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'cursor-only'), 'c', 'user')
+    expect(suites).toHaveLength(1)
+    expect(suites[0]!.manifest.layout).toBe('cursor')
+    expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['foo'])
+  })
+
+  it('discovers a kimi-only repo, honoring declared skills and skipping unknown transport', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'kimi-only'), 'k', 'user')
+    expect(suites).toHaveLength(1)
+    expect(suites[0]!.manifest.layout).toBe('kimi')
+    expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['bar'])
+    expect(suites[0]!.mcp).toBeDefined()
+    expect(Object.keys(suites[0]!.mcp!.servers)).toEqual([])
+    expect(suites[0]!.errors.some(error => error.includes('unsupported transport'))).toBe(true)
+  })
+
+  it('discovers a universal-only repo', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'universal-only'), 'u', 'user')
+    expect(suites).toHaveLength(1)
+    expect(suites[0]!.manifest.layout).toBe('universal')
+    expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['baz'])
+  })
+
+  it('reads .mcp.json leniently: keeps known transports, drops http with a diagnostic', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'dot-mcp'), 'd', 'user')
+    expect(suites).toHaveLength(1)
+    expect(suites[0]!.mcp).toBeDefined()
+    expect(Object.keys(suites[0]!.mcp!.servers)).toEqual(['good'])
+    expect(suites[0]!.errors.some(error => error.includes('httpSrv'))).toBe(true)
+  })
+})

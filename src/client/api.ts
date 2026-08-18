@@ -32,7 +32,7 @@ export interface SuiteCardData {
   enabled: boolean
   installed: boolean
   dimension: string
-  layout: 'agent-plugin-v1' | 'claude-code' | 'codex' | 'skill-collection'
+  layout: string
   errors: string[]
 }
 
