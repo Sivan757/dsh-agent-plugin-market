@@ -12,7 +12,7 @@ English | [简体中文](README.zh.md)
   - skills — one `SkillProvider` on `ctx.skills`. Project suites rank 250, user suites rank 450, so each dimension's own `.dsh/skills` (100/400) still wins. `SKILL.md` bodies are rewritten: `${CLAUDE_PLUGIN_ROOT}` becomes the suite root, so Claude Code-authored skills work verbatim. Frontmatter that strict YAML rejects (prose with unquoted `: `) falls back to a lenient line-based parse; skills that still lack a kebab-case name or a description are dropped with a per-suite diagnostic.
   - MCP — every valid `mcp.json` server of an enabled user-dimension suite is mounted as a live `dsh-mcp-client` child plugin (`ctx.plugin`); tools appear as `mcp__<suite>__<server>__<tool>`. Mounts reconcile on every enable/disable/install/uninstall.
   - context — the enabled-suite catalog (user + project sections) is injected at `agent/session-start` through `agent.inject()`, logged with the `{kind:'plugin', plugin:'dsh-agent-plugin'}` source; the `agent_plugins` tool lists suites, skills, and MCP tool prefixes.
-- **Market page**: a top-level navigation entry (sidebar row + full center-column panel, the ssh/task-board takeover pattern) with search, all/installed/uninstalled tabs, a category sidebar (全部 plus one row per source, add/remove/refresh), and suite cards with surface tag counts, enable toggle, refresh, and uninstall.
+- **Market page**: a settings-dialog section (the same `settings.section` seat dshmarket uses) with search, all/installed/uninstalled tabs, a category sidebar (全部 plus one row per source, add/remove/refresh), and suite cards with surface tag counts, enable toggle, refresh, and uninstall.
 
 ## Supported suite layouts
 

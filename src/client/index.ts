@@ -1,15 +1,14 @@
 /**
- * dsh-agent-plugin client: mounts the 套件市场 as a top-level entry.
- *
- * The web shell exposes no third-party navigation slot, so the entry follows
- * the dsh-ssh / task-board precedent: a plain-DOM sidebar row toggles a
- * center-column React panel (data-attribute visibility, cross-plugin panel
- * eviction). The market no longer lives inside the settings dialog.
+ * dsh-agent-plugin client: registers the 套件市场 section inside the Web
+ * GUI's settings dialog (the same settings.section seat dshmarket uses).
+ * Mirrors the market's integration contract: the bundle's only externals are
+ * react and the injected `dsh.client.inject` module table, so it cannot reach
+ * packages the host does not serve.
  */
+import { createElement as h } from 'react'
+import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import { en, zh } from './locales.js'
-import { mountPanel } from './mount.js'
-import { PanelController } from './panel-controller.js'
-import { mountSidebarEntry } from './sidebar-entry.js'
+import { MarketSection } from './MarketSection.js'
 
 const NS = 'dsh-agent-plugin'
 
@@ -21,20 +20,48 @@ interface LocaleService {
   bind(namespace: string): Translate
 }
 
+/** The subset of the slots service this plugin touches. */
+interface SlotsService {
+  inject(slot: string, register: () => unknown): void
+  register(meta: Record<string, unknown>, component: () => unknown): unknown
+}
+
 /** The client cordis context this plugin relies on (structural subset). */
 interface SuiteClientContext {
   effect(callback: () => unknown, label?: string): void
   locale: LocaleService
+  slots: SlotsService
 }
 
 export const name = 'dsh-agent-plugin'
-export const inject = ['locale']
+export const inject = ['slots', 'locale']
+
+/** Primitives this section renders with; absent exports degrade the whole section. */
+export const REQUIRED_PRIMITIVES = ['Button', 'Input', 'Modal', 'Toast', 'Tooltip'] as const
+
+/** Detect host primitives that predate the exports this UI relies on. */
+export function missingPrimitives(module: Record<string, unknown>, required: readonly string[] = REQUIRED_PRIMITIVES): string[] {
+  return required.filter(name => module[name] === undefined)
+}
 
 export function apply(ctx: SuiteClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-agent-plugin: dictionaries')
   const t = ctx.locale.bind(NS)
 
-  const controller = new PanelController()
-  ctx.effect(() => mountPanel(controller, t), 'dsh-agent-plugin: market panel')
-  ctx.effect(() => mountSidebarEntry(controller, t), 'dsh-agent-plugin: sidebar entry')
+  const gaps = missingPrimitives(primitives as unknown as Record<string, unknown>)
+  if (gaps.length > 0) {
+    console.warn(`[dsh-agent-plugin] host ui-primitives missing ${gaps.join(', ')} — 套件市场 section disabled (dsh web >= 0.1.0-rc.6 required)`)
+    return
+  }
+
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
+    id: 'agent-plugin',
+    order: 45,
+    label: () => t('nav'),
+    locale: NS,
+    inject: () => ({ t }),
+  }, () => h(MarketSection, {
+    t,
+  })))
 }

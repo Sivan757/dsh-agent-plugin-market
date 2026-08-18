@@ -1,98 +1,17 @@
 /**
- * 套件市场 styles. Scoped by the plugin's own data attributes so nothing
- * leaks into the rest of the GUI; colors ride the dsh --dsw-alias-* tokens
- * with light-mode fallbacks so the page follows the active theme. The
- * center-column hide rules are attribute-scoped and must stay in this
- * stylesheet (imported by mount.tsx, so the styles load with the plugin).
+ * 套件市场 section styles. Colors ride the dsh --dsw-alias-* tokens with
+ * light-mode fallbacks so the page follows the active theme; the section
+ * lives inside the settings dialog, so it scrolls within the dialog and
+ * never takes over the app frame.
  */
 
-/* --- center-column takeover (global rules, attribute-scoped) ----------------- */
-
-[data-pane='conversation'],
-[class*='centerCol'] {
-  position: relative;
-}
-
-/* The panel container rides inside the conversation grid item as an extra
-   trailing child; hidden unless the panel is active. */
-[data-dsh-agent-plugin-view] {
-  position: absolute;
-  inset: 0;
-  display: none;
-  z-index: 60;
-  background: var(--dsw-alias-bg-base, #f7f8fa);
-}
-
-html[data-dsh-agent-plugin-active]:not([data-dsh-taskboard-active]):not([data-dsh-ssh-active]) [data-dsh-agent-plugin-view] {
-  display: block;
-}
-
-/* While the panel is active, the conversation content underneath is hidden
-   (it stays mounted and stateful). */
-html[data-dsh-agent-plugin-active]:not([data-dsh-taskboard-active]):not([data-dsh-ssh-active]) [data-pane='conversation'] > :not([data-dsh-agent-plugin-view]),
-html[data-dsh-agent-plugin-active]:not([data-dsh-taskboard-active]):not([data-dsh-ssh-active]) [class*='centerCol'] > :not([data-dsh-agent-plugin-view]) {
-  display: none !important;
-}
-
-/* --- sidebar entry row ------------------------------------------------------- */
-
-.entry {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: var(--dsw-alias-label-primary, #1f2328);
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.entry:hover {
-  background: var(--dsw-alias-bg-hover, rgba(0, 0, 0, 0.05));
-}
-
-.entry:active {
-  background: var(--dsw-alias-bg-active, rgba(0, 0, 0, 0.08));
-}
-
-.entry svg {
-  flex-shrink: 0;
-  color: var(--dsw-alias-label-secondary, #6b7280);
-}
-
-.entryLabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-[data-dsh-frame][data-sidebar-collapsed] .entry {
-  justify-content: center;
-  padding: 0;
-}
-
-[data-dsh-frame][data-sidebar-collapsed] .entryLabel {
-  display: none;
-}
-
-/* --- market page -------------------------------------------------------------- */
-
 .market {
-  height: 100%;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  color: var(--dsw-alias-label-primary, #1f2328);
-  position: relative;
-  padding: 20px 24px;
+  min-height: 480px;
   gap: 14px;
-  overflow: auto;
+  color: var(--dsw-alias-label-primary, #1f2328);
 }
 
 .header {
@@ -135,7 +54,7 @@ html[data-dsh-agent-plugin-active]:not([data-dsh-taskboard-active]):not([data-ds
 }
 
 .searchWrap {
-  flex: 0 0 280px;
+  flex: 0 0 260px;
 }
 
 .tabRow {
@@ -175,11 +94,11 @@ html[data-dsh-agent-plugin-active]:not([data-dsh-taskboard-active]):not([data-ds
 /* --- category sidebar --------------------------------------------------------- */
 
 .sidebar {
-  flex: 0 0 240px;
+  flex: 0 0 220px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 100%;
+  max-height: 520px;
   overflow-y: auto;
 }
 
@@ -275,7 +194,7 @@ html[data-dsh-agent-plugin-active]:not([data-dsh-taskboard-active]):not([data-ds
 .grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 12px;
   min-width: 0;
   align-content: start;
