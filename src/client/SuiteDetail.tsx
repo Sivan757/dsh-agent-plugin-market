@@ -118,7 +118,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
             h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('mcpSection')} (${detail.mcpServers.length})`),
               detail.mcpServers.length === 0
-                ? h('div', { className: css.sidebarEmpty }, t('noMcp'))
+                ? h('div', { className: css.sidebarEmpty }, '—')
                 : detail.mcpServers.map(server => h('div', { key: server.key, className: css.detailItem },
                     h('button', {
                       type: 'button',

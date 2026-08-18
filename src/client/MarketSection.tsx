@@ -155,7 +155,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
         h(TabButton, { t, active: tab === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setTab('all') }),
         h(TabButton, { t, active: tab === 'installed', label: `${t('tabInstalled')} ${overview.totals.installed}`, onClick: () => setTab('installed') }),
         h(TabButton, { t, active: tab === 'uninstalled', label: `${t('tabUninstalled')} ${overview.totals.all - overview.totals.installed}`, onClick: () => setTab('uninstalled') }),
-        h('div', { className: css.spacer }),
+        h('div', { className: css.tabGap }),
         h(Button, {
           variant: 'ghost', size: 'sm',
           onClick: () => setView(view === 'grid' ? 'list' : 'grid'),
@@ -312,17 +312,15 @@ function SourceEditorModal(props: {
           onClick: () => setLocal(true),
         }, t('sourceModeLocal')),
       ),
-      h('div', { className: css.fieldGroup },
-        h('label', { className: css.fieldLabel }, editor.mode === 'edit' ? t('sourceIdPh') : t('idAutoLabel')),
-        editor.mode === 'edit'
-          ? h('div', { className: css.staticId },
+      editor.mode === 'edit'
+        ? h('div', { className: css.fieldGroup },
+            h('label', { className: css.fieldLabel }, t('sourceIdPh')),
+            h('div', { className: css.staticId },
               h('span', { className: css.staticIdValue }, id),
               h('span', { className: css.fieldHint }, t('idFixed')),
-            )
-          : h('div', { className: css.staticId },
-              h('span', { className: css.staticIdValue }, t('idAutoHint')),
             ),
-      ),
+          )
+        : null,
       h('div', { className: css.fieldGroup },
         h('label', { className: css.fieldLabel }, local ? t('sourceUrlLocalPh') : t('sourceUrlPh')),
         h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
