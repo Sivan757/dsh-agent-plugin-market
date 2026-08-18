@@ -39,3 +39,17 @@ describe('state: persisted suite state', () => {
     expect(loaded.sources).toEqual([{ id: 'ok', url: 'https://example.com/ok.git' }])
   })
 })
+
+describe('state: local source round-trip', () => {
+  it('preserves the local flag through save and load', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-state4-'))
+    const path = join(dir, 'state.json')
+    await saveState(path, {
+      version: 1,
+      sources: [{ id: 'local-repo', url: '/tmp/whatever', local: true }],
+      installed: {},
+    })
+    const loaded = await loadState(path)
+    expect(loaded.sources).toEqual([{ id: 'local-repo', url: '/tmp/whatever', local: true }])
+  })
+})

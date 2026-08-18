@@ -35,7 +35,8 @@ function normalizeState(record: Record<string, unknown>): SuiteState {
         const url = typeof source['url'] === 'string' ? source['url'] : ''
         if (id === '' || url === '') return []
         const branch = typeof source['branch'] === 'string' ? source['branch'] : undefined
-        return [{ id, url, ...branch === undefined ? {} : { branch } }]
+        const local = source['local'] === true
+        return [{ id, url, ...branch === undefined ? {} : { branch }, ...local ? { local: true } : {} }]
       })
     : []
   const installed: Record<string, InstalledEntry> = {}

@@ -103,3 +103,25 @@ describe('local-directory sources (local: true)', () => {
     await expect(manager.install('gone', 'anything')).rejects.toThrow('missing')
   })
 })
+
+describe('source editing (updateSource)', () => {
+  it('switches a git source to a local path without touching directories', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-edit-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    await manager.load()
+    await manager.mergeSources([{ id: 'demo', url: 'https://example.com/demo.git' }])
+    await manager.updateSource('demo', { url: '/Users/sivan/workspace/jeecg-plugin', local: true })
+    const sources = manager.sources
+    expect(sources).toEqual([{ id: 'demo', url: '/Users/sivan/workspace/jeecg-plugin', local: true }])
+    const overview = await manager.overview()
+    expect(overview.sources[0]!.local).toBe(true)
+    expect(overview.sources[0]!.cloned).toBe(true)
+  })
+
+  it('rejects unknown source ids', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-edit2-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    await manager.load()
+    await expect(manager.updateSource('nope', { url: 'https://example.com/x.git' })).rejects.toThrow('unknown source')
+  })
+})

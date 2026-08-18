@@ -74,6 +74,21 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     return { source }
   })
 
+  post(`${API_PREFIX}sources/update`, async (body) => {
+    const id = body['id']
+    if (typeof id !== 'string' || id === '') throw new Error('missing source id')
+    const patch: { url?: string; branch?: string; local?: boolean } = {}
+    if (body['url'] !== undefined) {
+      const url = String(body['url']).trim()
+      if (url === '') throw new Error('missing source url')
+      patch.url = url
+    }
+    if (body['branch'] !== undefined) patch.branch = String(body['branch']).trim()
+    if (body['local'] !== undefined) patch.local = body['local'] === true
+    await manager.updateSource(id, patch)
+    return {}
+  })
+
   post(`${API_PREFIX}sources/remove`, async (body) => {
     const id = body['id']
     if (typeof id !== 'string' || id === '') throw new Error('missing source id')

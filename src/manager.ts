@@ -138,6 +138,31 @@ export class SuiteManager {
     })
   }
 
+  /**
+   * Update one source's url / branch / local flag. A git source whose URL
+   * changes drops its stale checkout (the next refresh clones the new URL);
+   * a local source's directory is never touched.
+   */
+  async updateSource(sourceId: string, patch: { url?: string; branch?: string; local?: boolean }): Promise<void> {
+    return this.enqueue(async () => {
+      const index = this.state.sources.findIndex(source => source.id === sourceId)
+      if (index === -1) throw new Error(`unknown source "${sourceId}"`)
+      const current = this.state.sources[index]!
+      const next: SourceRef = {
+        id: sourceId,
+        url: patch.url ?? current.url,
+        ...(patch.branch !== undefined ? { branch: patch.branch } : current.branch === undefined ? {} : { branch: current.branch }),
+        ...(patch.local !== undefined ? { local: patch.local } : current.local === undefined ? {} : { local: current.local }),
+      }
+      if (current.local !== true && patch.url !== undefined && patch.url !== current.url) {
+        await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
+      }
+      this.state = { ...this.state, sources: this.state.sources.map((source, i) => i === index ? next : source) }
+      await saveState(this.statePath, this.state)
+      this.options.onChanged()
+    })
+  }
+
   /** Remove a source: delete its checkout, forget its suites and install entries. */
   async removeSource(sourceId: string): Promise<void> {
     return this.enqueue(async () => {

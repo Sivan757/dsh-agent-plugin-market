@@ -1,18 +1,16 @@
 /**
- * The 套件市场 panel: a top-level center-column page.
+ * The 套件市场 settings section.
  *
- * Layout follows the market convention this plugin is modeled on: search +
- * status tabs on top, a category sidebar (全部 first, then one row per
- * repository source), and a responsive card grid. Colors ride the dsh
- * `--dsw-alias-*` tokens with light-mode fallbacks so the page follows the
- * active theme.
+ * Layout: repository sources run along the TOP as chips (全部 first), with
+ * edit-current / add / refresh-all controls on the right; below sit search,
+ * status tabs, and the card grid. Colors ride the dsh --dsw-alias-* tokens
+ * with light-mode fallbacks so the page follows the active theme.
  */
 import { createElement as h, useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import {
   Button,
   Input,
   Modal,
-  Pill,
   Toast,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -39,6 +37,11 @@ interface ConfirmState {
   suiteId?: string
 }
 
+type EditorState =
+  | { mode: 'edit'; source: SourceOverview }
+  | { mode: 'add' }
+  | undefined
+
 const EMPTY_OVERVIEW: OverviewData = { sources: [], suites: [], totals: { all: 0, installed: 0, enabled: 0 }, roots: { user: '', data: '' } }
 
 export function MarketSection({ t }: MarketSectionProps): ReactNode {
@@ -51,6 +54,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const [busy, setBusy] = useState<string | undefined>(undefined)
   const [toast, setToast] = useState<ToastState | undefined>(undefined)
   const [confirm, setConfirm] = useState<ConfirmState | undefined>(undefined)
+  const [editor, setEditor] = useState<EditorState>(undefined)
 
   const refresh = useCallback(async () => {
     try {
@@ -96,21 +100,42 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     setConfirm({ kind: 'uninstall', sourceId: suite.sourceId, suiteId: suite.suiteId })
   }, [])
 
-  const openRemoveSource = useCallback((source: SourceOverview) => {
-    setConfirm({ kind: 'removeSource', sourceId: source.id })
-  }, [])
-
   const confirmAction = useCallback(async () => {
     if (confirm === undefined) return
     if (confirm.kind === 'uninstall' && confirm.suiteId !== undefined) {
       await action(`u:${confirm.suiteId}`, 'uninstall', { sourceId: confirm.sourceId, suiteId: confirm.suiteId })
     } else if (confirm.kind === 'removeSource') {
       await action(`s:${confirm.sourceId}`, 'sources/remove', { id: confirm.sourceId })
+      if (category === confirm.sourceId) setCategory('all')
     }
     setConfirm(undefined)
-  }, [confirm, action])
+  }, [confirm, action, category])
+
+  const selectedSource = category === 'all' ? undefined : overview.sources.find(source => source.id === category)
 
   return h('div', { className: css.market },
+    h('div', { className: css.sourceBar },
+      h(SourceChip, { t, active: category === 'all', label: t('tabAll'), count: overview.totals.all, onClick: () => setCategory('all') }),
+      ...overview.sources.map(source => h(SourceChip, {
+        key: source.id,
+        t,
+        active: category === source.id,
+        label: source.id,
+        count: source.suiteIds.length,
+        meta: source.local === true ? t('sourceLocal') : undefined,
+        broken: source.cloned === false,
+        onClick: () => setCategory(source.id),
+      })),
+      h('div', { className: css.spacer }),
+      h(Button, {
+        variant: 'ghost', size: 'sm',
+        disabled: selectedSource === undefined || busy !== undefined,
+        title: selectedSource === undefined ? '' : selectedSource.url,
+        onClick: () => setEditor(selectedSource === undefined ? undefined : { mode: 'edit', source: selectedSource }),
+      }, t('editSource')),
+      h(Button, { variant: 'ghost', size: 'sm', onClick: () => setEditor({ mode: 'add' }) }, `+ ${t('addSource')}`),
+      h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void action('s:refresh:all', 'sources/refresh', {}) } }, t('refreshAll')),
+    ),
     h('header', { className: css.header },
       h('div', { className: css.titleRow },
         h('h2', { className: css.title }, t('nav')),
@@ -130,34 +155,20 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
         }, view === 'grid' ? t('list') : t('grid')),
       ),
     ),
-    h('div', { className: css.body },
-      h(SourcesPanel, {
-        t, sources: overview.sources, totals: overview.totals, category, onCategory: setCategory,
-        busy, action, openRemoveSource,
-        onAdd: async (id, url, branch, local) => {
-          const ok = await action(`s:add:${id}`, 'sources/add', { id, url, ...branch === '' ? {} : { branch }, ...local ? { local: true } : {} })
-          if (ok) {
-            setSearch('')
-          }
-          return ok
-        },
-        onRefreshAll: async () => { await action('s:refresh:all', 'sources/refresh', {}) },
-      }),
-      h('main', { className: view === 'grid' ? css.grid : css.list },
-        loading
-          ? h('div', { className: css.empty }, '…')
-          : filtered.length === 0
-            ? h('div', { className: css.empty }, tab === 'installed' ? t('installedEmpty') : t('empty'))
-            : filtered.map(suite => h(SuiteCard, {
-              key: `${suite.sourceId}/${suite.suiteId}`,
-              t, suite,
-              busy: busy !== undefined,
-              onInstall: () => { void action(`i:${suite.suiteId}`, 'install', { sourceId: suite.sourceId, suiteId: suite.suiteId }) },
-              onToggle: () => { void action(`e:${suite.suiteId}`, 'set-enabled', { sourceId: suite.sourceId, suiteId: suite.suiteId, enabled: !suite.enabled }) },
-              onRefresh: () => { void action(`r:${suite.suiteId}`, 'sources/refresh', { id: suite.sourceId }) },
-              onUninstall: () => openUninstall(suite),
-            })),
-      ),
+    h('main', { className: view === 'grid' ? css.grid : css.list },
+      loading
+        ? h('div', { className: css.empty }, '…')
+        : filtered.length === 0
+          ? h('div', { className: css.empty }, tab === 'installed' ? t('installedEmpty') : t('empty'))
+          : filtered.map(suite => h(SuiteCard, {
+            key: `${suite.sourceId}/${suite.suiteId}`,
+            t, suite,
+            busy: busy !== undefined,
+            onInstall: () => { void action(`i:${suite.suiteId}`, 'install', { sourceId: suite.sourceId, suiteId: suite.suiteId }) },
+            onToggle: () => { void action(`e:${suite.suiteId}`, 'set-enabled', { sourceId: suite.sourceId, suiteId: suite.suiteId, enabled: !suite.enabled }) },
+            onRefresh: () => { void action(`r:${suite.suiteId}`, 'sources/refresh', { id: suite.sourceId }) },
+            onUninstall: () => openUninstall(suite),
+          })),
     ),
     toast === undefined ? null : h(Toast, { key: toast.key, text: toast.message, onDone: () => setToast(undefined) }),
     confirm === undefined ? null : h(Modal, {
@@ -171,6 +182,26 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
         h(Button, { variant: 'primary', onClick: () => { void confirmAction() } }, t('confirm')),
       ),
     }),
+    editor === undefined ? null : h(SourceEditorModal, {
+      t,
+      editor,
+      busy: busy !== undefined,
+      onClose: () => setEditor(undefined),
+      onSave: async (id, url, branch, local) => {
+        const ok = editor.mode === 'edit'
+          ? await action(`s:edit:${id}`, 'sources/update', { id, url, ...branch === '' ? {} : { branch }, ...{ local } })
+          : await action(`s:add:${id}`, 'sources/add', { id, url, ...branch === '' ? {} : { branch }, ...local ? { local: true } : {} })
+        if (ok) {
+          setEditor(undefined)
+          if (editor.mode === 'add') setCategory(id)
+        }
+        return ok
+      },
+      onRemove: async (id) => {
+        setConfirm({ kind: 'removeSource', sourceId: id })
+        setEditor(undefined)
+      },
+    }),
   )
 }
 
@@ -178,61 +209,7 @@ function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: bo
   return h('button', { type: 'button', className: active ? css.tabOn : css.tab, onClick }, label)
 }
 
-function SourcesPanel(props: {
-  t: Translate
-  sources: SourceOverview[]
-  totals: OverviewData['totals']
-  category: Category
-  onCategory: (category: Category) => void
-  busy: string | undefined
-  action: (key: string, path: string, body: Record<string, unknown>) => Promise<boolean>
-  openRemoveSource: (source: SourceOverview) => void
-  onAdd: (id: string, url: string, branch: string, local: boolean) => Promise<boolean>
-  onRefreshAll: () => Promise<void>
-}): ReactNode {
-  const { t, category, onCategory } = props
-  const [adding, setAdding] = useState(false)
-  const [local, setLocal] = useState(false)
-  const [id, setId] = useState('')
-  const [url, setUrl] = useState('')
-  const [branch, setBranch] = useState('')
-  return h('aside', { className: css.sidebar },
-    h('div', { className: css.sidebarHead },
-      h('h3', { className: css.sidebarTitle }, t('market')),
-      h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void props.onRefreshAll() } }, '↻'),
-      h(Button, { variant: 'ghost', size: 'sm', onClick: () => setAdding(!adding) }, `+ ${t('addSource')}`),
-    ),
-    h('div', { className: css.cats },
-      h(CategoryRow, { t, active: category === 'all', label: t('tabAll'), count: props.totals.all, onClick: () => onCategory('all') }),
-      ...props.sources.map(source => h(CategoryRow, {
-        key: source.id,
-        t,
-        active: category === source.id,
-        label: source.id,
-        count: source.suiteIds.length,
-        meta: source.local === true ? t('sourceLocal') : undefined,
-        broken: source.cloned === false,
-        onClick: () => onCategory(source.id),
-      })),
-    ),
-    adding ? h('div', { className: css.addForm },
-      h('div', { className: css.modeRow },
-        h(TabButton, { t, active: !local, label: t('sourceModeGit'), onClick: () => setLocal(false) }),
-        h(TabButton, { t, active: local, label: t('sourceModeLocal'), onClick: () => setLocal(true) }),
-      ),
-      h(Input, { placeholder: t('sourceIdPh'), value: id, onChange: event => setId((event.target as HTMLInputElement).value) }),
-      h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
-      local ? null : h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
-      h(Button, {
-        variant: 'primary', size: 'sm',
-        disabled: props.busy !== undefined,
-        onClick: () => { void props.onAdd(id.trim(), url.trim(), branch.trim(), local).then(ok => { if (ok) { setId(''); setUrl(''); setBranch(''); setAdding(false) } }) },
-      }, t('add')),
-    ) : null,
-  )
-}
-
-function CategoryRow(props: {
+function SourceChip(props: {
   t: Translate
   active: boolean
   label: string
@@ -243,14 +220,59 @@ function CategoryRow(props: {
 }): ReactNode {
   return h('button', {
     type: 'button',
-    className: props.active ? css.catOn : css.cat,
+    className: props.active ? css.chipOn : css.chip,
     onClick: props.onClick,
   },
-    h('span', { className: css.catLabel }, props.label),
+    h('span', { className: css.chipLabel }, props.label),
     props.meta === undefined ? null : h('span', { className: css.catMeta }, props.meta),
-    h('span', { className: css.catCount }, String(props.count)),
+    h('span', { className: css.chipCount }, String(props.count)),
     props.broken === true ? h('span', { className: css.catBroken }, '⚠') : null,
   )
+}
+
+function SourceEditorModal(props: {
+  t: Translate
+  editor: Exclude<EditorState, undefined>
+  busy: boolean
+  onClose: () => void
+  onSave: (id: string, url: string, branch: string, local: boolean) => Promise<boolean>
+  onRemove: (id: string) => void
+}): ReactNode {
+  const { t, editor } = props
+  const [local, setLocal] = useState(editor.mode === 'edit' && editor.source.local === true)
+  const [url, setUrl] = useState(editor.mode === 'edit' ? editor.source.url : '')
+  const [branch, setBranch] = useState(editor.mode === 'edit' ? (editor.source.branch ?? '') : '')
+  const [id, setId] = useState(editor.mode === 'edit' ? editor.source.id : '')
+  const title = editor.mode === 'edit' ? t('editSourceTitle') : t('addSourceTitle')
+  return h(Modal, {
+    open: true,
+    onClose: props.onClose,
+    title,
+    closeLabel: t('cancel'),
+    footer: h('div', { className: css.modalFooter },
+      editor.mode === 'edit'
+        ? h(Button, { variant: 'ghost', onClick: () => props.onRemove(id) }, `🗑 ${t('remove')}`)
+        : null,
+      h(Button, { variant: 'ghost', onClick: props.onClose }, t('cancel')),
+      h(Button, {
+        variant: 'primary',
+        disabled: props.busy,
+        onClick: () => { void props.onSave(id.trim(), url.trim(), branch.trim(), local) },
+      }, t('save')),
+    ),
+    children: h('div', { className: css.editorForm },
+      h('div', { className: css.modeRow },
+        h(TabButton, { t, active: !local, label: t('sourceModeGit'), onClick: () => setLocal(false) }),
+        h(TabButton, { t, active: local, label: t('sourceModeLocal'), onClick: () => setLocal(true) }),
+      ),
+      h('label', { className: css.fieldLabel }, t('sourceIdPh')),
+      h(Input, { placeholder: t('sourceIdPh'), value: id, readOnly: editor.mode === 'edit', onChange: event => setId((event.target as HTMLInputElement).value) }),
+      h('label', { className: css.fieldLabel }, local ? t('sourceUrlLocalPh') : t('sourceUrlPh')),
+      h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
+      local ? null : h('label', { className: css.fieldLabel }, t('branchPh')),
+      local ? null : h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
+    ),
+  })
 }
 
 function SuiteCard(props: {
