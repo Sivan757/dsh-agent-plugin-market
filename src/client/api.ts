@@ -33,6 +33,7 @@ export interface SuiteCardData {
   installed: boolean
   dimension: string
   layout: string
+  remoteUrl?: string
   errors: string[]
 }
 
@@ -108,6 +109,7 @@ export interface SuiteDetail {
   layout: string
   dimension: string
   root: string
+  remoteUrl: string | null
   installed: boolean
   enabled: boolean
   skills: SuiteSkillMeta[]

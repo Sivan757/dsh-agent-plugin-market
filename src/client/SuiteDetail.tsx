@@ -63,7 +63,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
 
   const layoutLabel = detail === undefined
     ? ''
-    : detail.layout === 'agent-plugin-v1' ? t('layoutV1') : detail.layout === 'claude-code' ? t('layoutCC') : detail.layout === 'codex' ? t('layoutCodex') : t('layoutSkills')
+    : detail.layout === 'agent-plugin-v1' ? t('layoutV1') : detail.layout === 'claude-code' ? t('layoutCC') : detail.layout === 'codex' ? t('layoutCodex') : detail.layout === 'remote' ? t('layoutRemote') : t('layoutSkills')
 
   return h(Modal, {
     open: true,

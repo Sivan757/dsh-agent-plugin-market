@@ -16,7 +16,7 @@
  * the directories regardless of which dialect won.
  */
 import { readFile, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { sanitizeId } from '../paths.js'
 import { isRecognizedSchema, validatePluginManifest } from '../validate.js'
 import type { SuiteManifest } from '../types.js'
@@ -123,7 +123,9 @@ export interface MarketplaceEntry {
   name?: string
   version?: string
   description?: string
-  source: string | { source?: string; url?: string }
+  /** Claude Code: a relative path string or `{ source: 'url', url }`.
+   *  Codex: `{ source: 'local', path }` or `{ source: 'remote', url }`. */
+  source: string | { source?: string; url?: string; path?: string }
 }
 
 export interface Marketplace {
@@ -131,27 +133,42 @@ export interface Marketplace {
   entries: MarketplaceEntry[]
 }
 
-/** Read a Claude Code marketplace manifest, or undefined when absent/malformed. */
+/** Marketplace manifest locations per dialect (Claude Code, Codex). */
+const MARKETPLACE_PATHS = ['.claude-plugin/marketplace.json', '.agents/plugins/marketplace.json']
+
+/** Read a marketplace manifest from a checkout root, or undefined when absent. */
 export async function readMarketplace(checkoutDir: string): Promise<Marketplace | undefined> {
-  let text: string
-  try {
-    text = await readFile(join(checkoutDir, '.claude-plugin', 'marketplace.json'), 'utf8')
-  } catch {
-    return undefined
-  }
-  try {
-    const parsed: unknown = JSON.parse(text)
-    if (typeof parsed !== 'object' || parsed === null) return undefined
-    const record = parsed as Record<string, unknown>
-    const plugins = record['plugins']
-    if (!Array.isArray(plugins)) return undefined
-    return {
-      ...typeof record['name'] === 'string' ? { name: record['name'] } : {},
-      entries: plugins as MarketplaceEntry[],
+  for (const relative of MARKETPLACE_PATHS) {
+    let text: string
+    try {
+      text = await readFile(join(checkoutDir, relative), 'utf8')
+    } catch {
+      continue
     }
-  } catch {
-    return undefined
+    try {
+      const parsed: unknown = JSON.parse(text)
+      if (typeof parsed !== 'object' || parsed === null) continue
+      const record = parsed as Record<string, unknown>
+      const plugins = record['plugins']
+      if (!Array.isArray(plugins)) continue
+      return {
+        ...typeof record['name'] === 'string' ? { name: record['name'] } : {},
+        entries: plugins as MarketplaceEntry[],
+      }
+    } catch {
+      continue
+    }
   }
+  return undefined
+}
+
+/** Resolve one marketplace entry to a local checkout-relative directory, or
+ *  `undefined` for remote-URL entries that are not present in the clone. */
+export function marketplaceEntryDir(checkoutDir: string, entry: MarketplaceEntry): string | undefined {
+  const source = entry.source
+  if (typeof source === 'string') return resolve(checkoutDir, source)
+  if (source?.path !== undefined) return resolve(checkoutDir, source.path)
+  return undefined
 }
 
 /**

@@ -73,15 +73,18 @@ describe('McpMountRegistry', () => {
 
 describe('CommandMountRegistry (CC commands compat)', () => {
   it('registers commands/*.md and forwards the template as a model follow-up', async () => {
-    const registered: Array<{ name: string; description: string; handler: (inv: { agent: unknown; rawInput: string }) => unknown }> = []
-    const ctx = { commands: { register: (def: { name: string; description: string; handler: (inv: { agent: unknown; rawInput: string }) => unknown }) => { registered.push(def); return () => { registered.splice(registered.indexOf(def), 1) } } } }
+    const registered: Array<{ name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }> = []
+    const ctx = { commands: { register: (def: { name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }) => { registered.push(def); return () => { registered.splice(registered.indexOf(def), 1) } } } }
     const registry = new (await import('../src/commands-mounts.js')).CommandMountRegistry(ctx as never)
     const suites = await (await import('../src/discovery.js')).discoverSuitesInSource('/Users/sivan/workspace/dsh-agent-plugins-market/tests/fixtures/cc-commands', 'cc', 'user')
     suites[0]!.enabled = true
     const diagnostics = await registry.reconcile(suites)
     expect(diagnostics).toEqual([])
-    expect(registered.map(def => def.name)).toEqual(['review'])
+    // Commands register under their file name; agents/*.md register as
+    // /agent-<name> so subagents are selectable from the slash menu.
+    expect(registered.map(def => def.name)).toEqual(['review', 'agent-codex-rescue'])
     expect(registered[0]!.description).toContain('challenge review')
+    expect(registered[1]!.input).toEqual({ hint: '子代理' })
     let followup: { content: Array<{ type: string; text: string }> } | undefined
     const result = registered[0]!.handler({ agent: { followup: (message: { content: Array<{ type: string; text: string }> }) => { followup = message } }, rawInput: '--wait focus' })
     expect(result).toMatchObject({ kind: 'success' })

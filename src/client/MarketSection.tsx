@@ -386,7 +386,8 @@ function SuiteCard(props: {
     [t('surfaceAgents'), suite.surfaces.agents],
     [t('surfaceLsp'), suite.surfaces.lsp],
   ] as Array<[string, number]>).filter(([, count]) => count > 0)
-  const layoutLabel = suite.layout === 'agent-plugin-v1' ? t('layoutV1') : suite.layout === 'claude-code' ? t('layoutCC') : suite.layout === 'codex' ? t('layoutCodex') : suite.layout === 'universal' ? t('layoutUniversal') : suite.layout === 'cursor' ? t('layoutCursor') : suite.layout === 'kimi' ? t('layoutKimi') : t('layoutSkills')
+  const layoutLabel = suite.layout === 'agent-plugin-v1' ? t('layoutV1') : suite.layout === 'claude-code' ? t('layoutCC') : suite.layout === 'codex' ? t('layoutCodex') : suite.layout === 'universal' ? t('layoutUniversal') : suite.layout === 'cursor' ? t('layoutCursor') : suite.layout === 'kimi' ? t('layoutKimi') : suite.layout === 'remote' ? t('layoutRemote') : t('layoutSkills')
+  const isRemote = suite.remoteUrl !== undefined
   const stop = (callback: () => void) => (event: { stopPropagation(): void }) => { event.stopPropagation(); callback() }
   return h('article', { className: css.card, onClick: props.onOpen },
     h('div', { className: css.cardTop },
@@ -403,16 +404,17 @@ function SuiteCard(props: {
             onChange: props.onToggle,
           })
           : h(Button, {
-            variant: 'primary', size: 'sm', disabled: busy,
+            variant: 'primary', size: 'sm', disabled: busy || isRemote,
+            title: isRemote ? suite.remoteUrl : undefined,
             onClick: stop(props.onInstall),
-          }, t('install')),
+          }, isRemote ? t('remoteRef') : t('install')),
         suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('refresh'), disabled: busy, onClick: stop(props.onRefresh) }, '↻') : null,
         suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('uninstall'), disabled: busy, onClick: stop(props.onUninstall) }, '🗑') : null,
       ),
     ),
     h('p', { className: css.desc }, suite.description ?? ''),
     h('div', { className: css.meta },
-      h('span', { className: css.src }, `${suite.sourceId} · ${suite.dimension === 'user' ? t('dimensionUser') : t('dimensionProject')}`),
+      h('span', { className: css.src }, `${suite.sourceId} · ${isRemote ? t('remoteRef') : (suite.dimension === 'user' ? t('dimensionUser') : t('dimensionProject'))}`),
       h('span', { className: css.tag }, layoutLabel),
       suite.installed ? h('span', { className: suite.enabled ? css.okState : css.tag }, suite.enabled ? `✓ ${t('installedBadge')}` : t('installedBadge')) : null,
       ...tags.map(([label, count]) => h('span', { key: label, className: css.tag }, `${label} ${count}`)),

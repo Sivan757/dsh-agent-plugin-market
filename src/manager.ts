@@ -55,6 +55,7 @@ export class SuiteManager {
     const suite = suites.find(entry => entry.sourceId === sourceId && entry.id === suiteId)
     if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
     const installed = this.state.installed[installKey(sourceId, suiteId)]
+    const remoteUrl = suite.remote?.url
     return {
       sourceId,
       suiteId: suite.id,
@@ -65,7 +66,8 @@ export class SuiteManager {
       keywords: suite.manifest.keywords ?? [],
       layout: suite.manifest.layout,
       dimension: suite.dimension,
-      root: suite.root,
+      root: remoteUrl ?? suite.root,
+      remoteUrl: remoteUrl ?? null,
       installed: installed !== undefined,
       enabled: installed?.enabled === true,
       skills: suite.skills.map(skill => ({
@@ -75,10 +77,10 @@ export class SuiteManager {
         path: skill.file,
       })),
       mcpServers: suite.mcp === undefined ? [] : Object.entries(suite.mcp.servers).map(([key, server]) => ({ key, ...server })),
-      hooks: await this.hooksPreviews(suite.root),
-      commands: await this.commandPreviews(`${suite.root}/commands`),
-      agents: await this.agentPreviews(`${suite.root}/agents`),
-      lsp: await this.lspPreviews(suite.root),
+      hooks: remoteUrl === undefined ? await this.hooksPreviews(suite.root) : { count: 0, entries: [] },
+      commands: remoteUrl === undefined ? await this.commandPreviews(`${suite.root}/commands`) : [],
+      agents: remoteUrl === undefined ? await this.agentPreviews(`${suite.root}/agents`) : [],
+      lsp: remoteUrl === undefined ? await this.lspPreviews(suite.root) : [],
       errors: suite.errors,
     }
   }
@@ -296,6 +298,7 @@ export class SuiteManager {
       const suites = await discoverSuitesInSource(checkout, sourceId, 'user')
       const suite = suites.find(entry => entry.id === suiteId)
       if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
+      if (suite.remote !== undefined) throw new Error(`suite "${suiteId}" is a remote reference (${suite.remote.url}); add its repository as a source before installing`)
       await this.setInstalled(sourceId, suiteId, { enabled: true, installedAt: new Date().toISOString(), lockCommit: await tryHead(checkout) })
       this.options.onChanged()
     })

@@ -28,17 +28,44 @@ describe('discovery: agent-plugins.org v1 layout', () => {
 })
 
 describe('discovery: Claude Code marketplace layout', () => {
-  it('uses the marketplace manifest and skips external-url entries', async () => {
+  it('uses the marketplace manifest, keeps local entries and remote references', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'cc-marketplace'), 'cc', 'user')
-    expect(suites.map(suite => suite.id)).toEqual(['jeecg-one', 'jeecg-two', 'jeecg-three', 'extra-plugin'])
+    expect(suites.map(suite => suite.id)).toEqual(['jeecg-one', 'jeecg-two', 'jeecg-three', 'external-one', 'extra-plugin'])
     expect(suites[0]!.manifest.layout).toBe('claude-code')
     expect(suites[0]!.skills[0]!.name).toBe('jeecg-one')
     // A manifest-less marketplace entry still surfaces as a skill collection.
     expect(suites[2]!.manifest.layout).toBe('skill-collection')
     expect(suites[2]!.skills[0]!.name).toBe('jeecg-three')
+    // Remote-URL entries surface as metadata-only remote suites.
+    expect(suites[3]!.manifest.layout).toBe('remote')
+    expect(suites[3]!.remote).toEqual({ url: 'https://github.com/example/external.git' })
+    expect(suites[3]!.root).toBe('')
     // A manifest-bearing container dir the marketplace did not list is supplemented.
-    expect(suites[3]!.manifest.layout).toBe('claude-code')
-    expect(suites[3]!.manifest.name).toBe('extra-plugin')
+    expect(suites[4]!.manifest.layout).toBe('claude-code')
+    expect(suites[4]!.manifest.name).toBe('extra-plugin')
+  })
+})
+
+describe('discovery: Codex marketplace and nested bundles', () => {
+  it('reads .agents/plugins/marketplace.json with Codex source objects, validating MCP', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'codex-bundled'), 'cb', 'user')
+    expect(suites.map(suite => suite.id)).toEqual(['demo-tools', 'remote-thing'])
+    const demo = suites[0]!
+    expect(demo.manifest.layout).toBe('codex')
+    expect(demo.mcp).toBeDefined()
+    expect(Object.keys(demo.mcp!.servers)).toEqual(['demo'])
+    expect(demo.mcp!.servers['demo']).toMatchObject({ type: 'streamable-http', url: 'https://mcp.demo.example.com' })
+    expect(demo.errors).toEqual([])
+    expect(suites[1]!.manifest.layout).toBe('remote')
+    expect(suites[1]!.remote).toEqual({ url: 'https://github.com/example/remote-thing.git' })
+  })
+
+  it('recurses nested plugins containers without a marketplace (Codex runtime layout)', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'codex-runtime'), 'cr', 'user')
+    expect(suites.map(suite => suite.id)).toEqual(['deep-tools'])
+    expect(suites[0]!.manifest.layout).toBe('codex')
+    expect(suites[0]!.skills.map(skill => skill.name)).toEqual(['deep'])
+    expect(suites[0]!.errors).toEqual([])
   })
 })
 

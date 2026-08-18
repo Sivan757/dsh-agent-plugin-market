@@ -30,7 +30,7 @@
 | Codex | `.codex-plugin/plugin.json` | — |
 | 技能集合（无清单） | 无（合成） | 扁平 `SKILL.md` 目录集合 |
 
-一个仓库可同时携带多种清单（如 vercel/vercel-plugin 全部都有）；套件身份取优先级最高的清单，内容面（skills/commands/agents/hooks/mcp）按目录扫描。`mcp.json` 严格按 agent-plugins.org schema 校验；`.mcp.json` 宽容解析——支持顶层 server map 简写、`type: http`/`local`/省略 type（按 command 判 stdio）归一化，`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${NAME:-default}` 占位符，未知 transport 逐 server 容错。marketplace 清单权威决定套件集合，无清单但含技能的市场条目与容器内未列出的清单插件也会被补全。
+一个仓库可同时携带多种清单（如 vercel/vercel-plugin 全部都有）；套件身份取优先级最高的清单，内容面（skills/commands/agents/hooks/mcp）按目录扫描。`mcp.json` 严格按 agent-plugins.org schema 校验；`.mcp.json` 宽容解析——支持顶层 server map 简写、`type: http`/`local`/省略 type（按 command 判 stdio）归一化，`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${NAME:-default}` 占位符，未知 transport 逐 server 容错。marketplace 清单权威决定套件集合（支持 Claude Code `.claude-plugin/marketplace.json` 与 Codex `.agents/plugins/marketplace.json`，含 Codex `{source:'local', path}` 条目与嵌套 `plugins/` 容器）；无清单但含技能的市场条目与容器内未列出的清单插件也会被补全；远程 URL 引用条目以「远程引用」卡片展示（元信息 + 源 URL，不可直接安装，可添加对应仓库为源后安装）。启用套件的 `commands/*.md` 注册为 `/命令`，`agents/*.md` 注册为 `/agent-*` 命令（含 argument-hint 提示）。
 
 ## 安装
 

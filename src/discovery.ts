@@ -19,6 +19,7 @@ import type { McpSuiteConfig, SourceRef, Suite, SuiteDimension, SuiteManifest, S
 import {
   declaredSkillsPath,
   detectManifest,
+  marketplaceEntryDir,
   readManifest,
   readMarketplace,
   repoName,
@@ -45,8 +46,10 @@ const DOT_DIRS = new Set(['.git', '.github', '.claude', '.cursor', '.kimi', '.pl
 export async function discoverSuitesInSource(checkoutDir: string, sourceId: string, dimension: SuiteDimension): Promise<Suite[]> {
   const roots = await suiteRoots(checkoutDir)
   const suites: Suite[] = []
-  for (const [root, hint] of roots) {
-    const suite = await readSuite(root, sourceId, dimension, hint)
+  for (const root of roots) {
+    const suite = root.dir === undefined
+      ? remoteSuite(sourceId, dimension, root)
+      : await readSuite(root.dir, sourceId, dimension, root.hint)
     if (suite !== undefined) suites.push(suite)
   }
   return suites
@@ -58,59 +61,77 @@ interface SuiteHint {
   description?: string
 }
 
+interface SuiteRoot {
+  dir?: string
+  hint?: SuiteHint
+  remoteUrl?: string
+}
+
 /**
  * Resolve the suite roots of one checkout. A marketplace manifest is the
- * authoritative list; manifest-less marketplace entries still surface when
- * they carry skills, and manifest-bearing container dirs the marketplace did
- * not list (e.g. official example plugins) are supplemented. Without a
- * marketplace: a single-suite root, a flat/manifest-dir scan, or a
- * manifest-less skill collection applies.
+ * authoritative list: local entries (relative paths, Codex `{source:
+ * 'local', path}`) surface when they carry a manifest or skills, container
+ * paths recurse into nested plugin dirs, and remote-URL entries become
+ * metadata-only remote suites. Manifest-bearing container dirs the
+ * marketplace did not list (e.g. official example plugins) are supplemented.
+ * Without a marketplace: a single-suite root, a recursive manifest/skill
+ * scan, or a manifest-less skill collection applies.
  */
-async function suiteRoots(checkoutDir: string): Promise<Array<[string, SuiteHint | undefined]>> {
+async function suiteRoots(checkoutDir: string): Promise<SuiteRoot[]> {
   const marketplace = await readMarketplace(checkoutDir)
   if (marketplace !== undefined && marketplace.entries.length > 0) {
-    const roots: Array<[string, SuiteHint | undefined]> = []
+    const roots: SuiteRoot[] = []
     const seen = new Set<string>()
     for (const entry of marketplace.entries) {
-      if (typeof entry.source !== 'string') continue
-      const dir = resolve(checkoutDir, entry.source)
       const hint = { name: entry.name, version: entry.version, description: entry.description }
-      if (await hasSuiteManifest(dir) || await hasSkillFiles(dir)) {
-        roots.push([dir, hint])
-        seen.add(dir)
+      const dir = marketplaceEntryDir(checkoutDir, entry)
+      if (dir === undefined) {
+        const remoteUrl = typeof entry.source === 'object' ? entry.source?.url : undefined
+        // Dedupe by entry name, not URL: one remote repo can host several
+        // plugins that each appear as their own marketplace entry.
+        const entryName = typeof entry.name === 'string' && entry.name !== '' ? entry.name : remoteUrl
+        if (remoteUrl !== undefined && entryName !== undefined && !seen.has(entryName)) {
+          roots.push({ hint, remoteUrl })
+          seen.add(entryName)
+        }
+        continue
       }
-      // External URL sources are not present in the clone; the overview
-      // records them as unavailable, so discovery skips them here.
+      await collectRoot(dir, hint, roots, seen)
     }
     for (const container of CONTAINER_DIRS) {
       const containerDir = join(checkoutDir, container)
       if (!await isDirectory(containerDir)) continue
       for (const child of await listChildDirs(containerDir)) {
-        if (!seen.has(child) && await hasSuiteManifest(child)) roots.push([child, undefined])
+        if (!seen.has(child) && await hasSuiteManifest(child)) roots.push({ dir: child })
       }
     }
     return roots
   }
-  if (await hasSuiteManifest(checkoutDir)) return [[checkoutDir, undefined]]
-  const found: Array<[string, SuiteHint | undefined]> = []
-  for (const child of await listChildDirs(checkoutDir)) {
-    if (await hasSuiteManifest(child)) found.push([child, undefined])
-  }
-  if (found.length > 0) return found
-  for (const container of CONTAINER_DIRS) {
-    const containerDir = join(checkoutDir, container)
-    if (!await isDirectory(containerDir)) continue
-    for (const child of await listChildDirs(containerDir)) {
-      if (await hasSuiteManifest(child)) found.push([child, undefined])
-    }
-  }
+  if (await hasSuiteManifest(checkoutDir)) return [{ dir: checkoutDir }]
+  const found: SuiteRoot[] = []
+  await collectRoot(checkoutDir, undefined, found, new Set())
   if (found.length > 0) return found
   // Manifest-less skill collection (the flat `<root>/<name>/SKILL.md` shape).
-  const collection: Array<[string, SuiteHint | undefined]> = []
+  const collection: SuiteRoot[] = []
   for (const child of await listChildDirs(checkoutDir)) {
-    if (await hasSkillFiles(child)) collection.push([child, undefined])
+    if (await hasSkillFiles(child)) collection.push({ dir: child })
   }
   return collection
+}
+
+/** Collect one root, recursing through container dirs (nested `plugins/`
+ *  bundles) up to four levels so Codex runtime layouts
+ *  (`plugins/<bundle>/plugins/<name>`) are reached. */
+async function collectRoot(dir: string, hint: SuiteHint | undefined, out: SuiteRoot[], seen: Set<string>, depth = 0): Promise<void> {
+  if (depth > 4 || seen.has(dir)) return
+  if (await hasSuiteManifest(dir) || await hasSkillFiles(dir)) {
+    out.push({ dir, hint })
+    seen.add(dir)
+    return
+  }
+  for (const child of await listChildDirs(dir)) {
+    await collectRoot(child, hint, out, seen, depth + 1)
+  }
 }
 
 /** Whether a directory carries any known suite manifest. */
@@ -161,6 +182,31 @@ async function readSuite(root: string, sourceId: string, dimension: SuiteDimensi
     dimension,
     enabled: false,
     errors,
+  }
+}
+
+/** Metadata-only suite for a marketplace entry whose content lives in a
+ *  remote repository that is not part of this clone. */
+function remoteSuite(sourceId: string, dimension: SuiteDimension, root: SuiteRoot): Suite {
+  const name = root.hint?.name ?? 'remote-plugin'
+  return {
+    sourceId,
+    id: sanitizeId(name),
+    root: '',
+    manifest: {
+      layout: 'remote',
+      path: '',
+      id: sanitizeId(name),
+      name,
+      version: root.hint?.version,
+      description: root.hint?.description,
+    },
+    skills: [],
+    surfaces: { skills: 0, mcp: 0, hooks: 0, commands: 0, agents: 0, lsp: 0 },
+    dimension,
+    enabled: false,
+    remote: { url: root.remoteUrl ?? '' },
+    errors: [],
   }
 }
 

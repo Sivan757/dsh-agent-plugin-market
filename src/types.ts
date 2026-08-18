@@ -21,7 +21,7 @@ export interface SourceRef {
 }
 
 /** The manifest layout a suite root was discovered under. */
-export type SuiteLayoutKind = 'agent-plugin-v1' | 'universal' | 'claude-code' | 'cursor' | 'kimi' | 'codex' | 'skill-collection'
+export type SuiteLayoutKind = 'agent-plugin-v1' | 'universal' | 'claude-code' | 'cursor' | 'kimi' | 'codex' | 'skill-collection' | 'remote'
 
 /** Normalized suite manifest fields. */
 export interface SuiteManifest {
@@ -111,6 +111,9 @@ export interface Suite {
   enabled: boolean
   lockCommit?: string
   installedAt?: string
+  /** Remote marketplace reference (not cloned): the source URL plus the
+   *  marketplace entry metadata; no local content is available. */
+  remote?: { url: string }
   /** Discovery/validation failures for this suite; skills of a suite with a
    * broken manifest are still exposed when they parse, per spec §7.1. */
   errors: string[]

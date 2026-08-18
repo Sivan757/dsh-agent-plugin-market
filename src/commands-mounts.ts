@@ -14,7 +14,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { parse as parseYaml } from 'yaml'
-import { stripFrontmatter } from './skills-parse.js'
+import { parseSkillFrontmatter, stripFrontmatter } from './skills-parse.js'
 import type { Suite } from './types.js'
 
 export interface CommandMountDiagnostic {
@@ -27,6 +27,7 @@ interface CommandSpec {
   name: string
   description: string
   body: string
+  hint?: string
 }
 
 interface CommandsHost {
@@ -34,6 +35,7 @@ interface CommandsHost {
     register(definition: {
       name: string
       description: string
+      input?: { hint: string }
       handler(invocation: { agent: unknown; rawInput: string }): { kind: 'success'; text: string } | { kind: 'error'; text: string }
     }): () => void
   }
@@ -50,12 +52,12 @@ export class CommandMountRegistry {
 
   constructor(private readonly ctx: Context) {}
 
-  /** Register/unregister suite commands to match the enabled suites exactly. */
+  /** Register/unregister suite commands and agent-commands to match the enabled suites exactly. */
   async reconcile(enabledSuites: Suite[]): Promise<CommandMountDiagnostic[]> {
     const diagnostics: CommandMountDiagnostic[] = []
     const wanted = new Map<string, CommandSpec & { suiteId: string }>()
     for (const suite of enabledSuites) {
-      for (const spec of await readCommands(suite.root)) {
+      for (const spec of [...await readCommands(suite.root), ...await readAgents(suite.root)]) {
         const key = `${suite.id}/${spec.name}`
         wanted.set(key, { ...spec, suiteId: suite.id })
       }
@@ -77,6 +79,7 @@ export class CommandMountRegistry {
         const disposer = host.commands.register({
           name: spec.name,
           description: spec.description,
+          ...spec.hint === undefined ? {} : { input: { hint: spec.hint } },
           handler: (invocation) => {
             const agent = invocation.agent as InboxAgent
             const text = [
@@ -122,26 +125,64 @@ export async function readCommands(root: string): Promise<CommandSpec[]> {
     } catch {
       continue
     }
-    const description = commandDescription(text) ?? firstLine(text)
+    const meta = commandMeta(text)
+    const description = meta?.description ?? firstLine(text)
     if (description === undefined) continue
-    specs.push({ name, description, body: stripFrontmatter(text) })
+    specs.push({ name, description, hint: meta?.hint, body: stripFrontmatter(text) })
   }
   return specs
 }
 
-function commandDescription(text: string): string | undefined {
+/** Parse `agents/*.md` of one suite root into `agent-<name>` commands so
+ *  subagents are selectable from the slash-command menu, grouped by the
+ *  `agent-` prefix (the harness command UI has no group headers). */
+export async function readAgents(root: string): Promise<CommandSpec[]> {
+  let entries: string[]
+  try {
+    entries = await readdir(join(root, 'agents'))
+  } catch {
+    return []
+  }
+  const specs: CommandSpec[] = []
+  for (const entry of entries) {
+    if (!entry.endsWith('.md')) continue
+    const name = `agent-${entry.slice(0, -3)}`
+    if (!COMMAND_NAME.test(name)) continue
+    let text: string
+    try {
+      text = await readFile(join(root, 'agents', entry), 'utf8')
+    } catch {
+      continue
+    }
+    const parsed = parseSkillFrontmatter(text, name)
+    const description = typeof parsed === 'string' ? parsed : parsed.description
+    if (description === undefined) continue
+    specs.push({ name, description, hint: '子代理', body: stripFrontmatter(text) })
+  }
+  return specs
+}
+
+interface CommandMeta {
+  description?: string
+  hint?: string
+}
+
+function commandMeta(text: string): CommandMeta | undefined {
   const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(text)
   if (match === null) return undefined
   try {
     const raw = parseYaml(match[1])
-    if (typeof raw === 'object' && raw !== null) {
-      const description = (raw as Record<string, unknown>)['description']
-      if (typeof description === 'string' && description.trim() !== '') return description.trim()
-    }
+    if (typeof raw !== 'object' || raw === null) return undefined
+    const record = raw as Record<string, unknown>
+    const meta: CommandMeta = {}
+    const description = record['description']
+    if (typeof description === 'string' && description.trim() !== '') meta.description = description.trim()
+    const hint = record['argument-hint']
+    if (typeof hint === 'string' && hint.trim() !== '') meta.hint = hint.trim()
+    return meta
   } catch {
     return undefined
   }
-  return undefined
 }
 
 function firstLine(text: string): string | undefined {
