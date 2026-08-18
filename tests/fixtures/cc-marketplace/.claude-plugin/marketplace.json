@@ -1,0 +1,8 @@
+{
+  "name": "cc-market",
+  "plugins": [
+    { "name": "jeecg-one", "source": "./skills/jeecg-one" },
+    { "name": "jeecg-two", "source": "./skills/jeecg-two" },
+    { "name": "external-one", "source": { "source": "url", "url": "https://github.com/example/external.git" } }
+  ]
+}

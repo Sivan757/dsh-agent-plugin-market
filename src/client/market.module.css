@@ -1,0 +1,270 @@
+/* 套件市场 section chrome. Layout follows the market page convention:
+   search + tabs header, source sidebar, two-column card grid. */
+
+.market {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.searchWrap {
+  flex: 1;
+  max-width: 360px;
+}
+
+.tabRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.tab,
+.tabActive {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--dsw-alias-fg, inherit);
+}
+
+.tabActive {
+  background: #c0392b;
+  color: #fff;
+}
+
+.body {
+  display: flex;
+  gap: 16px;
+  min-height: 320px;
+  align-items: flex-start;
+}
+
+.sidebar {
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--dsw-alias-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.sidebarHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebarTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.sidebarEmpty {
+  color: var(--dsw-alias-fg-dim, rgba(0, 0, 0, 0.4));
+  font-size: 12px;
+  padding: 6px;
+}
+
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.sourceRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.sourceRow:hover {
+  background: var(--dsw-alias-bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.sourceMain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sourceName {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceCount {
+  font-size: 12px;
+  color: var(--dsw-alias-fg-dim, rgba(0, 0, 0, 0.45));
+}
+
+.sourceStatus {
+  font-size: 11px;
+  color: var(--dsw-alias-fg-dim, rgba(0, 0, 0, 0.45));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceActions {
+  display: flex;
+  gap: 2px;
+}
+
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty {
+  color: var(--dsw-alias-fg-dim, rgba(0, 0, 0, 0.4));
+  padding: 40px 0;
+  text-align: center;
+}
+
+.card {
+  border: 1px solid var(--dsw-alias-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--dsw-alias-bg-card, #fff);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cardName {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardVersion {
+  flex: none;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.toggleOn,
+.toggleOff {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  line-height: 1;
+}
+
+.toggleOn {
+  color: #c0392b;
+}
+
+.toggleOff {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.cardDesc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-fg-dim, rgba(0, 0, 0, 0.65));
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 58px;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.badge {
+  font-size: 11px;
+}
+
+.badgeOn {
+  font-size: 11px;
+  background: #c0392b;
+  color: #fff;
+  border-color: transparent;
+}
+
+.badgeWarn {
+  font-size: 11px;
+  cursor: help;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

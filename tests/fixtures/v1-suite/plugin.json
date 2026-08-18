@@ -1,0 +1,8 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "v1-suite",
+  "version": "1.2.3",
+  "description": "A portable v1 suite",
+  "author": { "name": "Fixture Author" },
+  "keywords": ["fixture", "v1"]
+}
