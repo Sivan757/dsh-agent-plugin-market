@@ -116,16 +116,18 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const selectedSource = category === 'all' ? undefined : overview.sources.find(source => source.id === category)
 
   return h('div', { className: css.market },
-    h('div', { className: css.sourceTabs },
-      h(TabButton, { t, active: category === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setCategory('all') }),
-      ...overview.sources.map(source => h(TabButton, {
-        key: source.id,
-        t,
-        active: category === source.id,
-        label: `${source.id}${source.local === true ? ` · ${t('sourceLocal')}` : ''} ${source.suiteIds.length}${source.cloned === false ? ' ⚠' : ''}`,
-        onClick: () => setCategory(source.id),
-      })),
-      h('div', { className: css.spacer }),
+    h('div', { className: css.sourceTabsRow },
+      h('div', { className: css.sourceTabsScroll },
+        h(TabButton, { t, active: category === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setCategory('all') }),
+        ...overview.sources.map(source => h(SourceTab, {
+          key: source.id,
+          t,
+          active: category === source.id,
+          label: `${source.id}${source.local === true ? ` · ${t('sourceLocal')}` : ''} ${source.suiteIds.length}${source.cloned === false ? ' ⚠' : ''}`,
+          onSelect: () => setCategory(source.id),
+          onDelete: () => setConfirm({ kind: 'removeSource', sourceId: source.id }),
+        })),
+      ),
       h('div', { className: css.sourceActions },
         h(Button, {
           variant: 'ghost', size: 'sm',
@@ -216,6 +218,26 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
 
 function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: boolean; label: string; onClick: () => void }): ReactNode {
   return h('button', { type: 'button', className: active ? css.tabOn : css.tab, onClick }, label)
+}
+
+/** A source tab with a trailing delete control (deletion confirms at the section level). */
+function SourceTab(props: {
+  t: Translate
+  active: boolean
+  label: string
+  onSelect: () => void
+  onDelete: () => void
+}): ReactNode {
+  const { t, active, label, onSelect, onDelete } = props
+  return h('div', { className: active ? css.srcTabOn : css.srcTab },
+    h('button', { type: 'button', className: css.srcTabMain, onClick: onSelect }, label),
+    h('button', {
+      type: 'button',
+      className: css.srcTabDel,
+      title: t('remove'),
+      onClick: (event: { stopPropagation(): void }) => { event.stopPropagation(); onDelete() },
+    }, '×'),
+  )
 }
 
 function SourceEditorModal(props: {

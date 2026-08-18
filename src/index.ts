@@ -13,6 +13,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import type { SkillProviderControl } from '@deepseek-ai/dsh-skill'
+import { CommandMountRegistry } from './commands-mounts.js'
 import { mountSuiteContext } from './context.js'
 import { SuiteManager } from './manager.js'
 import { McpMountRegistry } from './mcp-mounts.js'
@@ -39,6 +40,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const dataRoot = resolveDataRoot(config.dataRoot)
   let providerControl: SkillProviderControl | undefined
   const mounts = new McpMountRegistry(ctx, dataRoot)
+  const commandMounts = new CommandMountRegistry(ctx)
 
   const reconcileMounts = (): void => {
     void (async () => {
@@ -49,6 +51,14 @@ export function apply(ctx: Context, config: Config = {}): void {
         }
       } catch (error) {
         ctx.logger?.warn(`[dsh-agent-plugin] mcp reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+      }
+      try {
+        const diagnostics = await commandMounts.reconcile(await manager.enabledUserSuites())
+        for (const diagnostic of diagnostics) {
+          if (diagnostic.reason !== '') ctx.logger?.warn(`[dsh-agent-plugin] suite "${diagnostic.suiteId}" command "${diagnostic.command}": ${diagnostic.reason}`)
+        }
+      } catch (error) {
+        ctx.logger?.warn(`[dsh-agent-plugin] command reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     })()
   }
@@ -77,6 +87,7 @@ export function apply(ctx: Context, config: Config = {}): void {
 
   ctx.effect(() => () => {
     void mounts.disposeAll()
+    commandMounts.disposeAll()
     disposeContext()
   }, 'dsh-agent-plugin: lifecycle')
 }

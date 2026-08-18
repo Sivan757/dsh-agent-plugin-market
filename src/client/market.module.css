@@ -93,27 +93,79 @@
 
 /* --- source tabs (top, primary) -------------------------------------------------- */
 
-.sourceTabs {
+.sourceTabsRow {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
+  flex-shrink: 0;
+}
+
+.sourceTabsScroll {
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
   overflow-x: auto;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   scrollbar-width: thin;
 }
 
-.sourceTabs .tab,
-.sourceTabs .tabOn {
+.sourceTabsScroll .tab,
+.sourceTabsScroll .tabOn,
+.srcTab,
+.srcTabOn {
   flex-shrink: 0;
 }
 
 .sourceActions {
   display: flex;
   gap: 4px;
-  margin-left: auto;
   padding-left: 10px;
   flex-shrink: 0;
+  padding-bottom: 6px;
+}
+
+.srcTab,
+.srcTabOn {
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+}
+
+.srcTabMain {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary, #6b7280);
+  padding: 7px 6px 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.srcTabOn .srcTabMain {
+  color: var(--dsw-alias-brand-primary, #4f6ef7);
+  font-weight: 600;
+}
+
+.srcTabOn {
+  border-bottom-color: var(--dsw-alias-brand-primary, #4f6ef7);
+}
+
+.srcTabDel {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--dsw-alias-label-tertiary, #9ca3af);
+  padding: 7px 10px 7px 2px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.srcTabDel:hover {
+  color: var(--dsw-alias-state-error-primary, #dc2626);
 }
 
 /* --- card grid ----------------------------------------------------------------- */
