@@ -96,34 +96,27 @@
 
 .sourceTabsRow {
   display: flex;
-  align-items: flex-end;
-  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
-  flex-shrink: 0;
-}
-
-.sourceTabsScroll {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-  width: 100%;
-}
-
-.sourceTabsRow {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
   border-radius: 12px;
   background: var(--dsw-alias-bg-layer-1, #fff);
 }
 
+.sourceTabsScroll {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
 .sourceActions {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  border-top: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
-  padding-top: 10px;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .srcTab,
