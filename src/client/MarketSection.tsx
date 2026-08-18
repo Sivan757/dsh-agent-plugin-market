@@ -87,6 +87,19 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     }
   }, [refresh, t])
 
+  // Scope totals follow the selected source pill; without a selection they
+  // mirror the overview-wide totals (全部 / 已安装 / 未安装 stay consistent
+  // with the visible set).
+  const scopeTotals = useMemo(() => {
+    if (category === 'all') return overview.totals
+    const scoped = overview.suites.filter(suite => suite.sourceId === category)
+    return {
+      all: scoped.length,
+      installed: scoped.filter(suite => suite.installed).length,
+      enabled: scoped.filter(suite => suite.enabled).length,
+    }
+  }, [overview, category])
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase()
     return overview.suites.filter((suite) => {
@@ -152,9 +165,9 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
         ),
       ),
       h('div', { className: css.tabRow },
-        h(TabButton, { t, active: tab === 'all', label: `${t('tabAll')} ${overview.totals.all}`, onClick: () => setTab('all') }),
-        h(TabButton, { t, active: tab === 'installed', label: `${t('tabInstalled')} ${overview.totals.installed}`, onClick: () => setTab('installed') }),
-        h(TabButton, { t, active: tab === 'uninstalled', label: `${t('tabUninstalled')} ${overview.totals.all - overview.totals.installed}`, onClick: () => setTab('uninstalled') }),
+        h(TabButton, { t, active: tab === 'all', label: `${t('tabAll')} ${scopeTotals.all}`, onClick: () => setTab('all') }),
+        h(TabButton, { t, active: tab === 'installed', label: `${t('tabInstalled')} ${scopeTotals.installed}`, onClick: () => setTab('installed') }),
+        h(TabButton, { t, active: tab === 'uninstalled', label: `${t('tabUninstalled')} ${scopeTotals.all - scopeTotals.installed}`, onClick: () => setTab('uninstalled') }),
         h('div', { className: css.tabGap }),
         h('button', {
           type: 'button',
