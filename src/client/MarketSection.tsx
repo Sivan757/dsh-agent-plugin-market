@@ -156,8 +156,9 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
         h(TabButton, { t, active: tab === 'installed', label: `${t('tabInstalled')} ${overview.totals.installed}`, onClick: () => setTab('installed') }),
         h(TabButton, { t, active: tab === 'uninstalled', label: `${t('tabUninstalled')} ${overview.totals.all - overview.totals.installed}`, onClick: () => setTab('uninstalled') }),
         h('div', { className: css.tabGap }),
-        h(Button, {
-          variant: 'ghost', size: 'sm',
+        h('button', {
+          type: 'button',
+          className: css.viewSwitch,
           onClick: () => setView(view === 'grid' ? 'list' : 'grid'),
         }, view === 'grid' ? t('list') : t('grid')),
       ),

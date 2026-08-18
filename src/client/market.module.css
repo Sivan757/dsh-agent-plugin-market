@@ -108,6 +108,23 @@
   font-weight: 600;
 }
 
+/* View-switch control (列表/网格): same metrics as .tab so it aligns on the row. */
+.viewSwitch {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary, #9ca3af);
+  padding: 7px 12px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.viewSwitch:hover {
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
 .body {
   display: flex;
   gap: 20px;
