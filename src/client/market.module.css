@@ -95,18 +95,11 @@
 /* --- source tabs (top, primary) -------------------------------------------------- */
 
 .sourceTabsRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);
-  border-radius: 12px;
-  background: var(--dsw-alias-bg-layer-1, #fff);
+  display: block;
+  padding: 0;
 }
 
 .sourceTabsScroll {
-  flex: 1;
-  min-width: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
