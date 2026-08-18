@@ -130,3 +130,26 @@ describe('suite detail and skill content (market detail endpoints)', () => {
     await expect(manager.suiteDetail('demo', 'missing')).rejects.toThrow('not found')
   })
 })
+
+describe('category-nested skill collections', () => {
+  it('finds skills at skills/<category>/<name>/SKILL.md', async () => {
+    const suites = await discoverSuitesInSource(join(fixtures, 'cc-commands'), 'cc', 'user')
+    expect(suites).toHaveLength(1)
+    const names = suites[0]!.skills.map(skill => skill.name)
+    expect(names).toContain('ask-matt')
+    expect(names).toContain('plain')
+  })
+})
+
+describe('suite detail: hooks preview entries', () => {
+  it('flattens CC hooks.json into event/matcher/command entries', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugin-hooks-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    await manager.load()
+    await manager.mergeSources([{ id: 'cc', url: join(fixtures, 'cc-commands'), local: true }])
+    const detail = await manager.suiteDetail('cc', 'cc-commands')
+    const hooks = detail['hooks'] as { count: number; entries: Array<{ event: string; matcher?: string; command: string }> }
+    expect(hooks.count).toBe(1)
+    expect(hooks.entries[0]).toMatchObject({ event: 'PreToolUse', matcher: 'Bash', command: 'echo hi' })
+  })
+})

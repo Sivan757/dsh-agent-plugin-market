@@ -259,10 +259,27 @@ async function discoverSkills(root: string, errors: string[]): Promise<SuiteSkil
   }
   const skillsDir = join(root, 'skills')
   if (!await isDirectory(skillsDir)) return skills
+  const seen = new Set<string>()
   for (const child of await listChildDirs(skillsDir)) {
     const name = child.split(/[\\/]/).at(-1) ?? ''
     const parsed = await parseOneSkill(join(child, 'SKILL.md'), child, name, errors)
-    if (parsed !== undefined) skills.push(parsed)
+    if (parsed === undefined) continue
+    if (seen.has(parsed.name)) continue
+    seen.add(parsed.name)
+    skills.push(parsed)
+  }
+  // Category-nested collections (`skills/<category>/<name>/SKILL.md`) are a
+  // common CC-marketplace variant beyond the spec's immediate-children rule;
+  // scan one more level and dedupe by frontmatter name.
+  for (const category of await listChildDirs(skillsDir)) {
+    for (const child of await listChildDirs(category)) {
+      const name = child.split(/[\\/]/).at(-1) ?? ''
+      const parsed = await parseOneSkill(join(child, 'SKILL.md'), child, name, errors)
+      if (parsed === undefined) continue
+      if (seen.has(parsed.name)) continue
+      seen.add(parsed.name)
+      skills.push(parsed)
+    }
   }
   return skills
 }

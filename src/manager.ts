@@ -75,7 +75,7 @@ export class SuiteManager {
         path: skill.file,
       })),
       mcpServers: suite.mcp === undefined ? [] : Object.entries(suite.mcp.servers).map(([key, server]) => ({ key, ...server })),
-      hooks: suite.surfaces.hooks,
+      hooks: await this.hooksPreviews(suite.root),
       commands: await this.commandPreviews(`${suite.root}/commands`),
       agents: await this.agentPreviews(`${suite.root}/agents`),
       lsp: await this.lspPreviews(suite.root),
@@ -392,6 +392,47 @@ export class SuiteManager {
       }
     }
     return previews
+  }
+
+  /** Parse CC hooks.json into flat {event, matcher, command} preview entries. */
+  private async hooksPreviews(root: string): Promise<{ count: number; entries: Array<{ event: string; matcher?: string; command: string }> }> {
+    for (const relative of ['hooks/hooks.json', 'hooks.json'] as const) {
+      let text: string
+      try {
+        text = await readFile(`${root}/${relative}`, 'utf8')
+      } catch {
+        continue
+      }
+      try {
+        const parsed: unknown = JSON.parse(text)
+        if (typeof parsed !== 'object' || parsed === null) continue
+        const hooks = (parsed as Record<string, unknown>)['hooks']
+        if (typeof hooks !== 'object' || hooks === null) continue
+        const entries: Array<{ event: string; matcher?: string; command: string }> = []
+        for (const [event, groups] of Object.entries(hooks as Record<string, unknown>)) {
+          if (!Array.isArray(groups)) continue
+          for (const group of groups) {
+            if (typeof group !== 'object' || group === null) continue
+            const record = group as Record<string, unknown>
+            const matcher = typeof record['matcher'] === 'string' ? record['matcher'] : undefined
+            const hooksList = record['hooks']
+            if (Array.isArray(hooksList)) {
+              for (const hook of hooksList) {
+                if (typeof hook !== 'object' || hook === null) continue
+                const hookRecord = hook as Record<string, unknown>
+                if (typeof hookRecord['command'] === 'string') {
+                  entries.push({ event, ...matcher === undefined ? {} : { matcher }, command: hookRecord['command'] })
+                }
+              }
+            }
+          }
+        }
+        return { count: entries.length, entries }
+      } catch {
+        // unparsable hook files yield zero entries
+      }
+    }
+    return { count: 0, entries: [] }
   }
 
   private async lspPreviews(root: string): Promise<Array<{ name: string; content: string }>> {

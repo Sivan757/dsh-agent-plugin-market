@@ -156,7 +156,20 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
                 })),
             ),
             h('section', { className: css.detailSection },
-              h('h4', { className: css.detailHead }, `${t('lspSection')} (${detail.lsp.length}) · ${t('hooksLabel')} ${detail.hooks}`),
+              h('h4', { className: css.detailHead }, `${t('hooksLabel')} (${detail.hooks.count})`),
+              detail.hooks.count === 0 ? h('div', { className: css.sidebarEmpty }, '—')
+                : detail.hooks.entries.map((hook, index) => h(PreviewRow, {
+                  key: `h:${index}`,
+                  t,
+                  name: hook.event,
+                  description: hook.command,
+                  open: openPreview === `h:${index}`,
+                  onToggle: () => setOpenPreview(openPreview === `h:${index}` ? undefined : `h:${index}`),
+                  children: h('pre', { className: css.mono }, JSON.stringify(hook, null, 2)),
+                })),
+            ),
+            h('section', { className: css.detailSection },
+              h('h4', { className: css.detailHead }, `${t('lspSection')} (${detail.lsp.length})`),
               detail.lsp.length === 0 ? h('div', { className: css.sidebarEmpty }, '—')
                 : detail.lsp.map(entry => h(PreviewRow, {
                   key: `l:${entry.name}`,

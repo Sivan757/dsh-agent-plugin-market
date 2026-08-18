@@ -77,6 +77,13 @@ export interface LspPreview {
   content: string
 }
 
+/** One flattened CC hook entry for preview. */
+export interface HookPreview {
+  event: string
+  matcher?: string
+  command: string
+}
+
 /** One validated mcp.json server entry. */
 export interface McpServerDetail {
   key: string
@@ -105,7 +112,7 @@ export interface SuiteDetail {
   enabled: boolean
   skills: SuiteSkillMeta[]
   mcpServers: McpServerDetail[]
-  hooks: number
+  hooks: { count: number; entries: HookPreview[] }
   commands: CommandPreview[]
   agents: AgentPreview[]
   lsp: LspPreview[]
