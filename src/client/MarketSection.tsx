@@ -315,6 +315,24 @@ function SourceEditorModal(props: {
   })
 }
 
+/** A green/gray switch control for suite enable state. */
+function ToggleSwitch(props: {
+  on: boolean
+  disabled?: boolean
+  title?: string
+  onChange: () => void
+}): ReactNode {
+  return h('button', {
+    type: 'button',
+    role: 'switch',
+    'aria-checked': props.on,
+    title: props.title,
+    disabled: props.disabled,
+    className: props.on ? css.switchOn : css.switchOff,
+    onClick: (event: { stopPropagation(): void }) => { event.stopPropagation(); props.onChange() },
+  }, h('span', { className: css.switchThumb }))
+}
+
 function SuiteCard(props: {
   t: Translate
   suite: SuiteCardData
@@ -344,14 +362,12 @@ function SuiteCard(props: {
       ),
       h('div', { className: css.cardActions },
         suite.installed
-          ? h('button', {
-            type: 'button',
-            title: suite.enabled ? t('disable') : t('enable'),
-            className: suite.enabled ? css.toggleOn : css.toggleOff,
+          ? h(ToggleSwitch, {
+            on: suite.enabled,
             disabled: busy,
-            onClick: stop(props.onToggle),
-            'aria-pressed': suite.enabled,
-          }, suite.enabled ? '●' : '○')
+            title: suite.enabled ? t('disable') : t('enable'),
+            onChange: props.onToggle,
+          })
           : h(Button, {
             variant: 'primary', size: 'sm', disabled: busy,
             onClick: stop(props.onInstall),

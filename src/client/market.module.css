@@ -101,12 +101,11 @@
 }
 
 .sourceTabsScroll {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 8px;
   flex: 1;
   min-width: 0;
-  align-content: flex-start;
 }
 
 .sourceTabsRow {
@@ -131,8 +130,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 auto;
-  min-width: 120px;
+  width: 100%;
   border: 1px solid var(--dsw-alias-border-l3, #d9dde3);
   border-radius: 999px;
   overflow: hidden;
@@ -193,7 +191,7 @@
 .grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
   gap: 12px;
   min-width: 0;
   align-content: start;
@@ -209,8 +207,9 @@
 
 .list .card {
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  gap: 8px 14px;
 }
 
 .list .cardTop {
@@ -219,12 +218,17 @@
 
 .list .cardDesc {
   flex: 1;
+  min-width: 200px;
   min-height: 0;
   -webkit-line-clamp: 1;
 }
 
 .list .cardActions {
   flex: 0 0 auto;
+}
+
+.list .meta {
+  flex-basis: 100%;
 }
 
 .empty {
@@ -284,22 +288,48 @@
   flex-shrink: 0;
 }
 
-.toggleOn,
-.toggleOff {
+.switchOn,
+.switchOff {
+  position: relative;
+  width: 38px;
+  height: 22px;
   border: none;
-  background: transparent;
+  border-radius: 999px;
   cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
 }
 
-.toggleOn {
-  color: var(--dsw-alias-state-error-primary, #dc2626);
+.switchOn {
+  background: var(--dsw-alias-state-success-primary, #22c55e);
 }
 
-.toggleOff {
-  color: var(--dsw-alias-label-tertiary, #9ca3af);
+.switchOff {
+  background: var(--dsw-alias-state-neutral, #d1d5db);
+}
+
+.switchOn:disabled,
+.switchOff:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.switchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: left 0.15s ease;
+  pointer-events: none;
+}
+
+.switchOn .switchThumb {
+  left: 19px;
 }
 
 .desc {
