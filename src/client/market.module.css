@@ -61,7 +61,17 @@
 }
 
 .searchWrap {
-  flex: 0 0 260px;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  display: flex;
+  align-items: center;
+}
+
+.searchInput input {
+  width: 240px;
 }
 
 .tabRow {

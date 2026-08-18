@@ -128,7 +128,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
           h(Button, { variant: 'ghost', size: 'sm', title: t('addSource'), onClick: () => setEditor({ mode: 'add' }) }, '＋'),
           h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void action('s:refresh:all', 'sources/refresh', {}) } }, '↻'),
           h('div', { className: css.searchWrap },
-            h(Input, { placeholder: t('searchPh'), value: search, onChange: event => setSearch((event.target as HTMLInputElement).value) })),
+            h(Input, { className: css.searchInput, placeholder: t('searchPh'), value: search, onChange: event => setSearch((event.target as HTMLInputElement).value) })),
         ),
       ),
       h('div', { className: css.sourceTabsRow },
