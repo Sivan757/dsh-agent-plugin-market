@@ -4,3 +4,4 @@ client/*.js
 client/*.map
 *.tgz
 .DS_Store
+scripts/npm-token-setup.sh
