@@ -1,7 +1,7 @@
 {
   "name": "dsh-agent-plugins-market",
   "description": "Bring the Claude Code / Codex / Cursor plugin-marketplace ecosystem into DeepSeek Harness (DSH): install & inject agent plugins — skills, MCP servers, hooks, slash commands — from git marketplace repos (agent-plugins.org v1.0.0, .claude-plugin, .codex-plugin, .cursor-plugin, .kimi-plugin), with a Web GUI market page.",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
