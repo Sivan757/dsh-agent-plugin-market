@@ -1,6 +1,6 @@
 {
   "name": "dsh-agent-plugins-market",
-  "description": "Agent Plugins Market for DeepSeek Harness: install, browse and inject Agent Plugins (agent-plugins.org v1.0.0 portable suites) — skills, MCP servers, hooks, commands — from git repo sources, with a market page in the Web GUI.",
+  "description": "Bring the Claude Code / Codex / Cursor plugin-marketplace ecosystem into DeepSeek Harness (DSH): install & inject agent plugins — skills, MCP servers, hooks, slash commands — from git marketplace repos (agent-plugins.org v1.0.0, .claude-plugin, .codex-plugin, .cursor-plugin, .kimi-plugin), with a Web GUI market page.",
   "version": "0.4.3",
   "type": "module",
   "main": "lib/index.js",
@@ -48,13 +48,24 @@
   "license": "MIT",
   "keywords": [
     "deepseek",
+    "deepseek-harness",
     "harness",
     "dsh",
     "dsh-plugin",
     "agent-plugins",
     "agent-plugin",
+    "plugin-marketplace",
+    "marketplace",
+    "claude-code",
+    "claude",
+    "codex",
+    "cursor",
+    "skills",
+    "mcp",
+    "mcp-servers",
+    "hooks",
     "suite",
-    "marketplace"
+    "ai-agents"
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -94,5 +105,6 @@
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
-  }
+  },
+  "homepage": "https://www.npmjs.com/package/dsh-agent-plugins-market"
 }
