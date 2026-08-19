@@ -44,6 +44,10 @@ One repo may carry several dialects at once (vercel/vercel-plugin ships all of t
 
 ## Install
 
+> Requires DeepSeek Harness ≥ 0.1.0-rc.6 with a Web profile. The package is published on [npm](https://www.npmjs.com/package/dsh-agent-plugins-market) and can be installed from the npm registry or directly from GitHub.
+
+**Option 1 — npm registry (recommended):**
+
 ```sh
 # inside a dsh profile
 pnpm add dsh-agent-plugins-market
@@ -52,17 +56,27 @@ pnpm add dsh-agent-plugins-market
 dsh plugin --profile <name> add dsh-agent-plugins-market
 ```
 
-Add the package to the profile's `dsh.profile.bundles` (the package's `cordis.patch.yml` inserts the plugin row):
+**Option 2 — GitHub:**
+
+```sh
+# inside a dsh profile
+pnpm add github:Sivan757/dsh-agent-plugins-market
+
+# or via the dsh CLI
+dsh plugin --profile <name> add github:Sivan757/dsh-agent-plugins-market
+```
+
+**Option 3 — manual:** add the package to the profile's `dsh.profile.bundles` (the package's `cordis.patch.yml` inserts the plugin row):
 
 ```jsonc
 // ~/.dsh/profiles/<profile>/package.json
 {
-  "dependencies": { "dsh-agent-plugins-market": "^0.4.0" },
+  "dependencies": { "dsh-agent-plugins-market": "^0.4.4" },
   "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugins-market"] } }
 }
 ```
 
-Restart dsh and open **Settings → Agent Plugins Market**.
+Restart dsh and open **Settings → Agent Plugins Market**. The built entry point (`lib/`, `client/`) is committed to the repository, so GitHub installs work without a `prepare` step.
 
 ## Configure marketplace sources
 

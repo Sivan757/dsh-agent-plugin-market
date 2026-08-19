@@ -44,6 +44,10 @@ DeepSeek Harness 是很强的 Agent 底座，但它的插件生态还没有 Clau
 
 ## 安装
 
+> 需要 DeepSeek Harness ≥ 0.1.0-rc.6 且带 Web profile。本包已发布到 [npm](https://www.npmjs.com/package/dsh-agent-plugins-market)，可从 npm registry 或直接通过 GitHub 安装。
+
+**方式一：npm registry（推荐）**
+
 ```sh
 # 在某个 dsh profile 中
 pnpm add dsh-agent-plugins-market
@@ -52,17 +56,27 @@ pnpm add dsh-agent-plugins-market
 dsh plugin --profile <名字> add dsh-agent-plugins-market
 ```
 
-把本包加入 profile 的 `dsh.profile.bundles`（包内 `cordis.patch.yml` 自动插入插件行）：
+**方式二：GitHub**
+
+```sh
+# 在某个 dsh profile 中
+pnpm add github:Sivan757/dsh-agent-plugins-market
+
+# 或通过 dsh CLI
+dsh plugin --profile <名字> add github:Sivan757/dsh-agent-plugins-market
+```
+
+**方式三：手动**——把本包加入 profile 的 `dsh.profile.bundles`（包内 `cordis.patch.yml` 自动插入插件行）：
 
 ```jsonc
 // ~/.dsh/profiles/<profile>/package.json
 {
-  "dependencies": { "dsh-agent-plugins-market": "^0.4.0" },
+  "dependencies": { "dsh-agent-plugins-market": "^0.4.4" },
   "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugins-market"] } }
 }
 ```
 
-重启 dsh，在 设置 → Agent Plugins 市场 中管理。
+重启 dsh，在 设置 → Agent Plugins 市场 中管理。构建产物（`lib/`、`client/`）已提交到仓库，GitHub 安装无需 `prepare` 步骤。
 
 ## 配置市场源
 
