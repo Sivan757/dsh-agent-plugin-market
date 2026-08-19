@@ -76,7 +76,7 @@ Sources persist in `~/.dsh/agent-plugins/state.json`; cordis config seeds them (
       - { id: mattpocock-skills, url: 'https://github.com/mattpocock/skills.git' }
       - { id: claude-plugins-official, url: 'https://github.com/anthropics/claude-plugins-official' }
       - { id: ui-ux-pro-max, url: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git' }
-      - { id: jeecg-skills, url: '/Users/me/work/jeecg-plugin', local: true }
+      - { id: my-local-plugin, url: '/Users/me/work/my-plugin', local: true }
 ```
 
 A `local: true` source reads the directory in place (live working tree; never deleted on removal).

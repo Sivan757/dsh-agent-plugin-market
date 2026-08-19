@@ -30,12 +30,12 @@ describe('discovery: agent-plugins.org v1 layout', () => {
 describe('discovery: Claude Code marketplace layout', () => {
   it('uses the marketplace manifest, keeps local entries and remote references', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'cc-marketplace'), 'cc', 'user')
-    expect(suites.map(suite => suite.id)).toEqual(['jeecg-one', 'jeecg-two', 'jeecg-three', 'external-one', 'extra-plugin'])
+    expect(suites.map(suite => suite.id)).toEqual(['demo-one', 'demo-two', 'demo-three', 'external-one', 'extra-plugin'])
     expect(suites[0]!.manifest.layout).toBe('claude-code')
-    expect(suites[0]!.skills[0]!.name).toBe('jeecg-one')
+    expect(suites[0]!.skills[0]!.name).toBe('demo-one')
     // A manifest-less marketplace entry still surfaces as a skill collection.
     expect(suites[2]!.manifest.layout).toBe('skill-collection')
-    expect(suites[2]!.skills[0]!.name).toBe('jeecg-three')
+    expect(suites[2]!.skills[0]!.name).toBe('demo-three')
     // Remote-URL entries surface as metadata-only remote suites.
     expect(suites[3]!.manifest.layout).toBe('remote')
     expect(suites[3]!.remote).toEqual({ url: 'https://github.com/example/external.git' })

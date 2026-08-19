@@ -17,7 +17,7 @@ async function installUserSuite(fixtureDir: string): Promise<{ manager: SuiteMan
   const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, '..', 'data'), onChanged: () => {} })
   await manager.load()
   await manager.mergeSources([{ id: 'demo', url: 'file:///demo' }])
-  await manager.install('demo', fixtureDir.includes('v1-suite') ? 'v1-suite' : fixtureDir.includes('bad-mcp') ? 'bad-mcp' : 'jeecg-one')
+  await manager.install('demo', fixtureDir.includes('v1-suite') ? 'v1-suite' : fixtureDir.includes('bad-mcp') ? 'bad-mcp' : 'demo-one')
   return { manager, userRoot, sourceId: 'demo', suiteId: fixtureDir.includes('v1-suite') ? 'v1-suite' : 'bad-mcp' }
 }
 
@@ -111,9 +111,9 @@ describe('source editing (updateSource)', () => {
     const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'demo', url: 'https://example.com/demo.git' }])
-    await manager.updateSource('demo', { url: '/Users/sivan/workspace/jeecg-plugin', local: true })
+    await manager.updateSource('demo', { url: join(fixtures, 'v1-suite'), local: true })
     const sources = manager.sources
-    expect(sources).toEqual([{ id: 'demo', url: '/Users/sivan/workspace/jeecg-plugin', local: true }])
+    expect(sources).toEqual([{ id: 'demo', url: join(fixtures, 'v1-suite'), local: true }])
     const overview = await manager.overview()
     expect(overview.sources[0]!.local).toBe(true)
     expect(overview.sources[0]!.cloned).toBe(true)

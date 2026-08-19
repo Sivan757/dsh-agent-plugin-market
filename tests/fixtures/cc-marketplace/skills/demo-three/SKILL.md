@@ -1,7 +1,7 @@
 ---
-name: jeecg-three
+name: demo-three
 description: Three skill body.
 ---
-# Jeecg Three
+# Demo Three
 
 Three skill body
