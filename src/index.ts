@@ -48,6 +48,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     void (async () => {
       try {
         const diagnostics = await mounts.reconcile(await manager.enabledUserSuites())
+        manager.mcpDiagnostics = diagnostics
         for (const diagnostic of diagnostics) {
           ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" mcp server "${diagnostic.serverKey}": ${diagnostic.reason}`)
         }

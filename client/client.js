@@ -428,7 +428,10 @@ function SuiteDetailModal({ t, sourceId, suiteId, onClose }) {
 				onClick: () => {
 					toggleSkill(skill.name);
 				}
-			}, (0, react.createElement)("span", { className: market_module_default.detailItemName }, skill.name), (0, react.createElement)("span", { className: market_module_default.detailItemDesc }, skill.description), (0, react.createElement)("span", { className: market_module_default.detailChevron }, openSkill === skill.name ? "▾" : "▸")), openSkill !== skill.name ? null : (0, react.createElement)("div", { className: market_module_default.skillContent }, skillLoading ? t("loading") : (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.MarkdownText, { text: skillText ?? "" }))))), (0, react.createElement)("section", { className: market_module_default.detailSection }, (0, react.createElement)("h4", { className: market_module_default.detailHead }, `${t("mcpSection")} (${detail.mcpServers.length})`), detail.mcpServers.length === 0 ? (0, react.createElement)("div", { className: market_module_default.sidebarEmpty }, "—") : detail.mcpServers.map((server) => (0, react.createElement)("div", {
+			}, (0, react.createElement)("span", { className: market_module_default.detailItemName }, skill.name), (0, react.createElement)("span", { className: market_module_default.detailItemDesc }, skill.description), (0, react.createElement)("span", { className: market_module_default.detailChevron }, openSkill === skill.name ? "▾" : "▸")), openSkill !== skill.name ? null : (0, react.createElement)("div", { className: market_module_default.skillContent }, skillLoading ? t("loading") : (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.MarkdownText, { text: skillText ?? "" }))))), (0, react.createElement)("section", { className: market_module_default.detailSection }, (0, react.createElement)("h4", { className: market_module_default.detailHead }, `${t("mcpSection")} (${detail.mcpServers.length})`), detail.mcpErrors.length === 0 ? null : (0, react.createElement)("div", {
+				className: market_module_default.warnLine,
+				style: { margin: "0 0 6px" }
+			}, `⚠ ${detail.mcpErrors.join("；")}`), detail.mcpServers.length === 0 ? (0, react.createElement)("div", { className: market_module_default.sidebarEmpty }, "—") : detail.mcpServers.map((server) => (0, react.createElement)("div", {
 				key: server.key,
 				className: market_module_default.detailItem
 			}, (0, react.createElement)("button", {
@@ -672,6 +675,9 @@ function MarketSection({ t }) {
 					suiteId: suite.suiteId
 				});
 			},
+			onAddSource: () => {
+				if (suite.remoteUrl !== void 0) action(`a:${suite.suiteId}`, "sources/add", { url: suite.remoteUrl });
+			},
 			onToggle: () => {
 				action(`e:${suite.suiteId}`, "set-enabled", {
 					sourceId: suite.sourceId,
@@ -871,13 +877,18 @@ function SuiteCard(props) {
 		disabled: busy,
 		title: suite.enabled ? t("disable") : t("enable"),
 		onChange: props.onToggle
-	}) : (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+	}) : isRemote ? (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 		variant: "primary",
 		size: "sm",
-		disabled: busy || isRemote,
-		title: isRemote ? suite.remoteUrl : void 0,
+		disabled: busy,
+		title: suite.remoteUrl,
+		onClick: stop(props.onAddSource)
+	}, t("addSource")) : (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+		variant: "primary",
+		size: "sm",
+		disabled: busy,
 		onClick: stop(props.onInstall)
-	}, isRemote ? t("remoteRef") : t("install")), suite.installed ? (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+	}, t("install")), suite.installed ? (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 		variant: "ghost",
 		size: "sm",
 		title: t("refresh"),
@@ -895,6 +906,9 @@ function SuiteCard(props) {
 	}, `${label} ${count}`)), suite.errors.length === 0 ? null : (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {
 		label: suite.errors.slice(0, 8).join("；"),
 		children: (0, react.createElement)("span", { className: market_module_default.warnLine }, `⚠ ${t("errors")} ${suite.errors.length}`)
+	}), (suite.mcpErrors?.length ?? 0) === 0 ? null : (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {
+		label: suite.mcpErrors.slice(0, 8).join("；"),
+		children: (0, react.createElement)("span", { className: market_module_default.warnLine }, `⚠ ${t("mcpSection")} ${suite.mcpErrors.length}`)
 	})));
 }
 //#endregion

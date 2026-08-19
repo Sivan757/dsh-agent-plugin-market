@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>输入框插件条 · 设计样例</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #e5e7eb;
+    --text: #1f2328;
+    --text-2: #6b7280;
+    --text-3: #9ca3af;
+    --brand: #4f6ef7;
+    --brand-soft: rgba(79, 110, 247, 0.08);
+    --hover: #f3f4f6;
+    --radius: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 24px 120px;
+  }
+  .page-title { text-align: center; font-size: 15px; color: var(--text-2); margin-bottom: 6px; }
+  .page-sub { text-align: center; font-size: 12px; color: var(--text-3); margin-bottom: 32px; }
+
+  /* --- 模拟会话窗口 --- */
+  .stage {
+    max-width: 860px;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fafbfc;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  }
+  .stage-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    font-size: 12px; color: var(--text-2);
+  }
+  .stage-head .dot { width: 8px; height: 8px; border-radius: 50%; background: #d1d5db; }
+  .stage-head .dot.on { background: #22c55e; }
+
+  /* --- 消息区（示意） --- */
+  .messages { padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 12px; }
+  .msg {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px; line-height: 20px;
+  }
+  .msg.user { align-self: flex-end; background: var(--brand-soft); color: var(--text); }
+  .msg.assistant { align-self: flex-start; background: #fff; border: 1px solid var(--border); color: var(--text-2); }
+
+  /* --- 输入区：dock 条 + composer --- */
+  .composer-area {
+    padding: 12px 20px 16px;
+    background: #fff;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ===== 插件 dock 条（新增） ===== */
+  .dock {
+    width: 100%;
+    margin: 0 auto 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .dock-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dock-head:hover { background: var(--hover); }
+  .dock-label {
+    font-size: 12px; color: var(--text-3);
+    white-space: nowrap;
+    flex: none;
+  }
+  .dock-pills { display: flex; gap: 6px; flex: 1; min-width: 0; overflow: hidden; flex-wrap: nowrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 24px; padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 11px; color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .12s, background .12s;
+  }
+  .pill:hover { border-color: var(--brand); color: var(--brand); }
+  .pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .pill .count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.06);
+    font-size: 10px; color: var(--text-2);
+  }
+  .pill.active .count { background: rgba(255,255,255,0.22); color: #fff; }
+  .dock-chevron { font-size: 10px; color: var(--text-3); flex: none; transition: transform .15s; }
+  .dock.open .dock-chevron { transform: rotate(180deg); }
+
+  /* ===== 展开面板 ===== */
+  .dock-panel { display: none; border-top: 1px solid var(--border); padding: 8px; max-height: 240px; overflow-y: auto; }
+  .dock.open .dock-panel { display: block; }
+  .group-label { font-size: 11px; color: var(--text-3); padding: 6px 8px 4px; }
+  .row {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .row:hover { background: var(--hover); }
+  .row .cmd { font-family: ui-monospace, Menlo, monospace; color: var(--brand); flex: none; }
+  .row .skill { color: var(--text); flex: none; }
+  .row .desc {
+    flex: 1; min-width: 0;
+    color: var(--text-3);
+    white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    font-size: 11px;
+  }
+  .row .insert {
+    flex: none;
+    border: none; background: none;
+    font-size: 11px; color: var(--brand);
+    cursor: pointer; padding: 2px 6px; border-radius: 6px;
+  }
+  .row .insert:hover { background: var(--brand-soft); }
+
+  /* ===== composer ===== */
+  .composer {
+    display: flex; align-items: flex-end; gap: 10px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fff;
+    padding: 10px 12px;
+  }
+  .composer textarea {
+    flex: 1; border: none; outline: none; resize: none;
+    font-family: var(--font); font-size: 13px; line-height: 20px;
+    min-height: 22px; max-height: 120px;
+    color: var(--text);
+  }
+  .composer .send {
+    flex: none;
+    border: none; border-radius: 10px;
+    background: var(--brand); color: #fff;
+    width: 32px; height: 32px;
+    font-size: 15px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .composer .send:hover { filter: brightness(1.05); }
+
+  /* --- 说明区 --- */
+  .notes {
+    max-width: 860px; margin: 24px auto 0;
+    font-size: 12px; line-height: 22px; color: var(--text-2);
+    background: #fff; border: 1px dashed var(--border);
+    border-radius: 12px; padding: 14px 16px;
+  }
+  .notes b { color: var(--text); }
+  .notes code { background: #f3f4f6; padding: 1px 6px; border-radius: 6px; font-size: 11px; }
+</style>
+</head>
+<body>
+  <div class="page-title">设计样例 · 输入框插件条（conversation.input.dock）</div>
+  <div class="page-sub">点击胶囊展开该插件的命令 / 技能，点「插入」填入输入框；折叠时仅一行胶囊</div>
+
+  <div class="stage">
+    <div class="stage-head">
+      <span class="dot on"></span> 会话 · DeepSeek Harness
+      <span style="margin-left:auto;font-size:11px;color:var(--text-3)">插件条 dock（order 10，介于 todo 与 queue 之间）</span>
+    </div>
+
+    <div class="messages">
+      <div class="msg assistant">已启用 4 个插件：codex、ui-ux-pro-max、mattpocock-skills、consulting-advisor。输入框上方出现插件条，点胶囊可展开命令与技能。</div>
+      <div class="msg user">用 codex 帮我审查一下当前的改动</div>
+    </div>
+
+    <div class="composer-area">
+      <!-- ============ 插件 dock 条 ============ -->
+      <div class="dock" id="dock">
+        <div class="dock-head" id="dockHead">
+          <span class="dock-label">插件</span>
+          <div class="dock-pills" id="pills"></div>
+          <span class="dock-chevron">▾</span>
+        </div>
+        <div class="dock-panel" id="panel"></div>
+      </div>
+
+      <div class="composer">
+        <textarea id="input" rows="1" placeholder="输入消息，/ 唤起命令、@ 唤起技能…"></textarea>
+        <button class="send" title="发送">↑</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <b>设计要点：</b><br>
+    1. 平时只占一行：左侧「插件」标签 + 已启用插件胶囊（含命令/技能计数），最右折叠箭头；与 todo 条、queue 条并存于 <code>conversation.input.dock</code>（order 10）。<br>
+    2. 点击胶囊 → 高亮并展开面板：按「命令 / 技能」分组列出（数据来自 <code>/api/agent-plugins/overview</code> 的已启用套件），行内显示名称 + 描述 + 「插入」按钮。<br>
+    3. 点「插入」→ 命令以 <code>/name</code>、技能以 <code>name</code> 填入输入框（仅带出名称，与现有约定一致）；也可直接点击行（等效插入）。<br>
+    4. 面板上限 240px 滚动；无命令/技能的插件只显示来源说明。全部为宿主 dock slot 注入，不侵入输入框本体。
+  </div>
+
+<script>
+  const PLUGINS = [
+    {
+      name: 'codex', count: '9',
+      commands: [
+        { name: '/review', desc: 'Run a Codex review of the current changes' },
+        { name: '/adversarial-review', desc: 'Challenge review that questions design choices' },
+        { name: '/rescue', desc: 'Hand a stuck coding task to Codex' },
+        { name: '/status', desc: 'Show background Codex job status' },
+      ],
+      skills: [
+        { name: 'codex-cli-runtime', desc: 'Internal helper contract for codex-companion' },
+        { name: 'agent-codex-rescue', desc: 'Proactively hand a substantial task to Codex' },
+      ],
+    },
+    {
+      name: 'ui-ux-pro-max', count: '7',
+      commands: [],
+      skills: [
+        { name: 'banner-design', desc: 'Design banners for social media, ads, web' },
+        { name: 'design-system', desc: 'Token architecture, component specs' },
+        { name: 'slides', desc: 'Strategic HTML presentations with Chart.js' },
+        { name: 'ui-styling', desc: 'shadcn/ui + Tailwind accessible UIs' },
+      ],
+    },
+    {
+      name: 'mattpocock-skills', count: '12',
+      commands: [],
+      skills: [
+        { name: 'code-review', desc: 'Review changes along standards and spec' },
+        { name: 'tdd', desc: 'Test-driven development red-green-refactor' },
+        { name: 'research', desc: 'Investigate against high-trust primary sources' },
+      ],
+    },
+    {
+      name: 'consulting-advisor', count: '1',
+      commands: [],
+      skills: [
+        { name: 'consulting-advisor', desc: 'Structured cross-domain consulting' },
+      ],
+    },
+  ];
+
+  const pillsEl = document.getElementById('pills');
+  const panelEl = document.getElementById('panel');
+  const dockEl = document.getElementById('dock');
+  const inputEl = document.getElementById('input');
+  let active = null;
+
+  function renderPills() {
+    pillsEl.innerHTML = '';
+    for (const p of PLUGINS) {
+      const pill = document.createElement('span');
+      pill.className = 'pill' + (active === p.name ? ' active' : '');
+      pill.innerHTML = `${p.name} <span class="count">${p.count}</span>`;
+      pill.onclick = (e) => { e.stopPropagation(); toggle(p.name); };
+      pillsEl.appendChild(pill);
+    }
+  }
+
+  function toggle(name) {
+    active = active === name ? null : name;
+    dockEl.classList.toggle('open', active !== null);
+    renderPills();
+    renderPanel();
+  }
+
+  function renderPanel() {
+    panelEl.innerHTML = '';
+    if (active === null) return;
+    const p = PLUGINS.find(x => x.name === active);
+    if (!p) return;
+    if (p.commands.length > 0) {
+      const label = document.createElement('div');
+      label.className = 'group-label'; label.textContent = '命令';
+      panelEl.appendChild(label);
+      for (const c of p.commands) panelEl.appendChild(row(c.name, c.desc, c.name));
+    }
+    if (p.skills.length > 0) {
+      const label = document.createElement('div');
+      label.className = 'group-label'; label.textContent = '技能';
+      panelEl.appendChild(label);
+      for (const s of p.skills) panelEl.appendChild(row(s.name, s.desc, s.name));
+    }
+    if (p.commands.length === 0 && p.skills.length === 0) {
+      const label = document.createElement('div');
+      label.className = 'group-label'; label.textContent = '该插件没有命令或技能';
+      panelEl.appendChild(label);
+    }
+  }
+
+  function row(name, desc, insertText) {
+    const el = document.createElement('div');
+    el.className = 'row';
+    const isCmd = insertText.startsWith('/');
+    el.innerHTML = `
+      <span class="${isCmd ? 'cmd' : 'skill'}">${name}</span>
+      <span class="desc">${desc}</span>
+      <button class="insert">插入</button>`;
+    const insert = () => {
+      inputEl.value = (inputEl.value ? inputEl.value + ' ' : '') + insertText;
+      inputEl.focus();
+    };
+    el.onclick = insert;
+    el.querySelector('.insert').onclick = (e) => { e.stopPropagation(); insert(); };
+    return el;
+  }
+
+  document.getElementById('dockHead').onclick = (e) => {
+    if (e.target.closest('.pill')) return;
+    toggle(active === null ? PLUGINS[0].name : null);
+  };
+
+  renderPills();
+</script>
+</body>
+</html>

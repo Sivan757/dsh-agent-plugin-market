@@ -9,6 +9,12 @@ export declare class SuiteManager {
     private state;
     private mutationQueue;
     private readonly statePath;
+    /** Latest MCP mount diagnostics (suiteId -> reasons), fed by the host reconcile. */
+    mcpDiagnostics: Array<{
+        suiteId: string;
+        serverKey: string;
+        reason: string;
+    }>;
     constructor(options: ManagerOptions);
     /** Load persisted state once at plugin activation. */
     load(): Promise<void>;

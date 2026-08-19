@@ -117,6 +117,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
             ),
             h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('mcpSection')} (${detail.mcpServers.length})`),
+              detail.mcpErrors.length === 0 ? null : h('div', { className: css.warnLine, style: { margin: '0 0 6px' } }, `⚠ ${detail.mcpErrors.join('；')}`),
               detail.mcpServers.length === 0
                 ? h('div', { className: css.sidebarEmpty }, '—')
                 : detail.mcpServers.map(server => h('div', { key: server.key, className: css.detailItem },

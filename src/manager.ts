@@ -27,6 +27,8 @@ export class SuiteManager {
   private state: SuiteState = EMPTY_STATE
   private mutationQueue: Promise<unknown> = Promise.resolve()
   private readonly statePath: string
+  /** Latest MCP mount diagnostics (suiteId -> reasons), fed by the host reconcile. */
+  mcpDiagnostics: Array<{ suiteId: string; serverKey: string; reason: string }> = []
 
   constructor(private readonly options: ManagerOptions) {
     this.statePath = join(options.userRoot, STATE_FILE_NAME)
@@ -82,6 +84,7 @@ export class SuiteManager {
       agents: remoteUrl === undefined ? await this.agentPreviews(`${suite.root}/agents`) : [],
       lsp: remoteUrl === undefined ? await this.lspPreviews(suite.root) : [],
       errors: suite.errors,
+      mcpErrors: this.mcpDiagnostics.filter(diagnostic => diagnostic.suiteId === suite.id).map(diagnostic => `${diagnostic.serverKey}: ${diagnostic.reason}`),
     }
   }
 
@@ -152,6 +155,7 @@ export class SuiteManager {
       dimension: suite.dimension,
       layout: suite.manifest.layout,
       errors: suite.errors,
+      mcpErrors: this.mcpDiagnostics.filter(diagnostic => diagnostic.suiteId === suite.id).map(diagnostic => `${diagnostic.serverKey}: ${diagnostic.reason}`),
     }))
     return {
       sources: sourceRows,

@@ -187,6 +187,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
             busy: busy !== undefined,
             onOpen: () => setDetail({ sourceId: suite.sourceId, suiteId: suite.suiteId }),
             onInstall: () => { void action(`i:${suite.suiteId}`, 'install', { sourceId: suite.sourceId, suiteId: suite.suiteId }) },
+            onAddSource: () => { if (suite.remoteUrl !== undefined) void action(`a:${suite.suiteId}`, 'sources/add', { url: suite.remoteUrl }) },
             onToggle: () => { void action(`e:${suite.suiteId}`, 'set-enabled', { sourceId: suite.sourceId, suiteId: suite.suiteId, enabled: !suite.enabled }) },
             onRefresh: () => { void action(`r:${suite.suiteId}`, 'sources/refresh', { id: suite.sourceId }) },
             onUninstall: () => openUninstall(suite),
@@ -373,6 +374,7 @@ function SuiteCard(props: {
   busy: boolean
   onOpen: () => void
   onInstall: () => void
+  onAddSource: () => void
   onToggle: () => void
   onRefresh: () => void
   onUninstall: () => void
@@ -403,11 +405,16 @@ function SuiteCard(props: {
             title: suite.enabled ? t('disable') : t('enable'),
             onChange: props.onToggle,
           })
-          : h(Button, {
-            variant: 'primary', size: 'sm', disabled: busy || isRemote,
-            title: isRemote ? suite.remoteUrl : undefined,
-            onClick: stop(props.onInstall),
-          }, isRemote ? t('remoteRef') : t('install')),
+          : isRemote
+            ? h(Button, {
+              variant: 'primary', size: 'sm', disabled: busy,
+              title: suite.remoteUrl,
+              onClick: stop(props.onAddSource),
+            }, t('addSource'))
+            : h(Button, {
+              variant: 'primary', size: 'sm', disabled: busy,
+              onClick: stop(props.onInstall),
+            }, t('install')),
         suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('refresh'), disabled: busy, onClick: stop(props.onRefresh) }, '↻') : null,
         suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('uninstall'), disabled: busy, onClick: stop(props.onUninstall) }, '🗑') : null,
       ),
@@ -421,6 +428,10 @@ function SuiteCard(props: {
       suite.errors.length === 0 ? null : h(Tooltip, {
         label: suite.errors.slice(0, 8).join('；'),
         children: h('span', { className: css.warnLine }, `⚠ ${t('errors')} ${suite.errors.length}`) as unknown as ReactElement,
+      }),
+      (suite.mcpErrors?.length ?? 0) === 0 ? null : h(Tooltip, {
+        label: suite.mcpErrors!.slice(0, 8).join('；'),
+        children: h('span', { className: css.warnLine }, `⚠ ${t('mcpSection')} ${suite.mcpErrors!.length}`) as unknown as ReactElement,
       }),
     ),
   )

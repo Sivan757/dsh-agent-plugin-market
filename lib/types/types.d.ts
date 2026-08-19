@@ -137,6 +137,8 @@ export interface SuiteOverviewCard {
     dimension: SuiteDimension;
     layout: SuiteLayoutKind;
     errors: string[];
+    /** Live MCP mount failures for this suite (reason per failed server). */
+    mcpErrors: string[];
 }
 export interface SourceOverview {
     id: string;

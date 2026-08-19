@@ -35,6 +35,7 @@ export interface SuiteCardData {
   layout: string
   remoteUrl?: string
   errors: string[]
+  mcpErrors?: string[]
 }
 
 export interface OverviewData {
@@ -119,6 +120,7 @@ export interface SuiteDetail {
   agents: AgentPreview[]
   lsp: LspPreview[]
   errors: string[]
+  mcpErrors: string[]
 }
 
 /** One skill's full file text. */
