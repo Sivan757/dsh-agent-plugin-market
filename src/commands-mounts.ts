@@ -55,11 +55,11 @@ export class CommandMountRegistry {
   /** Register/unregister suite commands and agent-commands to match the enabled suites exactly. */
   async reconcile(enabledSuites: Suite[]): Promise<CommandMountDiagnostic[]> {
     const diagnostics: CommandMountDiagnostic[] = []
-    const wanted = new Map<string, CommandSpec & { suiteId: string }>()
+    const wanted = new Map<string, CommandSpec & { suiteId: string; suiteName: string }>()
     for (const suite of enabledSuites) {
       for (const spec of [...await readCommands(suite.root), ...await readAgents(suite.root)]) {
         const key = `${suite.id}/${spec.name}`
-        wanted.set(key, { ...spec, suiteId: suite.id })
+        wanted.set(key, { ...spec, suiteId: suite.id, suiteName: suite.manifest.name })
       }
     }
     for (const [key, disposer] of [...this.live]) {
@@ -78,7 +78,7 @@ export class CommandMountRegistry {
       try {
         const disposer = host.commands.register({
           name: spec.name,
-          description: spec.description,
+          description: `[${spec.suiteName}] ${spec.description}`,
           ...spec.hint === undefined ? {} : { input: { hint: spec.hint } },
           handler: (invocation) => {
             const agent = invocation.agent as InboxAgent

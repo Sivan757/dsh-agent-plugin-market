@@ -83,7 +83,8 @@ describe('CommandMountRegistry (CC commands compat)', () => {
     // Commands register under their file name; agents/*.md register as
     // /agent-<name> so subagents are selectable from the slash menu.
     expect(registered.map(def => def.name)).toEqual(['review', 'agent-codex-rescue'])
-    expect(registered[0]!.description).toContain('challenge review')
+    expect(registered[0]!.description).toBe('[cc-commands] Run a challenge review')
+    expect(registered[1]!.description).toContain('[cc-commands]')
     expect(registered[1]!.input).toEqual({ hint: '子代理' })
     let followup: { content: Array<{ type: string; text: string }> } | undefined
     const result = registered[0]!.handler({ agent: { followup: (message: { content: Array<{ type: string; text: string }> }) => { followup = message } }, rawInput: '--wait focus' })

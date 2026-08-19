@@ -90,7 +90,7 @@ function listPayload(suites: Suite[]): Record<string, unknown> {
       description: suite.manifest.description ?? null,
       layout: suite.manifest.layout,
     })),
-    skills: suites.flatMap(suite => suite.skills.map(skill => ({ suiteId: suite.id, name: skill.name, description: skill.description }))),
+    skills: suites.flatMap(suite => suite.skills.map(skill => ({ suiteId: suite.id, name: skill.name, description: `[${suite.manifest.name}] ${skill.description}` }))),
     mcpServers: suites.flatMap(suite => suite.mcp === undefined
       ? []
       : Object.keys(suite.mcp.servers).map(key => ({ suiteId: suite.id, server: key, tools: `mcp__${deriveServerName(suite.id, key)}__*` }))),

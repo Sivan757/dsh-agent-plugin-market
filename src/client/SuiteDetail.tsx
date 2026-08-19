@@ -106,7 +106,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
                       className: openSkill === skill.name ? css.detailItemOpen : css.detailItemRow,
                       onClick: () => { void toggleSkill(skill.name) },
                     },
-                      h('span', { className: css.detailItemName }, `${detail.name}:${skill.name}`),
+                      h('span', { className: css.detailItemName }, skill.name),
                       h('span', { className: css.detailItemDesc }, skill.description),
                       h('span', { className: css.detailChevron }, openSkill === skill.name ? '▾' : '▸'),
                     ),
@@ -138,7 +138,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
                 : detail.commands.map(command => h(PreviewRow, {
                   key: `c:${command.name}`,
                   t,
-                  name: `${detail.name}:${command.name}`,
+                  name: `/${command.name}`,
                   description: command.description,
                   open: openPreview === `c:${command.name}`,
                   onToggle: () => setOpenPreview(openPreview === `c:${command.name}` ? undefined : `c:${command.name}`),
@@ -151,7 +151,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
                 : detail.agents.map(agent => h(PreviewRow, {
                   key: `a:${agent.name}`,
                   t,
-                  name: `${detail.name}:${agent.name}`,
+                  name: agent.name,
                   description: agent.description,
                   open: openPreview === `a:${agent.name}`,
                   onToggle: () => setOpenPreview(openPreview === `a:${agent.name}` ? undefined : `a:${agent.name}`),

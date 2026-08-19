@@ -129,7 +129,7 @@ export class SuiteSkillProvider implements SkillProvider {
     const content = stripFrontmatter(text).replaceAll('${CLAUDE_PLUGIN_ROOT}', locator.suiteRoot)
     return {
       name: parsed.name,
-      description: parsed.description,
+      description: candidate.description,
       ...parsed.whenToUse === undefined ? {} : { whenToUse: parsed.whenToUse },
       invocation: parsed.invocation,
       source: candidate.source,
@@ -143,7 +143,7 @@ export class SuiteSkillProvider implements SkillProvider {
   private candidateFor(entry: LocatedSkill): SkillCandidate {
     return {
       name: entry.skill.name,
-      description: entry.skill.description,
+      description: `[${entry.suite.manifest.name}] ${entry.skill.description}`,
       ...entry.skill.whenToUse === undefined ? {} : { whenToUse: entry.skill.whenToUse },
       invocation: entry.skill.invocation,
       source: entry.source,
