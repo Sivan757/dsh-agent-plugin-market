@@ -6,6 +6,8 @@ English | [简体中文](README.md)
 
 ![Agent Plugins Market screenshot](docs/screenshot.png)
 
+![Suite detail (skills / MCP / commands preview)](docs/screenshot-detail.png)
+
 ## What it does
 
 - **Plugin management**: configure git repository sources (markets), browse every discoverable plugin, install / uninstall / enable / disable / refresh per source or per plugin. Source ids are derived automatically from the repository manifest JSON — no manual input.

@@ -6,6 +6,8 @@
 
 ![Agent Plugins 市场截图](docs/screenshot.png)
 
+![套件详情（技能 / MCP / 命令预览）](docs/screenshot-detail.png)
+
 ## 它能做什么
 
 - **套件管理**：配置 git 仓库源（市场），浏览每个源的套件，支持安装、卸载、启用、禁用、刷新；源 ID 自动从仓库清单 JSON 解析，无需手填。
