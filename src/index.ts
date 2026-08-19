@@ -24,7 +24,7 @@ import { SuiteSkillProvider } from './skills-provider.js'
 import type { SourceRef } from './types.js'
 
 export const name = 'dsh-agent-plugins-market'
-export const inject = ['skills']
+export const inject = ['skills', 'commands']
 
 /** Host configuration. */
 export interface Config {
