@@ -23,8 +23,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npx --yes astro build
-        working-directory: docs-site
+      - name: Install docs-site deps
+        run: |
+          corepack enable
+          pnpm install --no-frozen-lockfile
+        working-directory: .
+      - run: pnpm --dir docs-site exec astro build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs-site/dist
