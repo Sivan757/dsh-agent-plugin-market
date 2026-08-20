@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
 ---
 <Base
   title="dsh-agent-plugins-market — Use Claude Code plugins in DeepSeek Harness (DSH)"
@@ -15,12 +15,12 @@ const base = import.meta.env.BASE_URL;
       Add any git marketplace repo as a source, install its suites, and their skills, MCP servers, hooks and slash commands are injected into your dsh sessions at runtime. Claude Code-authored skills work verbatim (<code>${'{'}CLAUDE_PLUGIN_ROOT{'}'}</code> is substituted automatically).
     </p>
     <p>
-      <a class="cta" href="/install/">Get started</a>
+      <a class="cta" href={`${base}install/`}>Get started</a>
       <a class="cta ghost" href="https://github.com/Sivan757/dsh-agent-plugins-market">GitHub</a>
       <a class="cta ghost" href="https://www.npmjs.com/package/dsh-agent-plugins-market">npm</a>
     </p>
-    <img class="shot" src={`${base}assets/screenshot.png`} alt="Agent Plugins Market page inside the DeepSeek Harness Web GUI" />
-    <img class="shot" src={`${base}assets/screenshot-detail.png`} alt="Plugin suite detail modal with skills, MCP servers and commands preview" />
+    <img class="shot" src={`${base}assets/screenshot.png`} alt="Agent Plugins Market page inside the DeepSeek Harness Web GUI" width="100%" />
+    <img class="shot" src={`${base}assets/screenshot-detail.png`} alt="Plugin suite detail modal with skills, MCP servers and commands preview" width="100%" />
   </section>
 
   <h2>What it solves</h2>
@@ -42,12 +42,12 @@ const base = import.meta.env.BASE_URL;
 
   <h2>Quick install</h2>
   <pre><code>dsh plugin --profile &lt;name&gt; add dsh-agent-plugins-market</code></pre>
-  <p>Requires DeepSeek Harness ≥ 0.1.0-rc.6 with a Web profile. See the <a href="/install/">install guide</a> for details.</p>
+  <p>Requires DeepSeek Harness ≥ 0.1.0-rc.6 with a Web profile. See the <a href={`${base}install/`}>install guide</a> for details.</p>
 
   <h2>Learn more</h2>
   <ul>
-    <li><a href="/install/">Step-by-step install guide</a></li>
-    <li><a href="/compatible-plugins/">Known compatible plugin marketplaces</a></li>
-    <li><a href="/faq/">FAQ</a></li>
+    <li><a href={`${base}install/`}>Step-by-step install guide</a></li>
+    <li><a href={`${base}compatible-plugins/`}>Known compatible plugin marketplaces</a></li>
+    <li><a href={`${base}faq/`}>FAQ</a></li>
   </ul>
 </Base>

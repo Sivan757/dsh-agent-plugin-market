@@ -4,6 +4,7 @@ export interface Props {
   description: string;
 }
 const { title, description } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
 const siteName = 'dsh-agent-plugins-market';
 const faqSchema = JSON.stringify({
   '@context': 'https://schema.org',
@@ -54,7 +55,8 @@ const faqSchema = JSON.stringify({
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={baseUrl + 'favicon.svg'} type="image/svg+xml" />
+
     <script type="application/ld+json" set:html={faqSchema} />
     <style is:global>
       :root {
@@ -94,12 +96,12 @@ const faqSchema = JSON.stringify({
   <body>
     <header class="site">
       <div class="inner">
-        <a class="brand" href="/">dsh-agent-plugins-market</a>
+        <a class="brand" href={`${baseUrl}`}>dsh-agent-plugins-market</a>
         <nav>
-          <a href="/">Home</a>
-          <a href="/install/">Install</a>
-          <a href="/compatible-plugins/">Compatible plugins</a>
-          <a href="/faq/">FAQ</a>
+          <a href={`${baseUrl}`}>Home</a>
+          <a href={`${baseUrl}install/`}>Install</a>
+          <a href={`${baseUrl}compatible-plugins/`}>Compatible plugins</a>
+          <a href={`${baseUrl}faq/`}>FAQ</a>
           <a href="https://github.com/Sivan757/dsh-agent-plugins-market">GitHub ↗</a>
         </nav>
       </div>
