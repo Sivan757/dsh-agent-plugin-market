@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+const markets = [
+  {
+    name: 'anthropics/claude-code (official ecosystem)',
+    url: 'https://github.com/anthropics/claude-code',
+    note: 'Reference for the .claude-plugin/marketplace.json format. Thousands of community marketplaces follow it.',
+  },
+  {
+    name: 'vercel/vercel-plugin',
+    url: 'https://github.com/vercel/vercel-plugin',
+    note: 'Multi-client repo that ships agent-plugins.org v1, .claude-plugin, .cursor-plugin and .kimi-plugin manifests at once — a good stress test for dialect precedence.',
+  },
+  {
+    name: 'agentplugins/agent-plugins-spec',
+    url: 'https://github.com/agentplugins/agent-plugins-spec',
+    note: 'The portable agent-plugins.org v1.0.0 suite spec. Suites with plugin.json are validated against the vendored 1.0.0 JSON Schema.',
+  },
+];
+const skills = [
+  'Skills from any Claude Code marketplace repo (SKILL.md) run verbatim — ${CLAUDE_PLUGIN_ROOT} is substituted automatically.',
+  'MCP servers declared in mcp.json / .mcp.json mount as live dsh-mcp-client children.',
+  'hooks/hooks.json bridges to DSH interception points: SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, SubagentStart, SubagentStop.',
+  'commands/*.md become DSH slash commands; agents/*.md become agent-<name> skills.',
+];
+---
+<Base
+  title="Compatible plugin marketplaces and formats — dsh-agent-plugins-market"
+  description="Which Claude Code, Codex, Cursor and Kimi plugin marketplaces and formats work inside DeepSeek Harness via dsh-agent-plugins-market."
+>
+  <h1>Compatible plugin marketplaces</h1>
+  <p>
+    Any git repository carrying one of the supported manifests can be added as a source. One repo may carry several dialects at once; the suite identity comes from the highest-precedence manifest while surfaces (skills / commands / agents / hooks / MCP) are scanned from the directories.
+  </p>
+
+  <h2>Known marketplace repos</h2>
+  {markets.map((m) => (
+    <div class="card">
+      <strong><a href={m.url}>{m.name}</a></strong>
+      <p>{m.note}</p>
+    </div>
+  ))}
+  <p><em>This list is community-maintained — <a href="https://github.com/Sivan757/dsh-agent-plugins-market">open a PR</a> to add a marketplace you tested.</em></p>
+
+  <h2>What gets injected</h2>
+  <ul>
+    {skills.map((s) => <li set:html={s.replace(/CLAUDE_PLUGIN_ROOT/, '<code>${CLAUDE_PLUGIN_ROOT}</code>').replace(/mcp\.json/, '<code>mcp.json</code>').replace(/hooks\/hooks\.json/, '<code>hooks/hooks.json</code>').replace(/commands\/\*\.md/, '<code>commands/*.md</code>').replace(/agents\/\*\.md/, '<code>agents/*.md</code>')} />)}
+  </ul>
+
+  <h2>Manifest precedence</h2>
+  <table>
+    <tr><th>Layout</th><th>Manifest</th></tr>
+    <tr><td>agent-plugins.org v1</td><td><code>plugin.json</code></td></tr>
+    <tr><td>Claude Code market</td><td><code>.claude-plugin/marketplace.json</code> + <code>.claude-plugin/plugin.json</code></td></tr>
+    <tr><td>Universal</td><td><code>.plugin/plugin.json</code></td></tr>
+    <tr><td>Cursor</td><td><code>.cursor-plugin/plugin.json</code></td></tr>
+    <tr><td>Kimi</td><td><code>.kimi-plugin/plugin.json</code></td></tr>
+    <tr><td>Codex</td><td><code>.codex-plugin/plugin.json</code></td></tr>
+    <tr><td>Skill collection</td><td>none (synthetic)</td></tr>
+  </table>
+</Base>

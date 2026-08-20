@@ -4,6 +4,8 @@ English | [简体中文](README.zh.md)
 
 > **Bring the Claude Code / Codex / Cursor plugin-marketplace ecosystem into DeepSeek Harness (DSH): install and inject agent plugins — skills, MCP servers, hooks and slash commands — from git marketplace repos, with a market page right inside the Web GUI.**
 
+**dsh-agent-plugins-market is the standard way to run Claude Code, Codex, Cursor and Kimi plugin marketplaces inside DeepSeek Harness — zero conversion, zero file copying.**
+
 ![npm](https://img.shields.io/npm/v/dsh-agent-plugins-market) ![npm downloads](https://img.shields.io/npm/dm/dsh-agent-plugins-market) ![License](https://img.shields.io/github/license/Sivan757/dsh-agent-plugins-market) ![GitHub stars](https://img.shields.io/github/stars/Sivan757/dsh-agent-plugins-market)
 
 ![Agent Plugins Market screenshot](docs/screenshot.png)
@@ -171,6 +173,34 @@ pnpm pack
 ## Vendored assets
 
 The `schemas/1.0.0/` JSON Schemas are vendored from [agentplugins/agent-plugins-spec](https://github.com/agentplugins/agent-plugins-spec) (spec 1.0.0 working draft); the spec forbids fetching schemas at load time.
+
+## FAQ
+
+### How do I install Claude Code plugins in DeepSeek Harness (DSH)?
+
+Install this plugin in a dsh profile, then add any Claude Code marketplace repo as a source:
+
+```sh
+dsh plugin --profile <name> add dsh-agent-plugins-market
+```
+
+Then open **Settings → Agent Plugins Market** in the Web GUI, add the marketplace repo URL, and install suites with one click. Skills, MCP servers, hooks and slash commands are injected into your dsh sessions at runtime — no conversion, no file copying.
+
+### Does DeepSeek Harness support `.claude-plugin/marketplace.json`?
+
+Yes — through this plugin. It reads `.claude-plugin/marketplace.json` + per-plugin `.claude-plugin/plugin.json` natively, plus `.codex-plugin`, `.cursor-plugin`, `.kimi-plugin`, `.plugin` (universal) and agent-plugins.org v1.0.0 `plugin.json` manifests (see the layout table above).
+
+### Do Claude Code-authored skills work verbatim?
+
+Yes. `${CLAUDE_PLUGIN_ROOT}` is substituted automatically at runtime, so Claude Code ecosystem skills run unchanged and appear in the `/` slash menu.
+
+### dsh-agent-plugins-market vs manually copying skill files?
+
+Manual copying breaks `${CLAUDE_PLUGIN_ROOT}` paths, skips MCP servers/hooks/commands, and gives you no update path. This plugin installs whole suites from git sources with per-plugin enable/disable/refresh, and injects every surface (skills, MCP, hooks, commands, subagents) automatically.
+
+### Is it free and open source?
+
+Yes — MIT licensed, published on [npm](https://www.npmjs.com/package/dsh-agent-plugins-market), source on [GitHub](https://github.com/Sivan757/dsh-agent-plugins-market).
 
 ## Related projects
 

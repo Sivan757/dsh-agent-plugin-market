@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+const faqs = [
+  {
+    q: 'How do I install Claude Code plugins in DeepSeek Harness (DSH)?',
+    a: `Install dsh-agent-plugins-market in a dsh profile, then add any Claude Code marketplace repo as a source:
+<pre><code>dsh plugin --profile &lt;name&gt; add dsh-agent-plugins-market</code></pre>
+Then open <strong>Settings → Agent Plugins Market</strong> in the Web GUI. Skills, MCP servers, hooks and slash commands are injected into your dsh sessions at runtime — no conversion, no file copying.`,
+  },
+  {
+    q: 'Does DeepSeek Harness support .claude-plugin/marketplace.json?',
+    a: 'Yes — through dsh-agent-plugins-market. It reads <code>.claude-plugin/marketplace.json</code> and per-plugin <code>.claude-plugin/plugin.json</code> natively, plus <code>.codex-plugin</code>, <code>.cursor-plugin</code>, <code>.kimi-plugin</code>, <code>.plugin</code> (universal) and agent-plugins.org v1.0.0 <code>plugin.json</code> manifests.',
+  },
+  {
+    q: 'Do Claude Code-authored skills work verbatim?',
+    a: 'Yes. <code>${CLAUDE_PLUGIN_ROOT}</code> is substituted automatically at runtime, so Claude Code ecosystem skills run unchanged and appear in the <code>/</code> slash menu.',
+  },
+  {
+    q: 'dsh-agent-plugins-market vs manually copying skill files?',
+    a: 'Manual copying breaks <code>${CLAUDE_PLUGIN_ROOT}</code> paths, skips MCP servers / hooks / commands, and gives you no update path. This plugin installs whole suites from git sources with per-plugin enable/disable/refresh, and injects every surface automatically.',
+  },
+  {
+    q: 'Which MCP transports are supported?',
+    a: '<code>mcp.json</code> is validated strictly against the agent-plugins.org schema; <code>.mcp.json</code> is parsed leniently — top-level server-map shorthand, <code>type: http</code> / <code>local</code> / omitted type (stdio by <code>command</code>) normalization, and <code>${CLAUDE_PLUGIN_ROOT}</code> / <code>${CLAUDE_PLUGIN_DATA}</code> / <code>${NAME:-default}</code> placeholders are supported.',
+  },
+  {
+    q: 'Is it free and open source?',
+    a: 'Yes — MIT licensed, published on <a href="https://www.npmjs.com/package/dsh-agent-plugins-market">npm</a>, source on <a href="https://github.com/Sivan757/dsh-agent-plugins-market">GitHub</a>.',
+  },
+];
+---
+<Base
+  title="FAQ — dsh-agent-plugins-market for DeepSeek Harness"
+  description="Frequently asked questions about using Claude Code, Codex, Cursor and Kimi plugins inside DeepSeek Harness with dsh-agent-plugins-market."
+>
+  <h1>FAQ</h1>
+  {faqs.map((f) => (
+    <div class="card">
+      <h2 style="margin-top:0" id={f.q.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60)}>{f.q}</h2>
+      <div set:html={f.a} />
+    </div>
+  ))}
+</Base>

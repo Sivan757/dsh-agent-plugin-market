@@ -1,0 +1,11 @@
+{
+  "name": "dsh-agent-plugins-market-docs",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "astro": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp"]
+  }
+}
