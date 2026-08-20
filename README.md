@@ -30,7 +30,7 @@ dsh plugin --profile <name> add dsh-agent-plugins-market
 pnpm add dsh-agent-plugins-market
 ```
 
-Restart dsh, open **Settings → Agent Plugins Market**, add a marketplace repo as a source (e.g. `https://github.com/anthropics/claude-plugins-official`), and install suites with one click. Skills appear in the `/` slash menu; MCP tools appear as `mcp__<suite>__<server>__<tool>`; slash commands and `/agent-*` subagents register automatically.
+Restart dsh, open **Settings → Agent Plugins Market**, add a marketplace repo as a source (e.g. `https://github.com/anthropics/claude-plugins-official`), and install suites with one click. On legacy Web shells without the `settings.section` slot, the same UI falls back to a top-level Agent Plugins Market page entry. Skills appear in the `/` slash menu; MCP tools appear as `mcp__<suite>__<server>__<tool>`; slash commands and `/agent-*` subagents register automatically.
 
 <details>
 <summary><strong>More install options</strong></summary>
@@ -48,7 +48,7 @@ dsh plugin --profile <name> add github:Sivan757/dsh-agent-plugins-market
 ```jsonc
 // ~/.dsh/profiles/<profile>/package.json
 {
-  "dependencies": { "dsh-agent-plugins-market": "^0.4.4" },
+  "dependencies": { "dsh-agent-plugins-market": "^0.4.6" },
   "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugins-market"] } }
 }
 ```
@@ -60,14 +60,14 @@ The built entry point (`lib/`, `client/`) is committed to the repository, so Git
 ## Features
 
 - **Plugin / suite management** — configure git repository sources (markets), browse every discoverable plugin, install / uninstall / enable / disable / refresh per source or per plugin. Source ids are derived automatically from the repository manifest JSON — no manual input.
-- **Market page in the Web GUI** — source pills + search/actions, status tabs, a two-column card grid, and a plugin detail modal with previews for skills / MCP / hooks / commands / LSP.
+- **Market page in the Web GUI** — source pills + search/actions, status tabs, a two-column card grid, and a plugin detail modal with previews for skills / MCP / hooks / commands / LSP. New shells render it as a localized Settings page; legacy shells without `settings.section` receive a guarded top-level page-mode fallback instead of a duplicate surface.
 - **Runtime injection**
   - **Skills** — a `ctx.skills` SkillProvider (project rank 250 / user rank 450); `${CLAUDE_PLUGIN_ROOT}` is substituted so Claude Code-authored skills work verbatim, and appear in the `/` slash menu.
   - **MCP servers** — every valid `mcp.json` server of an enabled plugin mounts a live `dsh-mcp-client` child; tools appear as `mcp__<plugin>__<server>__<tool>`.
   - **Hooks** — a plugin's `hooks/hooks.json` mounts the `dsh-hooks-claude-code` bridge on the harness interception points (SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, SubagentStart, SubagentStop).
   - **Commands / subagents** — `commands/*.md` register as dsh slash commands; `agents/*.md` register as `agent-<name>` skills.
   - **Context** — the enabled-plugin catalog (user + project sections) is injected at session start; the `agent_plugins` tool queries it.
-- **Runtime discovery** — installed plugins are discovered from `~/.dsh/agent-plugins/.sources/<sourceId>/` (user dimension) and `<project>/.dsh/agent-plugins/.sources/<sourceId>/` (project dimension). Local sources read the working tree directly, including uncommitted changes.
+- **Runtime discovery** — installed plugins are discovered from configured source ids under `~/.dsh/agent-plugins/.sources/<sourceId>/` (user dimension) and `<project>/.dsh/agent-plugins/.sources/<sourceId>/` (project dimension). Stale unmanaged user checkouts are ignored, while project checkouts remain state-authorized. Local sources read the working tree directly, including uncommitted changes.
 
 ## Supported plugin layouts
 

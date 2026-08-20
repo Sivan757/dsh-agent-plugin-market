@@ -45,14 +45,10 @@ const DOT_DIRS = new Set(['.git', '.github', '.claude', '.cursor', '.kimi', '.pl
 /** Discover every suite under one cloned source checkout. */
 export async function discoverSuitesInSource(checkoutDir: string, sourceId: string, dimension: SuiteDimension): Promise<Suite[]> {
   const roots = await suiteRoots(checkoutDir)
-  const suites: Suite[] = []
-  for (const root of roots) {
-    const suite = root.dir === undefined
-      ? remoteSuite(sourceId, dimension, root)
-      : await readSuite(root.dir, sourceId, dimension, root.hint)
-    if (suite !== undefined) suites.push(suite)
-  }
-  return suites
+  const suites = await Promise.all(roots.map(async root => root.dir === undefined
+    ? remoteSuite(sourceId, dimension, root)
+    : readSuite(root.dir, sourceId, dimension, root.hint)))
+  return suites.filter((suite): suite is Suite => suite !== undefined)
 }
 
 interface SuiteHint {
@@ -236,27 +232,34 @@ export function isOutside(root: string, candidate: string): boolean {
 }
 
 /**
- * Discover every suite of one dimension's configured sources, plus manual
- * checkouts present under the dimension's `.sources/` that no source entry
- * names. Local sources read their directory directly; git sources read
- * their clone; a missing checkout contributes nothing.
+ * Discover suites for one dimension. User catalogs only read configured
+ * sources: unmanaged user checkouts have no persisted identity and otherwise
+ * leak stale repositories into the catalog totals. Project catalogs retain
+ * unmanaged checkout ids because project state may authorize them through its
+ * installed map without duplicating source configuration. All selected
+ * checkouts are discovered concurrently so one large repository does not
+ * serialize every other repository's scan.
  */
 export async function discoverSourceList(sources: SourceRef[], dimension: SuiteDimension, dimensionRoot: string): Promise<Suite[]> {
   const checkoutRoot = sourcesDir(dimensionRoot)
-  const bySource = new Map<string, Suite[]>()
   const listed = new Set(sources.map(source => source.id))
-  try {
-    for (const entry of await readdir(checkoutRoot, { withFileTypes: true })) {
-      if (!entry.isDirectory() || entry.name.startsWith('.') || listed.has(entry.name)) continue
-      bySource.set(entry.name, await discoverSuitesInSource(join(checkoutRoot, entry.name), entry.name, dimension))
+  const checkouts = sources.map(source => ({
+    sourceId: source.id,
+    checkout: source.local === true ? expandHome(source.url) : join(checkoutRoot, source.id),
+  }))
+  if (dimension === 'project') {
+    try {
+      for (const entry of await readdir(checkoutRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory() || entry.name.startsWith('.') || listed.has(entry.name)) continue
+        checkouts.push({ sourceId: entry.name, checkout: join(checkoutRoot, entry.name) })
+      }
+    } catch {
+      // A missing project checkout root has no unmanaged project sources.
     }
-  } catch {
-    // a missing checkout root simply has no manual checkouts
   }
-  for (const source of sources) {
-    const checkout = source.local === true ? expandHome(source.url) : join(checkoutRoot, source.id)
-    if (!await isDirectory(checkout)) continue
-    bySource.set(source.id, await discoverSuitesInSource(checkout, source.id, dimension))
-  }
-  return [...bySource.values()].flat()
+  const discovered = await Promise.all(checkouts.map(async ({ sourceId, checkout }) => {
+    if (!await isDirectory(checkout)) return []
+    return discoverSuitesInSource(checkout, sourceId, dimension)
+  }))
+  return discovered.flat()
 }

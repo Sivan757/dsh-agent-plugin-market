@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP 服务 · 平铺列表原型</title>
+<style>
+  :root {
+    --canvas: #eef1f7;
+    --surface: #fbfcfe;
+    --white: #fff;
+    --ink: #101828;
+    --muted: #667085;
+    --faint: #98a2b3;
+    --line: #e2e7ef;
+    --line-strong: #d4dce8;
+    --blue: #4966f5;
+    --blue-soft: #edf1ff;
+    --green: #159957;
+    --green-soft: #e9f8ef;
+    --amber: #a86f17;
+    --red: #d34242;
+    --mono: "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+    --ui: "Avenir Next", "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; padding: 34px 22px 72px; color: var(--ink);
+    background: radial-gradient(circle at 12% 0%, rgba(73,102,245,.08), transparent 30%), var(--canvas);
+    font-family: var(--ui);
+  }
+  button { font: inherit; }
+  .kicker { max-width: 1060px; margin: 0 auto 6px; color: var(--blue); font: 600 10px/16px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+  .prototype-note { max-width: 1060px; margin: 0 auto 26px; color: var(--faint); font-size: 12px; line-height: 18px; }
+  .console { max-width: 1060px; margin: 0 auto; overflow: hidden; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; box-shadow: 0 18px 46px rgba(16,24,40,.08); }
+  .topbar { display: flex; align-items: flex-start; gap: 18px; padding: 24px 28px 20px; border-bottom: 1px solid var(--line); }
+  .eyebrow { color: var(--muted); font: 600 11px/16px var(--mono); letter-spacing: .06em; }
+  h1 { margin-top: 3px; font-size: 25px; font-weight: 650; letter-spacing: -.035em; line-height: 32px; }
+  .subtitle { margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 20px; }
+  .top-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .health-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; color: var(--green); background: var(--green-soft); border: 1px solid #c8efd6; border-radius: 8px; font-size: 11px; white-space: nowrap; }
+  .health-pill::before { width: 6px; height: 6px; content: ""; background: currentColor; border-radius: 50%; }
+  .refresh { height: 28px; padding: 0 11px; color: var(--blue); background: var(--white); border: 1px solid #cfd7ff; border-radius: 8px; cursor: pointer; font-size: 12px; }
+  .refresh:hover { background: var(--blue-soft); }
+  .toolbar { display: flex; align-items: center; gap: 8px; padding: 13px 28px; background: #f6f8fc; border-bottom: 1px solid var(--line); }
+  .search { flex: 1; min-width: 140px; height: 30px; padding: 0 11px; color: var(--ink); background: var(--white); border: 1px solid var(--line-strong); border-radius: 8px; outline: none; font-size: 12px; }
+  .search:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(73,102,245,.1); }
+  .filter { height: 28px; padding: 0 10px; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 7px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+  .filter:hover { background: #e9edf5; }
+  .filter.active { color: var(--blue); background: var(--blue-soft); border-color: #d6ddff; font-weight: 600; }
+  .filter-count { margin-left: 3px; color: var(--faint); font-family: var(--mono); }
+  .filter.active .filter-count { color: var(--blue); }
+  .workspace { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(330px, .9fr); min-height: 570px; }
+  .list-pane { min-width: 0; border-right: 1px solid var(--line); }
+  .list-head { display: grid; grid-template-columns: minmax(150px, 1.4fr) 108px 112px 62px; gap: 10px; padding: 10px 18px; color: var(--faint); border-bottom: 1px solid var(--line); font: 10px/14px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+  .mcp-list { list-style: none; }
+  .mcp-row { display: grid; grid-template-columns: 4px minmax(150px, 1.4fr) 108px 112px 62px; gap: 10px; align-items: center; min-height: 70px; padding: 10px 18px 10px 0; background: transparent; border: none; border-bottom: 1px solid var(--line); cursor: pointer; text-align: left; width: 100%; transition: background .12s; }
+  .mcp-row:hover { background: #f6f8fc; }
+  .mcp-row.selected { background: var(--blue-soft); }
+  .row-rail { align-self: stretch; width: 4px; background: var(--green); border-radius: 0 4px 4px 0; }
+  .row-rail.warn { background: #e1a63a; }
+  .row-rail.err { background: var(--red); }
+  .row-main { min-width: 0; }
+  .row-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; font: 600 12px/18px var(--mono); }
+  .row-endpoint { overflow: hidden; margin-top: 2px; color: var(--faint); text-overflow: ellipsis; white-space: nowrap; font: 10px/16px var(--mono); }
+  .source-tag, .type-tag { display: inline-flex; width: fit-content; align-items: center; max-width: 100%; padding: 2px 6px; border-radius: 5px; font-size: 10px; line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .source-tag.plugin { color: var(--blue); background: var(--blue-soft); }
+  .source-tag.direct { color: #5b5bd6; background: #f0efff; }
+  .type-tag { color: var(--muted); background: #f0f2f5; font-family: var(--mono); }
+  .row-tools { color: var(--muted); font-size: 11px; white-space: nowrap; }
+  .row-tools strong { color: var(--ink); font: 600 14px/18px var(--mono); }
+  .row-state { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: 10px; white-space: nowrap; }
+  .row-state::before { width: 6px; height: 6px; content: ""; background: currentColor; border-radius: 50%; }
+  .row-state.warn { color: var(--amber); }
+  .row-state.err { color: var(--red); }
+  .detail-pane { min-width: 0; background: var(--white); }
+  .detail-empty { display: grid; min-height: 570px; place-items: center; padding: 28px; color: var(--faint); font-size: 12px; text-align: center; }
+  .detail { padding: 22px 22px 28px; }
+  .detail-kicker { color: var(--faint); font: 10px/16px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .detail-title { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+  .detail-title h2 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 650 16px/24px var(--mono); }
+  .detail-status { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: 10px; white-space: nowrap; }
+  .detail-status::before { width: 6px; height: 6px; content: ""; background: currentColor; border-radius: 50%; }
+  .detail-status.warn { color: var(--amber); }
+  .detail-status.err { color: var(--red); }
+  .detail-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+  .detail-meta span { padding: 2px 7px; color: var(--muted); background: #f2f4f7; border-radius: 5px; font-size: 10px; }
+  .detail-section { margin-top: 22px; }
+  .detail-section-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+  .detail-section-head strong { font-size: 12px; }
+  .detail-section-head span { color: var(--faint); font: 10px/14px var(--mono); }
+  .config { overflow: auto; max-height: 176px; margin-top: 9px; padding: 11px 12px; color: #344054; background: #f6f8fc; border: 1px solid var(--line); border-radius: 8px; font: 10px/17px var(--mono); white-space: pre-wrap; word-break: break-word; }
+  .tool-list { margin-top: 5px; }
+  .tool { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #eef1f5; }
+  .tool:last-child { border-bottom: 0; }
+  .tool-icon { display: grid; width: 19px; height: 19px; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 5px; font: 10px/1 var(--mono); }
+  .tool-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; font: 11px/17px var(--mono); }
+  .tool-desc { overflow: hidden; margin-left: auto; color: var(--faint); text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+  .detail-note { margin-top: 18px; padding: 9px 10px; color: var(--muted); background: #fafbfe; border-left: 3px solid #aab5ff; border-radius: 5px; font-size: 10px; line-height: 16px; }
+  .notes { max-width: 1060px; margin: 20px auto 0; color: var(--muted); font-size: 12px; line-height: 21px; }
+  .notes strong { color: var(--ink); }
+  .notes code { padding: 1px 5px; color: #4b5563; background: #e9edf4; border-radius: 4px; font: 11px/16px var(--mono); }
+  @media (max-width: 760px) {
+    body { padding: 18px 10px 48px; }
+    .topbar, .toolbar { padding-left: 16px; padding-right: 16px; }
+    .topbar { flex-direction: column; gap: 10px; }
+    .top-actions { width: 100%; margin-left: 0; justify-content: space-between; }
+    .workspace { display: block; }
+    .list-pane { border-right: 0; }
+    .detail-pane { border-top: 1px solid var(--line); }
+    .list-head { grid-template-columns: minmax(150px, 1fr) 86px 62px; padding-left: 16px; padding-right: 16px; }
+    .list-head span:nth-child(2) { display: none; }
+    .mcp-row { grid-template-columns: 4px minmax(150px, 1fr) 86px 62px; padding-right: 16px; }
+    .mcp-row .type-tag { display: none; }
+    .detail { padding: 18px 16px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="kicker">MCP / SERVICE INVENTORY</div>
+  <div class="prototype-note">平铺服务列表原型：来源用标签表达，点击任意 MCP 在右侧查看配置与工具。</div>
+  <main class="console">
+    <header class="topbar">
+      <div><div class="eyebrow">RUNTIME MCP</div><h1>MCP 服务</h1><p class="subtitle">连接状态、来源和工具清单</p></div>
+      <div class="top-actions"><span class="health-pill">3 / 5 可用</span><button class="refresh" id="refresh">↻ 刷新</button></div>
+    </header>
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="搜索 MCP 名称、来源或地址…" aria-label="搜索 MCP">
+      <button class="filter active" data-filter="all">全部 <span class="filter-count">05</span></button>
+      <button class="filter" data-filter="plugin">Plugin <span class="filter-count">04</span></button>
+      <button class="filter" data-filter="direct">直接安装 <span class="filter-count">01</span></button>
+    </div>
+    <div class="workspace">
+      <section class="list-pane">
+        <div class="list-head"><span>服务</span><span>来源</span><span>传输</span><span>工具</span></div>
+        <div class="mcp-list" id="list">
+          <button class="mcp-row selected" data-id="codex__codex_app" data-kind="plugin"><span class="row-rail"></span><span class="row-main"><span class="row-name">codex__codex_app</span><span class="row-endpoint">.../codex-plugin/plugins/codex</span></span><span class="source-tag plugin">Plugin · codex</span><span class="type-tag">stdio</span><span class="row-tools"><strong>12</strong></span></button>
+          <button class="mcp-row" data-id="context7__context7" data-kind="plugin"><span class="row-rail"></span><span class="row-main"><span class="row-name">context7__context7</span><span class="row-endpoint">mcp.context7.com/mcp</span></span><span class="source-tag plugin">Plugin · context7</span><span class="type-tag">http</span><span class="row-tools"><strong>08</strong></span></button>
+          <button class="mcp-row" data-id="jetbrains__jetbrains" data-kind="plugin"><span class="row-rail warn"></span><span class="row-main"><span class="row-name">jetbrains__jetbrains</span><span class="row-endpoint">127.0.0.1:64342/stream</span></span><span class="source-tag plugin">Plugin · jetbrains</span><span class="type-tag">http</span><span class="row-tools"><strong>00</strong></span></button>
+          <button class="mcp-row" data-id="mattpocock__mtp" data-kind="plugin"><span class="row-rail err"></span><span class="row-main"><span class="row-name">mattpocock__mtp</span><span class="row-endpoint">bun run --cwd .../start</span></span><span class="source-tag plugin">Plugin · mattpocock</span><span class="type-tag">stdio</span><span class="row-tools"><strong>00</strong></span></button>
+          <button class="mcp-row" data-id="filesystem" data-kind="direct"><span class="row-rail"></span><span class="row-main"><span class="row-name">filesystem</span><span class="row-endpoint">server-filesystem …</span></span><span class="source-tag direct">直接安装</span><span class="type-tag">stdio</span><span class="row-tools"><strong>06</strong></span></button>
+        </div>
+      </section>
+      <aside class="detail-pane" id="detail"></aside>
+    </div>
+  </main>
+  <div class="notes"><strong>设计重点：</strong>所有 MCP 平铺在一个列表里，不再按来源拆成两组；来源只用标签表达。点击服务后，右侧详情固定展示连接配置与工具清单。Plugin MCP 可以显示完整诊断，直接安装 MCP 仍受宿主状态 API 限制。</div>
+<script>
+  const DATA = {
+    'codex__codex_app': { name: 'codex__codex_app', status: 'connected', statusText: '已连接', kind: 'plugin', source: 'Plugin · codex', type: 'stdio', tools: 12, config: { transport: 'stdio', serverName: 'codex__codex_app', command: './scripts/launch_codex_app_tools_mcp', cwd: '.', enabled: true }, toolList: [['list_windows', '列出窗口'], ['open_file', '打开文件'], ['read_selection', '读取选区'], ['run_command', '执行命令'], ['take_screenshot', '截取屏幕']] },
+    'context7__context7': { name: 'context7__context7', status: 'connected', statusText: '已连接', kind: 'plugin', source: 'Plugin · context7', type: 'streamable-http', tools: 8, config: { transport: 'streamable-http', serverName: 'context7__context7', url: 'https://mcp.context7.com/mcp', headers: { Authorization: 'Bearer ${CONTEXT7_API_KEY:-}' } }, toolList: [['resolve-library-id', '解析库标识'], ['get-library-docs', '获取库文档'], ['search-docs', '搜索文档']] },
+    'jetbrains__jetbrains': { name: 'jetbrains__jetbrains', status: 'warn', statusText: '0 工具', kind: 'plugin', source: 'Plugin · jetbrains', type: 'streamable-http', tools: 0, config: { transport: 'streamable-http', serverName: 'jetbrains__jetbrains', url: 'http://127.0.0.1:64342/stream' }, toolList: [], note: '服务器已挂载，但当前 IDE 没有返回工具。' },
+    'mattpocock__mtp': { name: 'mattpocock__mtp', status: 'err', statusText: '挂载失败', kind: 'plugin', source: 'Plugin · mattpocock', type: 'stdio', tools: 0, config: { transport: 'stdio', serverName: 'mattpocock__mtp', command: 'bun', args: ['run', 'start'] }, toolList: [], note: 'command not found' },
+    filesystem: { name: 'filesystem', status: 'connected', statusText: '已连接', kind: 'direct', source: '直接安装', type: 'stdio', tools: 6, config: { transport: 'stdio', serverName: 'filesystem', command: 'npx', args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace'] }, toolList: [['read_file', '读取文件'], ['write_file', '写入文件'], ['list_directory', '列出目录'], ['search_files', '搜索文件']] }
+  };
+  const detail = document.getElementById('detail'); const rows = [...document.querySelectorAll('.mcp-row')]; const filters = [...document.querySelectorAll('.filter')]; const search = document.getElementById('search');
+  function renderDetail(id) { const item = DATA[id]; if (!item) return; const stateClass = item.status === 'connected' ? '' : item.status === 'warn' ? ' warn' : ' err'; detail.innerHTML = `<div class="detail"><div class="detail-kicker">SERVICE DETAIL</div><div class="detail-title"><h2>${item.name}</h2><span class="detail-status${stateClass}">${item.statusText}</span></div><div class="detail-meta"><span>${item.source}</span><span>${item.type}</span><span>${item.tools} tools</span></div><section class="detail-section"><div class="detail-section-head"><strong>连接配置</strong><span>read-only</span></div><pre class="config">${escapeHtml(JSON.stringify(item.config, null, 2))}</pre></section><section class="detail-section"><div class="detail-section-head"><strong>工具</strong><span>${item.tools} registered</span></div><div class="tool-list">${item.toolList.length ? item.toolList.map(([name, desc], i) => `<div class="tool"><span class="tool-icon">${String(i + 1).padStart(2, '0')}</span><span class="tool-name">${name}</span><span class="tool-desc">${desc}</span></div>`).join('') : '<div class="empty">当前没有已注册工具</div>'}</div></section>${item.note ? `<div class="detail-note">${item.note}</div>` : ''}</div>`; }
+  function escapeHtml(value) { return value.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])); }
+  function apply() { const kind = document.querySelector('.filter.active')?.dataset.filter || 'all'; const query = search.value.trim().toLowerCase(); rows.forEach(row => { const item = DATA[row.dataset.id]; const text = row.textContent.toLowerCase(); row.hidden = (kind !== 'all' && item.kind !== kind) || (query !== '' && !text.includes(query)); }); }
+  rows.forEach(row => row.addEventListener('click', () => { rows.forEach(item => item.classList.remove('selected')); row.classList.add('selected'); renderDetail(row.dataset.id); }));
+  filters.forEach(button => button.addEventListener('click', () => { filters.forEach(item => item.classList.remove('active')); button.classList.add('active'); apply(); }));
+  search.addEventListener('input', apply); document.getElementById('refresh').addEventListener('click', event => { const button = event.currentTarget; button.textContent = '✓ 已刷新'; setTimeout(() => { button.textContent = '↻ 刷新'; }, 900); }); renderDetail('codex__codex_app');
+</script>
+</body>
+</html>

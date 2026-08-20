@@ -18,6 +18,7 @@ import { HooksMountRegistry } from './hooks-mounts.js'
 import { mountSuiteContext } from './context.js'
 import { SuiteManager } from './manager.js'
 import { McpMountRegistry } from './mcp-mounts.js'
+import { inspectToolRegistry } from './mcp-status.js'
 import { resolveDataRoot, resolveUserRoot } from './paths.js'
 import { mountSuiteRoutes } from './routes.js'
 import { SuiteSkillProvider } from './skills-provider.js'
@@ -80,6 +81,9 @@ export function apply(ctx: Context, config: Config = {}): void {
   }
 
   const manager = new SuiteManager({ userRoot, dataRoot, onChanged })
+  ctx.inject(['tools'], (toolsCtx) => {
+    manager.setMcpToolSnapshotProvider(() => inspectToolRegistry((toolsCtx as { tools: unknown }).tools))
+  })
   void manager.load().then(async () => {
     await manager.mergeSources(config.sources ?? [])
     reconcileMounts()

@@ -63,7 +63,14 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
 
   const layoutLabel = detail === undefined
     ? ''
-    : detail.layout === 'agent-plugin-v1' ? t('layoutV1') : detail.layout === 'claude-code' ? t('layoutCC') : detail.layout === 'codex' ? t('layoutCodex') : detail.layout === 'remote' ? t('layoutRemote') : t('layoutSkills')
+    : detail.layout === 'agent-plugin-v1' ? t('layoutV1')
+      : detail.layout === 'claude-code' ? t('layoutCC')
+        : detail.layout === 'codex' ? t('layoutCodex')
+          : detail.layout === 'universal' ? t('layoutUniversal')
+            : detail.layout === 'cursor' ? t('layoutCursor')
+              : detail.layout === 'kimi' ? t('layoutKimi')
+                : detail.layout === 'remote' ? t('layoutRemote')
+                  : t('layoutSkills')
 
   return h(Modal, {
     open: true,
@@ -117,7 +124,7 @@ export function SuiteDetailModal({ t, sourceId, suiteId, onClose }: SuiteDetailM
             ),
             h('section', { className: css.detailSection },
               h('h4', { className: css.detailHead }, `${t('mcpSection')} (${detail.mcpServers.length})`),
-              detail.mcpErrors.length === 0 ? null : h('div', { className: css.warnLine, style: { margin: '0 0 6px' } }, `⚠ ${detail.mcpErrors.join('；')}`),
+              detail.mcpErrors.length === 0 ? null : h('div', { className: css.warnLine, style: { margin: '0 0 6px' } }, `⚠ ${detail.mcpErrors.join(t('sourceErrorSeparator'))}`),
               detail.mcpServers.length === 0
                 ? h('div', { className: css.sidebarEmpty }, '—')
                 : detail.mcpServers.map(server => h('div', { key: server.key, className: css.detailItem },

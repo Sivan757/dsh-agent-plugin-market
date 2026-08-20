@@ -13,6 +13,7 @@ import { mkdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { discoverLspEntries, discoverSourceList, discoverSuitesInSource, listMdFiles, repoName } from './discovery.js'
 import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
+import { buildMcpStatus, type McpStatusPayload, type McpToolSnapshot } from './mcp-status.js'
 import { deriveSourceId, expandHome, isDirectory, resolveProjectRoot, sanitizeId, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
 import { loadState, saveState, EMPTY_STATE } from './state.js'
 import type { InstalledEntry, OverviewPayload, SourceOverview, SourceRef, Suite, SuiteDimension, SuiteState } from './types.js'
@@ -31,9 +32,21 @@ export class SuiteManager {
   private readonly headCache = new Map<string, string>()
   /** Latest MCP mount diagnostics (suiteId -> reasons), fed by the host reconcile. */
   mcpDiagnostics: Array<{ suiteId: string; serverKey: string; reason: string }> = []
+  private toolSnapshotProvider: () => readonly McpToolSnapshot[] = () => []
 
   constructor(private readonly options: ManagerOptions) {
     this.statePath = join(options.userRoot, STATE_FILE_NAME)
+  }
+
+  /** Install the host tool snapshot provider used by the MCP status surface. */
+  setMcpToolSnapshotProvider(provider: () => readonly McpToolSnapshot[]): void {
+    this.toolSnapshotProvider = provider
+  }
+
+  /** Build the flat MCP service inventory for the status surface. */
+  async mcpStatus(): Promise<McpStatusPayload> {
+    const suites = await this.discoverDimension('user', this.options.userRoot)
+    return buildMcpStatus(suites, this.mcpDiagnostics, this.toolSnapshotProvider())
   }
 
   /** Load persisted state once at plugin activation. */

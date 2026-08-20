@@ -150,6 +150,39 @@ export async function fetchSuiteDetail(sourceId: string, suiteId: string): Promi
   return response.json() as Promise<SuiteDetail>
 }
 
+export interface McpStatusTool {
+  name: string
+  description?: string
+}
+
+export interface McpStatusEntry {
+  id: string
+  name: string
+  kind: 'plugin' | 'direct'
+  state: 'connected' | 'degraded' | 'failed' | 'disabled'
+  source?: string
+  suiteId?: string
+  serverKey?: string
+  transport: string
+  endpoint?: string
+  config?: Record<string, unknown>
+  tools: McpStatusTool[]
+  reason?: string
+}
+
+export interface McpStatusPayload {
+  entries: McpStatusEntry[]
+  observedAt: string
+  totals: { all: number; connected: number; degraded: number; failed: number; disabled: number }
+  directObservationOnly: boolean
+}
+
+export async function fetchMcpStatus(): Promise<McpStatusPayload> {
+  const response = await fetch('/api/agent-plugins/mcp-status', { credentials: 'same-origin' })
+  if (!response.ok) throw new Error(`MCP status failed: ${response.status}`)
+  return response.json() as Promise<McpStatusPayload>
+}
+
 export async function fetchSkillContent(sourceId: string, suiteId: string, skill: string): Promise<SkillContent> {
   const response = await fetch(`/api/agent-plugins/skill?sourceId=${encodeURIComponent(sourceId)}&suiteId=${encodeURIComponent(suiteId)}&skill=${encodeURIComponent(skill)}`, { credentials: 'same-origin' })
   if (!response.ok) throw new Error(`skill content failed: ${response.status}`)

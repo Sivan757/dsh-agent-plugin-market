@@ -30,7 +30,7 @@ dsh plugin --profile <名字> add dsh-agent-plugins-market
 pnpm add dsh-agent-plugins-market
 ```
 
-重启 dsh，打开 **设置 → Agent Plugins 市场**，把市场仓库添加为源（例如 `https://github.com/anthropics/claude-plugins-official`），一键安装套件。技能出现在「/」斜杠菜单；MCP 工具以 `mcp__<套件>__<server>__<工具>` 出现；斜杠命令与 `/agent-*` 子代理自动注册。
+重启 dsh，打开 **设置 → Agent Plugins 市场**，把市场仓库添加为源（例如 `https://github.com/anthropics/claude-plugins-official`），一键安装套件。对于没有 `settings.section` slot 的旧版 Web 外壳，同一套界面会自动回退为顶层 Agent Plugins 市场页。技能出现在「/」斜杠菜单；MCP 工具以 `mcp__<套件>__<server>__<工具>` 出现；斜杠命令与 `/agent-*` 子代理自动注册。
 
 <details>
 <summary><strong>更多安装方式</strong></summary>
@@ -48,7 +48,7 @@ dsh plugin --profile <名字> add github:Sivan757/dsh-agent-plugins-market
 ```jsonc
 // ~/.dsh/profiles/<profile>/package.json
 {
-  "dependencies": { "dsh-agent-plugins-market": "^0.4.4" },
+  "dependencies": { "dsh-agent-plugins-market": "^0.4.6" },
   "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-agent-plugins-market"] } }
 }
 ```
@@ -60,14 +60,14 @@ dsh plugin --profile <名字> add github:Sivan757/dsh-agent-plugins-market
 ## 功能特性
 
 - **套件管理**——配置 git 仓库源（市场），浏览每个源的套件，支持安装、卸载、启用、禁用、刷新；源 ID 自动从仓库清单 JSON 解析，无需手填。
-- **Web 市场页**——设置面板内的市场页：顶部源胶囊 + 搜索/操作、状态标签、两列卡片网格、套件详情弹窗（技能/MCP/hooks/命令/LSP 全部可预览）。
+- **Web 市场页**——顶部源胶囊 + 搜索/操作、状态标签、两列卡片网格、套件详情弹窗（技能/MCP/hooks/命令/LSP 全部可预览）。新版外壳使用带中文/英文切换的设置页；没有 `settings.section` slot 的旧版外壳才启用受保护的顶层页面回退，不会重复渲染两份市场页。
 - **运行时注入**
   - **技能**：注册 `ctx.skills` SkillProvider（项目 rank 250 / 用户 rank 450），`${CLAUDE_PLUGIN_ROOT}` 自动替换，Claude Code 生态技能原样可用，出现在「/」斜杠菜单；
   - **MCP 服务器**：启用套件的 `mcp.json` 每个合法 server 动态挂载 `dsh-mcp-client` 子插件，工具名 `mcp__<套件>__<server>__<工具>`；
   - **Hooks**：套件 `hooks/hooks.json` 挂载 `dsh-hooks-claude-code` 桥，映射到宿主拦截点（SessionStart、UserPromptSubmit、PreToolUse、PostToolUse、Stop、SubagentStart、SubagentStop）；
   - **命令 / 子代理**：`commands/*.md` 注册为 dsh 斜杠命令；`agents/*.md` 注册为 `agent-<name>` 技能；
   - **上下文**：会话启动注入启用套件清单（用户级 + 项目级），`agent_plugins` 工具可查询。
-- **运行时发现**——已安装套件从 `~/.dsh/agent-plugins/.sources/<源id>/`（用户维度）与 `<项目>/.dsh/agent-plugins/.sources/<源id>/`（项目维度）发现；本地源直接读取工作树（含未提交改动）。
+- **运行时发现**——已安装套件只从已配置的源 ID 对应目录发现：`~/.dsh/agent-plugins/.sources/<源id>/`（用户维度）与 `<项目>/.dsh/agent-plugins/.sources/<源id>/`（项目维度）。用户维度的过期未登记 checkout 会被忽略，项目维度仍按 state 中的安装记录授权；本地源直接读取工作树（含未提交改动）。
 
 ## 兼容的套件布局
 

@@ -1,23 +1,26 @@
 /**
  * dsh-agent-plugins-market client: registers the Agent Plugins Market section inside the Web
- * GUI's settings dialog (the same settings.section seat dshmarket uses).
- * Mirrors the market's integration contract: the bundle's only externals are
- * react and the injected `dsh.client.inject` module table, so it cannot reach
- * packages the host does not serve.
+ * GUI's settings page (the same settings.section seat dshmarket uses), with a
+ * guarded legacy top-level page fallback for older shells. The bundle's
+ * browser externals are React, ReactDOM, and the injected `dsh.client.inject`
+ * module table, so it cannot reach packages the host does not serve.
  */
 import { createElement as h } from 'react'
 import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
-import { en, zh } from './locales.js'
+import { en, zh, type LocaleKey } from './locales.js'
 import { MarketSection } from './MarketSection.js'
+import { McpStatusPanel } from './McpStatusPanel.js'
+import { LEGACY_PAGE_MODE_SURFACE_EVENT, mountLegacyPageMode } from './page-mode.js'
 
 const NS = 'dsh-agent-plugins-market'
 
-export type Translate = (key: string) => string
+export type Translate = (key: LocaleKey, params?: Record<string, unknown>) => string
 
 /** The subset of the locale service this plugin touches. */
 interface LocaleService {
   register(namespace: string, dicts: { zh: Record<string, string>; en: Record<string, string> }): unknown
   bind(namespace: string): Translate
+  subscribe?: (listener: () => void) => () => void
 }
 
 /** The subset of the slots service this plugin touches. */
@@ -54,14 +57,44 @@ export function apply(ctx: SuiteClientContext): void {
     return
   }
 
-  ctx.slots.inject('settings.section', () => ctx.slots.register({
-    name: 'settings.section',
-    id: 'agent-plugin',
-    order: 45,
-    label: () => t('nav'),
-    locale: NS,
-    inject: () => ({ t }),
-  }, () => h(MarketSection, {
+  let settingsSurfaceAvailable = false
+  ctx.effect(() => mountLegacyPageMode({
     t,
-  })))
+    isSettingsSurfaceAvailable: () => settingsSurfaceAvailable,
+    subscribeLocale: ctx.locale.subscribe === undefined ? undefined : (listener) => ctx.locale.subscribe!(listener),
+  }), 'dsh-agent-plugins-market: legacy page mode')
+
+  ctx.slots.inject('settings.section', () => {
+    settingsSurfaceAvailable = true
+    notifyPageModeSurfaceChange()
+    const marketDispose = ctx.slots.register({
+      name: 'settings.section',
+      id: 'agent-plugin',
+      order: 45,
+      label: () => t('nav'),
+      locale: NS,
+      inject: () => ({ t }),
+    }, () => h(MarketSection, {
+      t,
+      mode: 'settings',
+    }))
+    const mcpDispose = ctx.slots.register({
+      name: 'settings.section',
+      id: 'mcp-status',
+      order: 46,
+      label: () => t('mcpStatusNav'),
+      locale: NS,
+      inject: () => ({ t }),
+    }, () => h(McpStatusPanel, { t }))
+    return () => {
+      settingsSurfaceAvailable = false
+      notifyPageModeSurfaceChange()
+      if (typeof mcpDispose === 'function') mcpDispose()
+      if (typeof marketDispose === 'function') marketDispose()
+    }
+  })
+}
+
+function notifyPageModeSurfaceChange(): void {
+  if (typeof document !== 'undefined') document.dispatchEvent(new Event(LEGACY_PAGE_MODE_SURFACE_EVENT))
 }

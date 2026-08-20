@@ -1,3 +1,4 @@
+import { type McpStatusPayload, type McpToolSnapshot } from './mcp-status.js';
 import type { OverviewPayload, SourceRef, Suite, SuiteDimension } from './types.js';
 export interface ManagerOptions {
     userRoot: string;
@@ -17,7 +18,12 @@ export declare class SuiteManager {
         serverKey: string;
         reason: string;
     }>;
+    private toolSnapshotProvider;
     constructor(options: ManagerOptions);
+    /** Install the host tool snapshot provider used by the MCP status surface. */
+    setMcpToolSnapshotProvider(provider: () => readonly McpToolSnapshot[]): void;
+    /** Build the flat MCP service inventory for the status surface. */
+    mcpStatus(): Promise<McpStatusPayload>;
     /** Load persisted state once at plugin activation. */
     load(): Promise<void>;
     get sources(): SourceRef[];

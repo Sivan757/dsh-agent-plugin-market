@@ -18,6 +18,7 @@ import { fetchOverview, fetchSourceProgress, postAction, type OverviewData, type
 import type { Translate } from './index.js'
 import { ErrorBoundary } from './ErrorBoundary.js'
 import { SuiteDetailModal } from './SuiteDetail.js'
+import { SearchFilterToolbar } from './SearchFilterToolbar.js'
 import css from './market.module.css'
 
 /** Host step keys -> translation keys, resolved against the active t(). */
@@ -28,6 +29,8 @@ const PROGRESS_STEP_LABELS: Record<string, string> = {
 
 export interface MarketSectionProps {
   t: Translate
+  /** The host surface controls only outer spacing; data and actions stay shared. */
+  mode?: 'settings' | 'page'
 }
 
 type Tab = 'all' | 'installed' | 'uninstalled'
@@ -84,6 +87,11 @@ function progressStepLabel(step: string): string {
   return PROGRESS_STEP_LABELS[step] ?? step
 }
 
+/** Keep parameterized copy compatible with hosts whose bound translator ignores params. */
+function interpolate(text: string, params: Record<string, unknown>): string {
+  return text.replace(/\{(\w+)\}/g, (match, key: string) => key in params ? String(params[key]) : match)
+}
+
 const EMPTY_OVERVIEW: OverviewData = { sources: [], suites: [], totals: { all: 0, installed: 0, enabled: 0 }, roots: { user: '', data: '' } }
 
 /**
@@ -112,7 +120,7 @@ function dropCachedOverview(): void {
   cachedOverview = undefined
 }
 
-export function MarketSection({ t }: MarketSectionProps): ReactNode {
+export function MarketSection({ t, mode = 'settings' }: MarketSectionProps): ReactNode {
   const [overview, setOverview] = useState<OverviewData>(() => loadOverview().initial)
   const [loading, setLoading] = useState(() => cachedOverview === undefined)
   const [search, setSearch] = useState('')
@@ -201,73 +209,76 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
 
   return h(ErrorBoundary, {
     fallback: error => h('div', { className: css.empty }, `${t('actionFail')}: ${error.message}`),
-    children: h('div', { className: css.market },
+    children: h('div', { className: mode === 'page' ? `${css.market} ${css.pageMode}` : css.market },
     h('header', { className: css.header },
       h('div', { className: css.titleRow },
         h('h2', { className: css.title }, t('nav')),
-        h('p', { className: css.sub }, t('subtitle')),
         h('div', { className: css.spacer }),
         h('div', { className: css.searchGroup },
           h(Button, { variant: 'ghost', size: 'sm', title: t('addSource'), onClick: () => setEditor({ mode: 'add' }) }, '＋'),
           h(Button, { variant: 'ghost', size: 'sm', title: t('refreshAll'), onClick: () => { void action('s:refresh:all', 'sources/refresh', {}) } }, '↻'),
-          h('div', { className: css.searchWrap },
-            h(Input, { className: css.searchInput, placeholder: t('searchPh'), value: search, onChange: event => setSearch((event.target as HTMLInputElement).value) })),
         ),
       ),
-      h('div', { className: css.sourceTabsRow },
-        h('div', { className: css.sourceTabsScroll },
-          h(SourceTab, {
-            key: '__all__',
-            t,
-            active: category === 'all',
-            label: `${t('tabAll')} ${overview.totals.all}`,
-            onSelect: () => setCategory('all'),
-          }),
-          ...[...overview.sources].sort((a, b) => a.id.localeCompare(b.id)).map(source => h(SourceTab, {
-            key: source.id,
-            t,
-            active: category === source.id,
-            label: `${source.id}${source.local === true ? ` · ${t('sourceLocal')}` : ''} ${source.suiteIds.length}${source.cloned === false ? ' ⚠' : ''}`,
-            onSelect: () => setCategory(source.id),
-            onDelete: () => setConfirm({ kind: 'removeSource', sourceId: source.id }),
-            onEdit: selectedSource?.id === source.id ? () => setEditor({ mode: 'edit', source: source }) : undefined,
-          })),
+      h('div', { className: css.marketControls },
+        h('div', { className: css.sourceTabsRow },
+          h('div', { className: css.sourceTabsScroll },
+            h(SourceTab, {
+              key: '__all__',
+              t,
+              active: category === 'all',
+              label: `${t('tabAll')} ${overview.totals.all}`,
+              onSelect: () => setCategory('all'),
+            }),
+            ...[...overview.sources].sort((a, b) => a.id.localeCompare(b.id)).map(source => h(SourceTab, {
+              key: source.id,
+              t,
+              active: category === source.id,
+              label: `${source.id}${source.local === true ? ` · ${t('sourceLocal')}` : ''} ${source.suiteIds.length}${source.cloned === false ? ' ⚠' : ''}`,
+              onSelect: () => setCategory(source.id),
+              onDelete: () => setConfirm({ kind: 'removeSource', sourceId: source.id }),
+              onEdit: selectedSource?.id === source.id ? () => setEditor({ mode: 'edit', source: source }) : undefined,
+            })),
+          ),
         ),
-      ),
-      h('div', { className: css.tabRow },
-        h(TabButton, { t, active: tab === 'all', label: `${t('tabAll')} ${scopeTotals.all}`, onClick: () => setTab('all') }),
-        h(TabButton, { t, active: tab === 'installed', label: `${t('tabInstalled')} ${scopeTotals.installed}`, onClick: () => setTab('installed') }),
-        h(TabButton, { t, active: tab === 'uninstalled', label: `${t('tabUninstalled')} ${scopeTotals.all - scopeTotals.installed}`, onClick: () => setTab('uninstalled') }),
-        h('div', { className: css.tabGap }),
-        h('button', {
-          type: 'button',
-          className: css.viewSwitch,
-          onClick: () => setView(view === 'grid' ? 'list' : 'grid'),
-        }, view === 'grid' ? t('list') : t('grid')),
+        h(SearchFilterToolbar, {
+          search,
+          searchLabel: t('searchPh'),
+          searchPlaceholder: t('searchPh'),
+          onSearchChange: setSearch,
+          filters: [
+            { id: 'all', label: t('tabAll'), count: scopeTotals.all, icon: h(StatusIcon, { kind: 'all' }), active: tab === 'all', onSelect: () => setTab('all') },
+            { id: 'installed', label: t('tabInstalled'), count: scopeTotals.installed, icon: h(StatusIcon, { kind: 'installed' }), active: tab === 'installed', onSelect: () => setTab('installed') },
+            { id: 'uninstalled', label: t('tabUninstalled'), count: scopeTotals.all - scopeTotals.installed, icon: h(StatusIcon, { kind: 'uninstalled' }), active: tab === 'uninstalled', onSelect: () => setTab('uninstalled') },
+          ],
+          view,
+          gridLabel: t('grid'),
+          listLabel: t('list'),
+          onViewChange: nextView => setView(nextView),
+        }),
       ),
     ),
     h('main', { className: view === 'grid' ? css.grid : css.list },
-      loading
-        ? h('div', { className: css.empty }, '…')
-        : filtered.length === 0
-          ? h('div', { className: css.empty }, tab === 'installed' ? t('installedEmpty') : t('empty'))
-          : filtered.map(suite => h(SuiteCard, {
-            key: `${suite.sourceId}/${suite.suiteId}`,
-            t, suite,
-            busy: busy !== undefined,
-            onOpen: () => setDetail({ sourceId: suite.sourceId, suiteId: suite.suiteId }),
-            onInstall: () => { void action(`i:${suite.suiteId}`, 'install', { sourceId: suite.sourceId, suiteId: suite.suiteId }) },
-            onAddSource: () => { if (suite.remoteUrl !== undefined) void action(`a:${suite.suiteId}`, 'sources/add', { url: suite.remoteUrl }) },
-            onToggle: () => { void action(`e:${suite.suiteId}`, 'set-enabled', { sourceId: suite.sourceId, suiteId: suite.suiteId, enabled: !suite.enabled }) },
-            onRefresh: () => { void action(`r:${suite.suiteId}`, 'sources/refresh', { id: suite.sourceId }) },
-            onUninstall: () => openUninstall(suite),
-          })),
+          loading
+            ? h('div', { className: css.empty }, t('loading'))
+            : filtered.length === 0
+              ? h('div', { className: css.empty }, tab === 'installed' ? t('installedEmpty') : t('empty'))
+              : filtered.map(suite => h(SuiteCard, {
+                key: `${suite.sourceId}/${suite.suiteId}`,
+                t, suite,
+                busy: busy !== undefined,
+                onOpen: () => setDetail({ sourceId: suite.sourceId, suiteId: suite.suiteId }),
+                onInstall: () => { void action(`i:${suite.suiteId}`, 'install', { sourceId: suite.sourceId, suiteId: suite.suiteId }) },
+                onAddSource: () => { if (suite.remoteUrl !== undefined) void action(`a:${suite.suiteId}`, 'sources/add', { url: suite.remoteUrl }) },
+                onToggle: () => { void action(`e:${suite.suiteId}`, 'set-enabled', { sourceId: suite.sourceId, suiteId: suite.suiteId, enabled: !suite.enabled }) },
+                onRefresh: () => { void action(`r:${suite.suiteId}`, 'sources/refresh', { id: suite.sourceId }) },
+                onUninstall: () => openUninstall(suite),
+              })),
     ),
     toast === undefined ? null : h(Toast, { key: toast.key, text: toast.message, onDone: () => setToast(undefined) }),
     confirm === undefined ? null : h(Modal, {
       open: true,
       onClose: () => setConfirm(undefined),
-      title: confirm.kind === 'uninstall' ? t('uninstallConfirmTitle') : `${t('removeSourceConfirmTitle')}「${confirm.sourceId}」`,
+      title: confirm.kind === 'uninstall' ? t('uninstallConfirmTitle') : interpolate(t('removeSourceConfirmTitle', { sourceId: confirm.sourceId }), { sourceId: confirm.sourceId }),
       closeLabel: t('cancel'),
       description: confirm.kind === 'uninstall' ? t('uninstallConfirmDesc') : t('removeSourceConfirmDesc'),
       footer: h('div', { className: css.modalFooter },
@@ -325,8 +336,17 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   })
 }
 
-function TabButton({ t: _t, active, label, onClick }: { t: Translate; active: boolean; label: string; onClick: () => void }): ReactNode {
-  return h('button', { type: 'button', className: active ? css.tabOn : css.tab, onClick }, label)
+type StatusIconKind = 'all' | 'installed' | 'uninstalled'
+
+function StatusIcon({ kind }: { kind: StatusIconKind }): ReactNode {
+  const common = { width: 16, height: 16, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true } as const
+  if (kind === 'installed') {
+    return h('svg', common, h('circle', { cx: 8, cy: 8, r: 5.5 }), h('path', { d: 'm5.5 8 1.7 1.7 3.4-3.4' }))
+  }
+  if (kind === 'uninstalled') {
+    return h('svg', common, h('path', { d: 'M8 2v8m-3-3 3 3 3-3M3 13h10' }))
+  }
+  return h('svg', common, h('path', { d: 'M2.5 5 8 2.5 13.5 5 8 7.5 2.5 5Zm0 3L8 10.5 13.5 8M2.5 11 8 13.5 13.5 11' }))
 }
 
 /** A source tab with a trailing delete control (deletion confirms at the section level). */
@@ -514,11 +534,11 @@ function SuiteCard(props: {
       suite.installed ? h('span', { className: suite.enabled ? css.okState : css.tag }, suite.enabled ? `✓ ${t('installedBadge')}` : t('installedBadge')) : null,
       ...tags.map(([label, count]) => h('span', { key: label, className: css.tag }, `${label} ${count}`)),
       suite.errors.length === 0 ? null : h(Tooltip, {
-        label: suite.errors.slice(0, 8).join('；'),
+        label: suite.errors.slice(0, 8).join(t('sourceErrorSeparator')),
         children: h('span', { className: css.warnLine }, `⚠ ${t('errors')} ${suite.errors.length}`) as unknown as ReactElement,
       }),
       (suite.mcpErrors?.length ?? 0) === 0 ? null : h(Tooltip, {
-        label: suite.mcpErrors!.slice(0, 8).join('；'),
+        label: suite.mcpErrors!.slice(0, 8).join(t('sourceErrorSeparator')),
         children: h('span', { className: css.warnLine }, `⚠ ${t('mcpSection')} ${suite.mcpErrors!.length}`) as unknown as ReactElement,
       }),
     ),
