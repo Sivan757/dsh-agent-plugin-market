@@ -51,6 +51,19 @@ export async function fetchOverview(): Promise<OverviewData> {
   return response.json() as Promise<OverviewData>
 }
 
+/** Host-side progress of the source mutation currently in flight, if any. */
+export interface SourceProgress {
+  active: boolean
+  sourceId: string
+  step: string
+}
+
+export async function fetchSourceProgress(): Promise<SourceProgress> {
+  const response = await fetch('/api/agent-plugins/progress', { credentials: 'same-origin' })
+  if (!response.ok) throw new Error(`progress failed: ${response.status}`)
+  return response.json() as Promise<SourceProgress>
+}
+
 /** One skill's metadata inside a suite detail. */
 export interface SuiteSkillMeta {
   name: string

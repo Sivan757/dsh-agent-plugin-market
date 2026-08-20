@@ -14,11 +14,17 @@ import {
   Toast,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import { fetchOverview, postAction, type OverviewData, type SourceOverview, type SuiteCardData } from './api.js'
+import { fetchOverview, fetchSourceProgress, postAction, type OverviewData, type SourceOverview, type SourceProgress, type SuiteCardData } from './api.js'
 import type { Translate } from './index.js'
 import { ErrorBoundary } from './ErrorBoundary.js'
 import { SuiteDetailModal } from './SuiteDetail.js'
 import css from './market.module.css'
+
+/** Host step keys -> translation keys, resolved against the active t(). */
+const PROGRESS_STEP_LABELS: Record<string, string> = {
+  cloning: 'progressCloning',
+  reading: 'progressReading',
+}
 
 export interface MarketSectionProps {
   t: Translate
@@ -44,11 +50,71 @@ type EditorState =
   | { mode: 'add' }
   | undefined
 
+interface ProgressState {
+  step: string | undefined
+  error: string | undefined
+}
+
+/**
+ * Poll the host's source-mutation progress while an add-source request runs.
+ * Failures of the poll itself never surface: the add request is the authority.
+ */
+function startProgressPolling(report: (state: ProgressState) => void): { stop: () => void } {
+  let stopped = false
+  const tick = async () => {
+    if (stopped) return
+    try {
+      const progress: SourceProgress = await fetchSourceProgress()
+      if (!stopped && progress.active) report({ step: progressStepLabel(progress.step), error: undefined })
+    } catch {
+      // transient poll failures are ignored; the add request reports real errors
+    }
+    if (!stopped) timer = setTimeout(tick, 800) as unknown as number
+  }
+  let timer = setTimeout(tick, 400) as unknown as number
+  return {
+    stop: () => {
+      stopped = true
+      clearTimeout(timer)
+    },
+  }
+}
+
+function progressStepLabel(step: string): string {
+  return PROGRESS_STEP_LABELS[step] ?? step
+}
+
 const EMPTY_OVERVIEW: OverviewData = { sources: [], suites: [], totals: { all: 0, installed: 0, enabled: 0 }, roots: { user: '', data: '' } }
 
+/**
+ * Session-level overview cache: the first mount paints the last snapshot
+ * instantly (no empty-state flash on reopen), then revalidates in the
+ * background. Every refresh overwrites the cached copy.
+ */
+let cachedOverview: OverviewData | undefined
+let inflightOverview: Promise<OverviewData> | undefined
+
+function loadOverview(): { initial: OverviewData; revalidating: boolean; promise: Promise<OverviewData> } {
+  const initial = cachedOverview ?? EMPTY_OVERVIEW
+  if (inflightOverview === undefined) {
+    inflightOverview = fetchOverview()
+      .then(data => {
+        cachedOverview = data
+        return data
+      })
+      .finally(() => { inflightOverview = undefined })
+  }
+  return { initial, revalidating: cachedOverview === undefined, promise: inflightOverview }
+}
+
+/** Invalidate the cached overview after any mutating action. */
+function dropCachedOverview(): void {
+  cachedOverview = undefined
+}
+
 export function MarketSection({ t }: MarketSectionProps): ReactNode {
-  const [overview, setOverview] = useState<OverviewData>(EMPTY_OVERVIEW)
-  const [loading, setLoading] = useState(true)
+  const [overview, setOverview] = useState<OverviewData>(() => loadOverview().initial)
+  const [loading, setLoading] = useState(() => cachedOverview === undefined)
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<Tab>('all')
   const [category, setCategory] = useState<Category>('all')
@@ -58,10 +124,13 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
   const [confirm, setConfirm] = useState<ConfirmState | undefined>(undefined)
   const [editor, setEditor] = useState<EditorState>(undefined)
   const [detail, setDetail] = useState<{ sourceId: string; suiteId: string } | undefined>(undefined)
+  const [progress, setProgress] = useState<ProgressState>({ step: undefined, error: undefined })
 
   const refresh = useCallback(async () => {
+    dropCachedOverview()
     try {
-      setOverview(await fetchOverview())
+      const data = await loadOverview().promise
+      setOverview(data)
     } catch {
       setToast({ key: Date.now(), message: t('loadFail') })
     } finally {
@@ -77,6 +146,7 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
     setBusy(key)
     try {
       await postAction(path, body)
+      dropCachedOverview()
       await refresh()
       return true
     } catch (error) {
@@ -216,23 +286,29 @@ export function MarketSection({ t }: MarketSectionProps): ReactNode {
       t,
       editor,
       busy: busy !== undefined,
+      progress,
       onClose: () => setEditor(undefined),
       onSave: async (url, branch, local) => {
         const key = editor.mode === 'edit' ? `s:edit:${editor.source.id}` : `s:add:${url}`
         const body = { url, ...branch === '' ? {} : { branch }, local }
         if (editor.mode === 'add') {
           setBusy(key)
+          setProgress({ step: t('progressStarting'), error: undefined })
+          const poll = startProgressPolling(setProgress)
           try {
             const payload = await postAction('sources/add', body)
             const derived = (payload['source'] as { id?: string } | undefined)?.id
+            dropCachedOverview()
             await refresh()
             setEditor(undefined)
             if (derived !== undefined) setCategory(derived)
             return true
           } catch (error) {
             setToast({ key: Date.now(), message: `${t('actionFail')}: ${error instanceof Error ? error.message : String(error)}` })
+            setProgress({ step: undefined, error: error instanceof Error ? error.message : String(error) })
             return false
           } finally {
+            poll.stop()
             setBusy(undefined)
           }
         }
@@ -284,6 +360,7 @@ function SourceEditorModal(props: {
   t: Translate
   editor: Exclude<EditorState, undefined>
   busy: boolean
+  progress: ProgressState
   onClose: () => void
   onSave: (url: string, branch: string, local: boolean) => Promise<boolean>
   onRemove: (id: string) => void
@@ -345,6 +422,17 @@ function SourceEditorModal(props: {
         h('label', { className: css.fieldLabel }, t('branchPh')),
         h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
         h('span', { className: css.fieldHint }, t('branchHint')),
+      ),
+      props.progress.error === undefined && props.progress.step === undefined ? null : h('div', {
+        className: props.progress.error === undefined ? css.progress : css.progressError,
+      },
+        props.progress.error === undefined
+          ? h('span', { className: css.progressSpin })
+          : h('span', { className: css.progressFail }, '✕'),
+        h('span', { className: css.progressText },
+          props.progress.error === undefined
+            ? props.progress.step
+            : `${t('actionFail')}: ${props.progress.error}`),
       ),
     ),
   })

@@ -27,6 +27,8 @@ export class SuiteManager {
   private state: SuiteState = EMPTY_STATE
   private mutationQueue: Promise<unknown> = Promise.resolve()
   private readonly statePath: string
+  /** Cached `git rev-parse HEAD` per source id, so overview reads stay instant; cleared whenever a checkout may have moved. */
+  private readonly headCache = new Map<string, string>()
   /** Latest MCP mount diagnostics (suiteId -> reasons), fed by the host reconcile. */
   mcpDiagnostics: Array<{ suiteId: string; serverKey: string; reason: string }> = []
 
@@ -114,6 +116,7 @@ export class SuiteManager {
     const suites = await this.discoverDimension('user', this.options.userRoot)
     const sourceRows: SourceOverview[] = []
     for (const source of this.state.sources) {
+      const inFlight = this.currentSourceState?.sourceId === source.id ? this.currentSourceState : undefined
       const checkout = this.sourceCheckoutPath(source)
       let cloned = false
       let lockCommit: string | undefined
@@ -121,12 +124,24 @@ export class SuiteManager {
       if (source.local === true) {
         cloned = await isDirectory(checkout)
         if (!cloned) error = `local source directory ${checkout} is missing`
+      } else if (inFlight !== undefined) {
+        // A mutation owns this source right now (clone/pull in progress): report
+        // its snapshot instead of racing git against the transient directory.
+        cloned = inFlight.cloned || await isDirectory(checkout)
+        lockCommit = inFlight.head
       } else {
-        try {
-          lockCommit = await gitHead(checkout)
+        const cachedHead = this.headCache.get(source.id)
+        if (cachedHead !== undefined && await isDirectory(checkout)) {
           cloned = true
-        } catch {
-          // not cloned yet (or a broken checkout); the clone attempt records its own error on refresh
+          lockCommit = cachedHead
+        } else {
+          try {
+            lockCommit = await gitHead(checkout)
+            cloned = true
+            this.headCache.set(source.id, lockCommit)
+          } catch {
+            // not cloned yet (or a broken checkout); the clone attempt records its own error on refresh
+          }
         }
       }
       const sourceSuites = suites.filter(suite => suite.sourceId === source.id)
@@ -208,14 +223,61 @@ export class SuiteManager {
       if (input.local === true) {
         if (!await isDirectory(checkout)) throw new Error(`local source directory ${checkout} is missing`)
       } else {
-        await this.ensureClone(source)
+        this.beginSourceState(baseId, 'cloning', false)
+        try {
+          await this.ensureClone(source)
+        } catch (error) {
+          this.endSourceState()
+          throw error
+        }
+        this.updateSourceStep('reading')
       }
       source.id = this.uniqueSourceId(sanitizeId(await repoName(checkout)))
+      const head = await tryHead(checkout)
+      if (head !== undefined) this.headCache.set(source.id, head)
+      this.endSourceState()
       this.state = { ...this.state, sources: [...this.state.sources, source] }
       await saveState(this.statePath, this.state)
       this.options.onChanged()
       return source
     })
+  }
+
+  /**
+   * Progress snapshot of the source mutation currently in flight, if any.
+   * While present, `overview()` reports it instead of running git against
+   * the transient checkout directory.
+   */
+  private currentSourceState: { sourceId: string; step: string; cloned: boolean; head?: string } | undefined
+
+  /**
+   * Begin reporting progress for a source mutation: `step` names the active
+   * phase and `cloned` whether the checkout directory exists yet. The client
+   * polls this through the `progress` route while its add-source modal is
+   * open, and `overview()` merges the snapshot into the source row.
+   */
+  beginSourceState(sourceId: string, step: string, cloned: boolean): void {
+    this.currentSourceState = { sourceId, step, cloned }
+  }
+
+  /** Advance the in-flight mutation's step (checkout state unchanged). */
+  updateSourceStep(step: string): void {
+    if (this.currentSourceState !== undefined) {
+      this.currentSourceState = { ...this.currentSourceState, step }
+    }
+  }
+
+  /** Stop reporting progress; `overview()` falls back to on-disk inspection. */
+  endSourceState(): void {
+    this.currentSourceState = undefined
+  }
+
+  /** Progress snapshot for the `progress` route (never throws). */
+  sourceProgress(): { active: boolean; sourceId: string; step: string } {
+    const state = this.currentSourceState
+    return state === undefined
+      ? { active: false, sourceId: '', step: '' }
+      : { active: true, sourceId: state.sourceId, step: state.step }
   }
 
   private uniqueSourceId(derived: string): string {
@@ -243,6 +305,7 @@ export class SuiteManager {
         ...(patch.local !== undefined ? { local: patch.local } : current.local === undefined ? {} : { local: current.local }),
       }
       if (current.local !== true && patch.url !== undefined && patch.url !== current.url) {
+        this.headCache.delete(sourceId)
         await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
       }
       this.state = { ...this.state, sources: this.state.sources.map((source, i) => i === index ? next : source) }
@@ -261,6 +324,7 @@ export class SuiteManager {
       }
       await saveState(this.statePath, this.state)
       const source = this.state.sources.find(entry => entry.id === sourceId)
+      this.headCache.delete(sourceId)
       if (source === undefined || source.local !== true) {
         await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
       }
@@ -280,13 +344,24 @@ export class SuiteManager {
           continue
         }
         const checkout = sourceCheckoutDir(this.options.userRoot, source.id)
+        this.headCache.delete(source.id)
         try {
           await gitHead(checkout)
         } catch {
           await this.ensureClone(source)
+          try {
+            this.headCache.set(source.id, await gitHead(checkout))
+          } catch {
+            // a failed head read simply means the next overview re-probes
+          }
           continue
         }
         await gitPull(checkout)
+        try {
+          this.headCache.set(source.id, await gitHead(checkout))
+        } catch {
+          // a failed head read simply means the next overview re-probes
+        }
       }
       this.options.onChanged()
     })

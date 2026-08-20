@@ -64,6 +64,10 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     sendJson(response, 200, await manager.overview())
   })
 
+  get(`${API_PREFIX}progress`, async (_request, response) => {
+    sendJson(response, 200, manager.sourceProgress())
+  })
+
   get(`${API_PREFIX}config`, async (_request, response) => {
     sendJson(response, 200, { sources: manager.sources })
   })

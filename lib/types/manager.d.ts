@@ -9,6 +9,8 @@ export declare class SuiteManager {
     private state;
     private mutationQueue;
     private readonly statePath;
+    /** Cached `git rev-parse HEAD` per source id, so overview reads stay instant; cleared whenever a checkout may have moved. */
+    private readonly headCache;
     /** Latest MCP mount diagnostics (suiteId -> reasons), fed by the host reconcile. */
     mcpDiagnostics: Array<{
         suiteId: string;
@@ -56,6 +58,29 @@ export declare class SuiteManager {
         branch?: string;
         local?: boolean;
     }): Promise<SourceRef>;
+    /**
+     * Progress snapshot of the source mutation currently in flight, if any.
+     * While present, `overview()` reports it instead of running git against
+     * the transient checkout directory.
+     */
+    private currentSourceState;
+    /**
+     * Begin reporting progress for a source mutation: `step` names the active
+     * phase and `cloned` whether the checkout directory exists yet. The client
+     * polls this through the `progress` route while its add-source modal is
+     * open, and `overview()` merges the snapshot into the source row.
+     */
+    beginSourceState(sourceId: string, step: string, cloned: boolean): void;
+    /** Advance the in-flight mutation's step (checkout state unchanged). */
+    updateSourceStep(step: string): void;
+    /** Stop reporting progress; `overview()` falls back to on-disk inspection. */
+    endSourceState(): void;
+    /** Progress snapshot for the `progress` route (never throws). */
+    sourceProgress(): {
+        active: boolean;
+        sourceId: string;
+        step: string;
+    };
     private uniqueSourceId;
     /**
      * Update one source's url / branch / local flag. A git source whose URL

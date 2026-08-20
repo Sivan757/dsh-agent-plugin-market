@@ -2,7 +2,7 @@ window.__ModuleLoader__.load({ id: "dsh-agent-plugins-market", factory: (require
 
 		var module = { exports: {} };
 		var exports = module.exports;
-(function(){if(typeof document!=="undefined"){var s=document.createElement("style");s.setAttribute("data-dsh-client","dsh-agent-plugins-market");s.textContent=".qMtKNa_market {\n  min-width: 0;\n  height: 100%;\n  min-height: 0;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  flex-direction: column;\n  gap: 14px;\n  display: flex;\n}\n\n.qMtKNa_header {\n  flex-direction: column;\n  flex-shrink: 0;\n  gap: 8px;\n  display: flex;\n}\n\n.qMtKNa_titleRow {\n  align-items: center;\n  gap: 12px;\n  display: flex;\n}\n\n.qMtKNa_title {\n  margin: 0;\n  font-size: 16px;\n  font-weight: 600;\n  line-height: 24px;\n}\n\n.qMtKNa_sub {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  flex: 1;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  margin: 0;\n  font-size: 13px;\n  line-height: 20px;\n  display: flex;\n  overflow: hidden;\n}\n\n.qMtKNa_spacer {\n  flex: 1;\n}\n\n.qMtKNa_tabGap {\n  flex-shrink: 0;\n  width: 16px;\n}\n\n.qMtKNa_searchGroup {\n  align-items: center;\n  gap: 2px;\n  display: flex;\n}\n\n.qMtKNa_searchWrap, .qMtKNa_searchInput {\n  align-items: center;\n  display: flex;\n}\n\n.qMtKNa_searchInput input {\n  width: 240px;\n  font-size: 12px;\n  line-height: 20px;\n}\n\n.qMtKNa_tabRow {\n  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  justify-content: flex-end;\n  align-items: flex-end;\n  gap: 2px;\n  display: flex;\n}\n\n.qMtKNa_tab, .qMtKNa_tabOn {\n  font: inherit;\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  cursor: pointer;\n  white-space: nowrap;\n  background: none;\n  border: none;\n  border-bottom: 2px solid #0000;\n  padding: 7px 12px;\n  font-size: 13px;\n}\n\n.qMtKNa_tabOn {\n  color: var(--dsw-alias-brand-primary, #4f6ef7);\n  border-bottom-color: var(--dsw-alias-brand-primary, #4f6ef7);\n  font-weight: 600;\n}\n\n.qMtKNa_viewSwitch {\n  font: inherit;\n  color: var(--dsw-alias-label-tertiary, #9ca3af);\n  cursor: pointer;\n  white-space: nowrap;\n  background: none;\n  border: none;\n  border-bottom: 2px solid #0000;\n  padding: 7px 12px;\n  font-size: 13px;\n}\n\n.qMtKNa_viewSwitch:hover {\n  color: var(--dsw-alias-label-primary, #1f2328);\n}\n\n.qMtKNa_body {\n  flex: 1;\n  align-items: flex-start;\n  gap: 20px;\n  min-height: 0;\n  display: flex;\n}\n\n.qMtKNa_sourceTabsRow {\n  padding: 0;\n  display: block;\n}\n\n.qMtKNa_sourceTabsScroll {\n  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));\n  gap: 6px;\n  display: grid;\n}\n\n.qMtKNa_srcTabEdit {\n  font: inherit;\n  color: var(--dsw-alias-label-tertiary, #9ca3af);\n  cursor: pointer;\n  background: none;\n  border: none;\n  flex-shrink: 0;\n  padding: 2px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_srcTabEdit:hover {\n  color: var(--dsw-alias-label-primary, #1f2328);\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabEdit {\n  color: #ffffffd9;\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabEdit:hover {\n  color: #fff;\n}\n\n.qMtKNa_srcTab, .qMtKNa_srcTabOn {\n  border: 1px solid var(--dsw-alias-border-l3, #d9dde3);\n  background: var(--dsw-alias-bg-layer-1, #fff);\n  border-radius: 999px;\n  justify-content: center;\n  align-items: center;\n  width: 100%;\n  height: 24px;\n  display: inline-flex;\n  overflow: hidden;\n}\n\n.qMtKNa_srcTabMain {\n  font: inherit;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  cursor: pointer;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  background: none;\n  border: none;\n  flex: 1;\n  min-width: 0;\n  padding: 2px 2px 2px 10px;\n  font-size: 12px;\n  line-height: 18px;\n  overflow: hidden;\n}\n\n.qMtKNa_srcTabMain:hover {\n  color: var(--dsw-alias-brand-primary, #4f6ef7);\n}\n\n.qMtKNa_srcTabOn {\n  background: var(--dsw-alias-brand-primary, #4f6ef7);\n  border-color: var(--dsw-alias-brand-primary, #4f6ef7);\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabMain {\n  color: #fff;\n  font-weight: 600;\n}\n\n.qMtKNa_srcTabDel {\n  font: inherit;\n  color: var(--dsw-alias-label-tertiary, #9ca3af);\n  cursor: pointer;\n  background: none;\n  border: none;\n  flex-shrink: 0;\n  padding: 2px 8px 2px 2px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_srcTabDel:hover {\n  color: var(--dsw-alias-state-error-primary, #dc2626);\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabDel {\n  color: #ffffffd9;\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabDel:hover {\n  color: #fff;\n}\n\n.qMtKNa_grid {\n  scrollbar-gutter: stable;\n  flex: 1;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  align-content: start;\n  gap: 12px;\n  min-width: 0;\n  min-height: 0;\n  padding-right: 4px;\n  display: grid;\n  overflow-y: auto;\n}\n\n.qMtKNa_list {\n  scrollbar-gutter: stable;\n  flex-direction: column;\n  flex: 1;\n  gap: 8px;\n  min-width: 0;\n  min-height: 0;\n  padding-right: 4px;\n  display: flex;\n  overflow-y: auto;\n}\n\n.qMtKNa_list .qMtKNa_card {\n  flex-flow: wrap;\n  align-items: center;\n  gap: 8px 14px;\n}\n\n.qMtKNa_list .qMtKNa_cardTop {\n  flex: none;\n}\n\n.qMtKNa_list .qMtKNa_cardDesc {\n  -webkit-line-clamp: 1;\n  flex: 1;\n  min-width: 200px;\n  min-height: 0;\n}\n\n.qMtKNa_list .qMtKNa_cardActions {\n  flex: none;\n}\n\n.qMtKNa_list .qMtKNa_meta {\n  flex-basis: 100%;\n}\n\n.qMtKNa_empty {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  text-align: center;\n  grid-column: 1 / -1;\n  padding: 48px 0;\n  font-size: 13px;\n}\n\n.qMtKNa_card {\n  background: var(--dsw-alias-bg-layer-1, #fff);\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  min-width: 0;\n  padding: 12px 14px;\n  display: flex;\n}\n\n.qMtKNa_cardTop {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.qMtKNa_cardTitle {\n  flex: 1;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.qMtKNa_cardName {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  font-weight: 600;\n  line-height: 22px;\n  overflow: hidden;\n}\n\n.qMtKNa_version {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  font-variant-numeric: tabular-nums;\n  flex-shrink: 0;\n  font-size: 12px;\n  line-height: 20px;\n}\n\n.qMtKNa_cardActions {\n  flex-shrink: 0;\n  align-items: center;\n  gap: 4px;\n  display: flex;\n}\n\n.qMtKNa_switchOn, .qMtKNa_switchOff {\n  cursor: pointer;\n  border: none;\n  border-radius: 999px;\n  flex-shrink: 0;\n  width: 38px;\n  height: 22px;\n  padding: 0;\n  transition: background-color .15s;\n  position: relative;\n}\n\n.qMtKNa_switchOn {\n  background: var(--dsw-alias-state-success-primary, #22c55e);\n}\n\n.qMtKNa_switchOff {\n  background: var(--dsw-alias-state-neutral, #d1d5db);\n}\n\n.qMtKNa_switchOn:disabled, .qMtKNa_switchOff:disabled {\n  opacity: .6;\n  cursor: default;\n}\n\n.qMtKNa_switchThumb {\n  pointer-events: none;\n  background: #fff;\n  border-radius: 50%;\n  width: 16px;\n  height: 16px;\n  transition: left .15s;\n  position: absolute;\n  top: 3px;\n  left: 3px;\n  box-shadow: 0 1px 2px #0003;\n}\n\n.qMtKNa_switchOn .qMtKNa_switchThumb {\n  left: 19px;\n}\n\n.qMtKNa_desc {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  -webkit-line-clamp: 2;\n  -webkit-box-orient: vertical;\n  min-height: 36px;\n  margin: 0;\n  font-size: 12px;\n  line-height: 18px;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.qMtKNa_meta {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.qMtKNa_src {\n  color: var(--dsw-alias-label-secondary, #9ca3af);\n  font-size: 12px;\n  text-decoration: none;\n}\n\n.qMtKNa_tag {\n  border: 1px solid var(--dsw-alias-border-l3, #d9dde3);\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  border-radius: 4px;\n  flex-shrink: 0;\n  padding: 1px 6px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_okState {\n  color: var(--dsw-alias-state-success-primary, #16a34a);\n  white-space: nowrap;\n  font-size: 12px;\n  font-weight: 600;\n}\n\n.qMtKNa_warnLine {\n  color: var(--dsw-alias-state-warn-primary, #b45309);\n  cursor: help;\n  margin: 0;\n  font-size: 12px;\n  font-weight: 600;\n  line-height: 18px;\n}\n\n.qMtKNa_modalFooter {\n  justify-content: flex-end;\n  gap: 8px;\n  width: 100%;\n  display: flex;\n}\n\n.qMtKNa_modalFooterLeft {\n  gap: 8px;\n  margin-right: auto;\n  display: flex;\n}\n\n.qMtKNa_editorDialog {\n  width: min(500px, 92vw);\n}\n\n.qMtKNa_editorForm {\n  flex-direction: column;\n  gap: 14px;\n  min-width: 0;\n  display: flex;\n}\n\n.qMtKNa_modeRow {\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  background: var(--dsw-alias-bg-layer-2, #f3f4f6);\n  border-radius: 10px;\n  align-self: flex-start;\n  gap: 6px;\n  padding: 3px;\n  display: flex;\n}\n\n.qMtKNa_seg, .qMtKNa_segOn {\n  font: inherit;\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 20px;\n}\n\n.qMtKNa_segOn {\n  background: var(--dsw-alias-bg-layer-1, #fff);\n  color: var(--dsw-alias-label-primary, #1f2328);\n  font-weight: 600;\n  box-shadow: 0 1px 2px #00000014;\n}\n\n.qMtKNa_fieldGroup {\n  flex-direction: column;\n  gap: 5px;\n  display: flex;\n}\n\n.qMtKNa_fieldLabel {\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  font-size: 12px;\n  font-weight: 600;\n}\n\n.qMtKNa_fieldHint {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  font-size: 12px;\n  line-height: 16px;\n}\n\n.qMtKNa_staticId {\n  border: 1px dashed var(--dsw-alias-border-l3, #d9dde3);\n  background: var(--dsw-alias-bg-layer-2, #f3f4f6);\n  border-radius: 8px;\n  align-items: center;\n  gap: 8px;\n  padding: 7px 10px;\n  display: flex;\n}\n\n.qMtKNa_staticIdValue {\n  color: var(--dsw-alias-label-primary, #1f2328);\n  font-size: 13px;\n  font-weight: 600;\n}\n\n.qMtKNa_detailDialog {\n  width: min(800px, 94vw);\n}\n\n.qMtKNa_detailBody {\n  flex-direction: column;\n  gap: 14px;\n  max-height: 78vh;\n  display: flex;\n  overflow-y: auto;\n}\n\n.qMtKNa_detailSections {\n  flex-direction: column;\n  gap: 14px;\n  display: flex;\n}\n\n.qMtKNa_detailSection {\n  flex-direction: column;\n  gap: 6px;\n  display: flex;\n}\n\n.qMtKNa_detailHead {\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  margin: 0;\n  padding-bottom: 4px;\n  font-size: 13px;\n  font-weight: 600;\n}\n\n.qMtKNa_detailGrid {\n  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));\n  gap: 6px 14px;\n  display: grid;\n}\n\n.qMtKNa_detailCell {\n  flex-direction: column;\n  gap: 2px;\n  min-width: 0;\n  display: flex;\n}\n\n.qMtKNa_detailKey {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  font-size: 12px;\n}\n\n.qMtKNa_detailValue {\n  color: var(--dsw-alias-label-primary, #1f2328);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  overflow: hidden;\n}\n\n.qMtKNa_detailDesc {\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  margin: 4px 0 0;\n  font-size: 13px;\n  line-height: 20px;\n}\n\n.qMtKNa_mono {\n  word-break: break-all;\n  white-space: pre-wrap;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  margin: 0;\n  font-family: ui-monospace, Menlo, Consolas, monospace;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_detailItem {\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  border-radius: 8px;\n  flex-direction: column;\n  display: flex;\n  overflow: hidden;\n}\n\n.qMtKNa_detailItemRow, .qMtKNa_detailItemOpen {\n  width: 100%;\n  font: inherit;\n  text-align: left;\n  cursor: pointer;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  background: none;\n  border: none;\n  align-items: center;\n  gap: 8px;\n  padding: 7px 10px;\n  display: flex;\n}\n\n.qMtKNa_detailItemRow:hover {\n  background: var(--dsw-alias-bg-hover, #0000000d);\n}\n\n.qMtKNa_detailItemOpen {\n  background: var(--dsw-alias-bg-selected, #4f6ef714);\n}\n\n.qMtKNa_detailItemName {\n  flex-shrink: 0;\n  font-size: 13px;\n  font-weight: 600;\n}\n\n.qMtKNa_detailItemDesc {\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  flex: 1;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.qMtKNa_detailChevron {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  flex-shrink: 0;\n}\n\n.qMtKNa_skillContent {\n  border-top: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  max-height: 320px;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  padding: 10px 12px;\n  font-size: 13px;\n  line-height: 20px;\n  overflow-y: auto;\n}\n";document.head.appendChild(s);}})();
+(function(){if(typeof document!=="undefined"){var s=document.createElement("style");s.setAttribute("data-dsh-client","dsh-agent-plugins-market");s.textContent=".qMtKNa_market {\n  min-width: 0;\n  height: 100%;\n  min-height: 0;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  flex-direction: column;\n  gap: 14px;\n  display: flex;\n}\n\n.qMtKNa_header {\n  flex-direction: column;\n  flex-shrink: 0;\n  gap: 8px;\n  display: flex;\n}\n\n.qMtKNa_titleRow {\n  align-items: center;\n  gap: 12px;\n  display: flex;\n}\n\n.qMtKNa_title {\n  margin: 0;\n  font-size: 16px;\n  font-weight: 600;\n  line-height: 24px;\n}\n\n.qMtKNa_sub {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  flex: 1;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  margin: 0;\n  font-size: 13px;\n  line-height: 20px;\n  display: flex;\n  overflow: hidden;\n}\n\n.qMtKNa_spacer {\n  flex: 1;\n}\n\n.qMtKNa_tabGap {\n  flex-shrink: 0;\n  width: 16px;\n}\n\n.qMtKNa_searchGroup {\n  align-items: center;\n  gap: 2px;\n  display: flex;\n}\n\n.qMtKNa_searchWrap, .qMtKNa_searchInput {\n  align-items: center;\n  display: flex;\n}\n\n.qMtKNa_searchInput input {\n  width: 240px;\n  font-size: 12px;\n  line-height: 20px;\n}\n\n.qMtKNa_tabRow {\n  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  justify-content: flex-end;\n  align-items: flex-end;\n  gap: 2px;\n  display: flex;\n}\n\n.qMtKNa_tab, .qMtKNa_tabOn {\n  font: inherit;\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  cursor: pointer;\n  white-space: nowrap;\n  background: none;\n  border: none;\n  border-bottom: 2px solid #0000;\n  padding: 7px 12px;\n  font-size: 13px;\n}\n\n.qMtKNa_tabOn {\n  color: var(--dsw-alias-brand-primary, #4f6ef7);\n  border-bottom-color: var(--dsw-alias-brand-primary, #4f6ef7);\n  font-weight: 600;\n}\n\n.qMtKNa_viewSwitch {\n  font: inherit;\n  color: var(--dsw-alias-label-tertiary, #9ca3af);\n  cursor: pointer;\n  white-space: nowrap;\n  background: none;\n  border: none;\n  border-bottom: 2px solid #0000;\n  padding: 7px 12px;\n  font-size: 13px;\n}\n\n.qMtKNa_viewSwitch:hover {\n  color: var(--dsw-alias-label-primary, #1f2328);\n}\n\n.qMtKNa_body {\n  flex: 1;\n  align-items: flex-start;\n  gap: 20px;\n  min-height: 0;\n  display: flex;\n}\n\n.qMtKNa_sourceTabsRow {\n  padding: 0;\n  display: block;\n}\n\n.qMtKNa_sourceTabsScroll {\n  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));\n  gap: 6px;\n  display: grid;\n}\n\n.qMtKNa_srcTabEdit {\n  font: inherit;\n  color: var(--dsw-alias-label-tertiary, #9ca3af);\n  cursor: pointer;\n  background: none;\n  border: none;\n  flex-shrink: 0;\n  padding: 2px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_srcTabEdit:hover {\n  color: var(--dsw-alias-label-primary, #1f2328);\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabEdit {\n  color: #ffffffd9;\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabEdit:hover {\n  color: #fff;\n}\n\n.qMtKNa_srcTab, .qMtKNa_srcTabOn {\n  border: 1px solid var(--dsw-alias-border-l3, #d9dde3);\n  background: var(--dsw-alias-bg-layer-1, #fff);\n  border-radius: 999px;\n  justify-content: center;\n  align-items: center;\n  width: 100%;\n  height: 24px;\n  display: inline-flex;\n  overflow: hidden;\n}\n\n.qMtKNa_srcTabMain {\n  font: inherit;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  cursor: pointer;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  background: none;\n  border: none;\n  flex: 1;\n  min-width: 0;\n  padding: 2px 2px 2px 10px;\n  font-size: 12px;\n  line-height: 18px;\n  overflow: hidden;\n}\n\n.qMtKNa_srcTabMain:hover {\n  color: var(--dsw-alias-brand-primary, #4f6ef7);\n}\n\n.qMtKNa_srcTabOn {\n  background: var(--dsw-alias-brand-primary, #4f6ef7);\n  border-color: var(--dsw-alias-brand-primary, #4f6ef7);\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabMain {\n  color: #fff;\n  font-weight: 600;\n}\n\n.qMtKNa_srcTabDel {\n  font: inherit;\n  color: var(--dsw-alias-label-tertiary, #9ca3af);\n  cursor: pointer;\n  background: none;\n  border: none;\n  flex-shrink: 0;\n  padding: 2px 8px 2px 2px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_srcTabDel:hover {\n  color: var(--dsw-alias-state-error-primary, #dc2626);\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabDel {\n  color: #ffffffd9;\n}\n\n.qMtKNa_srcTabOn .qMtKNa_srcTabDel:hover {\n  color: #fff;\n}\n\n.qMtKNa_grid {\n  scrollbar-gutter: stable;\n  flex: 1;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  align-content: start;\n  gap: 12px;\n  min-width: 0;\n  min-height: 0;\n  padding-right: 4px;\n  display: grid;\n  overflow-y: auto;\n}\n\n.qMtKNa_list {\n  scrollbar-gutter: stable;\n  flex-direction: column;\n  flex: 1;\n  gap: 8px;\n  min-width: 0;\n  min-height: 0;\n  padding-right: 4px;\n  display: flex;\n  overflow-y: auto;\n}\n\n.qMtKNa_list .qMtKNa_card {\n  flex-flow: wrap;\n  align-items: center;\n  gap: 8px 14px;\n}\n\n.qMtKNa_list .qMtKNa_cardTop {\n  flex: none;\n}\n\n.qMtKNa_list .qMtKNa_cardDesc {\n  -webkit-line-clamp: 1;\n  flex: 1;\n  min-width: 200px;\n  min-height: 0;\n}\n\n.qMtKNa_list .qMtKNa_cardActions {\n  flex: none;\n}\n\n.qMtKNa_list .qMtKNa_meta {\n  flex-basis: 100%;\n}\n\n.qMtKNa_empty {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  text-align: center;\n  grid-column: 1 / -1;\n  padding: 48px 0;\n  font-size: 13px;\n}\n\n.qMtKNa_card {\n  background: var(--dsw-alias-bg-layer-1, #fff);\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  min-width: 0;\n  padding: 12px 14px;\n  display: flex;\n}\n\n.qMtKNa_cardTop {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.qMtKNa_cardTitle {\n  flex: 1;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.qMtKNa_cardName {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  font-weight: 600;\n  line-height: 22px;\n  overflow: hidden;\n}\n\n.qMtKNa_version {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  font-variant-numeric: tabular-nums;\n  flex-shrink: 0;\n  font-size: 12px;\n  line-height: 20px;\n}\n\n.qMtKNa_cardActions {\n  flex-shrink: 0;\n  align-items: center;\n  gap: 4px;\n  display: flex;\n}\n\n.qMtKNa_switchOn, .qMtKNa_switchOff {\n  cursor: pointer;\n  border: none;\n  border-radius: 999px;\n  flex-shrink: 0;\n  width: 38px;\n  height: 22px;\n  padding: 0;\n  transition: background-color .15s;\n  position: relative;\n}\n\n.qMtKNa_switchOn {\n  background: var(--dsw-alias-state-success-primary, #22c55e);\n}\n\n.qMtKNa_switchOff {\n  background: var(--dsw-alias-state-neutral, #d1d5db);\n}\n\n.qMtKNa_switchOn:disabled, .qMtKNa_switchOff:disabled {\n  opacity: .6;\n  cursor: default;\n}\n\n.qMtKNa_switchThumb {\n  pointer-events: none;\n  background: #fff;\n  border-radius: 50%;\n  width: 16px;\n  height: 16px;\n  transition: left .15s;\n  position: absolute;\n  top: 3px;\n  left: 3px;\n  box-shadow: 0 1px 2px #0003;\n}\n\n.qMtKNa_switchOn .qMtKNa_switchThumb {\n  left: 19px;\n}\n\n.qMtKNa_desc {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  -webkit-line-clamp: 2;\n  -webkit-box-orient: vertical;\n  min-height: 36px;\n  margin: 0;\n  font-size: 12px;\n  line-height: 18px;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.qMtKNa_meta {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.qMtKNa_src {\n  color: var(--dsw-alias-label-secondary, #9ca3af);\n  font-size: 12px;\n  text-decoration: none;\n}\n\n.qMtKNa_tag {\n  border: 1px solid var(--dsw-alias-border-l3, #d9dde3);\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  border-radius: 4px;\n  flex-shrink: 0;\n  padding: 1px 6px;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_okState {\n  color: var(--dsw-alias-state-success-primary, #16a34a);\n  white-space: nowrap;\n  font-size: 12px;\n  font-weight: 600;\n}\n\n.qMtKNa_warnLine {\n  color: var(--dsw-alias-state-warn-primary, #b45309);\n  cursor: help;\n  margin: 0;\n  font-size: 12px;\n  font-weight: 600;\n  line-height: 18px;\n}\n\n.qMtKNa_modalFooter {\n  justify-content: flex-end;\n  gap: 8px;\n  width: 100%;\n  display: flex;\n}\n\n.qMtKNa_modalFooterLeft {\n  gap: 8px;\n  margin-right: auto;\n  display: flex;\n}\n\n.qMtKNa_editorDialog {\n  width: min(500px, 92vw);\n}\n\n.qMtKNa_editorForm {\n  flex-direction: column;\n  gap: 14px;\n  min-width: 0;\n  display: flex;\n}\n\n.qMtKNa_modeRow {\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  background: var(--dsw-alias-bg-layer-2, #f3f4f6);\n  border-radius: 10px;\n  align-self: flex-start;\n  gap: 6px;\n  padding: 3px;\n  display: flex;\n}\n\n.qMtKNa_seg, .qMtKNa_segOn {\n  font: inherit;\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 20px;\n}\n\n.qMtKNa_segOn {\n  background: var(--dsw-alias-bg-layer-1, #fff);\n  color: var(--dsw-alias-label-primary, #1f2328);\n  font-weight: 600;\n  box-shadow: 0 1px 2px #00000014;\n}\n\n.qMtKNa_fieldGroup {\n  flex-direction: column;\n  gap: 5px;\n  display: flex;\n}\n\n.qMtKNa_fieldLabel {\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  font-size: 12px;\n  font-weight: 600;\n}\n\n.qMtKNa_fieldHint {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  font-size: 12px;\n  line-height: 16px;\n}\n\n.qMtKNa_staticId {\n  border: 1px dashed var(--dsw-alias-border-l3, #d9dde3);\n  background: var(--dsw-alias-bg-layer-2, #f3f4f6);\n  border-radius: 8px;\n  align-items: center;\n  gap: 8px;\n  padding: 7px 10px;\n  display: flex;\n}\n\n.qMtKNa_staticIdValue {\n  color: var(--dsw-alias-label-primary, #1f2328);\n  font-size: 13px;\n  font-weight: 600;\n}\n\n.qMtKNa_detailDialog {\n  width: min(800px, 94vw);\n}\n\n.qMtKNa_detailBody {\n  flex-direction: column;\n  gap: 14px;\n  max-height: 78vh;\n  display: flex;\n  overflow-y: auto;\n}\n\n.qMtKNa_detailSections {\n  flex-direction: column;\n  gap: 14px;\n  display: flex;\n}\n\n.qMtKNa_detailSection {\n  flex-direction: column;\n  gap: 6px;\n  display: flex;\n}\n\n.qMtKNa_detailHead {\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  margin: 0;\n  padding-bottom: 4px;\n  font-size: 13px;\n  font-weight: 600;\n}\n\n.qMtKNa_detailGrid {\n  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));\n  gap: 6px 14px;\n  display: grid;\n}\n\n.qMtKNa_detailCell {\n  flex-direction: column;\n  gap: 2px;\n  min-width: 0;\n  display: flex;\n}\n\n.qMtKNa_detailKey {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  font-size: 12px;\n}\n\n.qMtKNa_detailValue {\n  color: var(--dsw-alias-label-primary, #1f2328);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  overflow: hidden;\n}\n\n.qMtKNa_detailDesc {\n  color: var(--dsw-alias-label-secondary, #6b7280);\n  margin: 4px 0 0;\n  font-size: 13px;\n  line-height: 20px;\n}\n\n.qMtKNa_mono {\n  word-break: break-all;\n  white-space: pre-wrap;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  margin: 0;\n  font-family: ui-monospace, Menlo, Consolas, monospace;\n  font-size: 12px;\n  line-height: 18px;\n}\n\n.qMtKNa_detailItem {\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  border-radius: 8px;\n  flex-direction: column;\n  display: flex;\n  overflow: hidden;\n}\n\n.qMtKNa_detailItemRow, .qMtKNa_detailItemOpen {\n  width: 100%;\n  font: inherit;\n  text-align: left;\n  cursor: pointer;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  background: none;\n  border: none;\n  align-items: center;\n  gap: 8px;\n  padding: 7px 10px;\n  display: flex;\n}\n\n.qMtKNa_detailItemRow:hover {\n  background: var(--dsw-alias-bg-hover, #0000000d);\n}\n\n.qMtKNa_detailItemOpen {\n  background: var(--dsw-alias-bg-selected, #4f6ef714);\n}\n\n.qMtKNa_detailItemName {\n  flex-shrink: 0;\n  font-size: 13px;\n  font-weight: 600;\n}\n\n.qMtKNa_detailItemDesc {\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  flex: 1;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.qMtKNa_detailChevron {\n  color: var(--dsw-alias-label-tertiary, #8b93a1);\n  flex-shrink: 0;\n}\n\n.qMtKNa_skillContent {\n  border-top: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  max-height: 320px;\n  color: var(--dsw-alias-label-primary, #1f2328);\n  padding: 10px 12px;\n  font-size: 13px;\n  line-height: 20px;\n  overflow-y: auto;\n}\n\n.qMtKNa_progress, .qMtKNa_progressError {\n  border: 1px solid var(--dsw-alias-border-l2, #e5e7eb);\n  background: var(--dsw-alias-bg-layer-2, #7f7f7f0f);\n  color: var(--dsw-alias-label-primary, #1f2328);\n  border-radius: 8px;\n  align-items: center;\n  gap: 10px;\n  padding: 10px 12px;\n  font-size: 13px;\n  line-height: 20px;\n  display: flex;\n}\n\n.qMtKNa_progressError {\n  border-color: var(--dsw-alias-danger, #e5484d);\n  color: var(--dsw-alias-danger, #e5484d);\n}\n\n.qMtKNa_progressSpin {\n  border: 2px solid var(--dsw-alias-border-l2, #e5e7eb);\n  border-top-color: var(--dsw-alias-brand-primary, #4f6ef7);\n  border-radius: 50%;\n  flex-shrink: 0;\n  width: 14px;\n  height: 14px;\n  animation: .8s linear infinite qMtKNa_dshApmSpin;\n}\n\n@keyframes qMtKNa_dshApmSpin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n.qMtKNa_progressFail {\n  flex-shrink: 0;\n  font-size: 13px;\n}\n\n.qMtKNa_progressText {\n  overflow-wrap: anywhere;\n  min-width: 0;\n}\n";document.head.appendChild(s);}})();
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 //#region \0rolldown/runtime.js
 var __create = Object.create;
@@ -77,6 +77,9 @@ const zh = {
 	urlLocalHint: "绝对路径或 ~/…，直接读取本地目录（不克隆、移除源时不会删除）",
 	branchHint: "可选；不填则跟踪默认分支",
 	idFixed: "id 不可修改（源标识全局唯一）",
+	progressStarting: "正在提交…",
+	progressCloning: "正在克隆仓库（git clone），可能需要几十秒…",
+	progressReading: "正在读取插件清单…",
 	idAutoLabel: "源 ID（自动生成）",
 	idAutoHint: "自动从插件清单名或仓库名解析，无需填写",
 	detailHint: "点击技能或 MCP 服务行可展开查看详情",
@@ -176,6 +179,9 @@ const en = {
 	urlLocalHint: "absolute path or ~/…, read in place (never cloned, never deleted on removal)",
 	branchHint: "optional; defaults to the repository default branch",
 	idFixed: "id is fixed (the source identifier is globally unique)",
+	progressStarting: "Submitting…",
+	progressCloning: "Cloning the repository (git clone) — this can take tens of seconds…",
+	progressReading: "Reading plugin manifests…",
 	idAutoLabel: "Source ID (auto)",
 	idAutoHint: "Derived from the suite or repo name — no need to type it",
 	detailHint: "Click a skill or MCP server row to expand its details",
@@ -233,6 +239,11 @@ const en = {
 async function fetchOverview() {
 	const response = await fetch("/api/agent-plugins/overview", { credentials: "same-origin" });
 	if (!response.ok) throw new Error(`overview failed: ${response.status}`);
+	return response.json();
+}
+async function fetchSourceProgress() {
+	const response = await fetch("/api/agent-plugins/progress", { credentials: "same-origin" });
+	if (!response.ok) throw new Error(`progress failed: ${response.status}`);
 	return response.json();
 }
 async function fetchSuiteDetail(sourceId, suiteId) {
@@ -305,6 +316,7 @@ var market_module_default = {
 	"detailSection": "qMtKNa_detailSection",
 	"detailSections": "qMtKNa_detailSections",
 	"detailValue": "qMtKNa_detailValue",
+	"dshApmSpin": "qMtKNa_dshApmSpin",
 	"editorDialog": "qMtKNa_editorDialog",
 	"editorForm": "qMtKNa_editorForm",
 	"empty": "qMtKNa_empty",
@@ -321,6 +333,11 @@ var market_module_default = {
 	"modeRow": "qMtKNa_modeRow",
 	"mono": "qMtKNa_mono",
 	"okState": "qMtKNa_okState",
+	"progress": "qMtKNa_progress",
+	"progressError": "qMtKNa_progressError",
+	"progressFail": "qMtKNa_progressFail",
+	"progressSpin": "qMtKNa_progressSpin",
+	"progressText": "qMtKNa_progressText",
 	"searchGroup": "qMtKNa_searchGroup",
 	"searchInput": "qMtKNa_searchInput",
 	"searchWrap": "qMtKNa_searchWrap",
@@ -498,6 +515,37 @@ function PreviewRow(props) {
 * status tabs, and the card grid. Colors ride the dsh --dsw-alias-* tokens
 * with light-mode fallbacks so the page follows the active theme.
 */
+/** Host step keys -> translation keys, resolved against the active t(). */
+const PROGRESS_STEP_LABELS = {
+	cloning: "progressCloning",
+	reading: "progressReading"
+};
+/**
+* Poll the host's source-mutation progress while an add-source request runs.
+* Failures of the poll itself never surface: the add request is the authority.
+*/
+function startProgressPolling(report) {
+	let stopped = false;
+	const tick = async () => {
+		if (stopped) return;
+		try {
+			const progress = await fetchSourceProgress();
+			if (!stopped && progress.active) report({
+				step: progressStepLabel(progress.step),
+				error: void 0
+			});
+		} catch {}
+		if (!stopped) timer = setTimeout(tick, 800);
+	};
+	let timer = setTimeout(tick, 400);
+	return { stop: () => {
+		stopped = true;
+		clearTimeout(timer);
+	} };
+}
+function progressStepLabel(step) {
+	return PROGRESS_STEP_LABELS[step] ?? step;
+}
 const EMPTY_OVERVIEW = {
 	sources: [],
 	suites: [],
@@ -511,9 +559,34 @@ const EMPTY_OVERVIEW = {
 		data: ""
 	}
 };
+/**
+* Session-level overview cache: the first mount paints the last snapshot
+* instantly (no empty-state flash on reopen), then revalidates in the
+* background. Every refresh overwrites the cached copy.
+*/
+let cachedOverview;
+let inflightOverview;
+function loadOverview() {
+	const initial = cachedOverview ?? EMPTY_OVERVIEW;
+	if (inflightOverview === void 0) inflightOverview = fetchOverview().then((data) => {
+		cachedOverview = data;
+		return data;
+	}).finally(() => {
+		inflightOverview = void 0;
+	});
+	return {
+		initial,
+		revalidating: cachedOverview === void 0,
+		promise: inflightOverview
+	};
+}
+/** Invalidate the cached overview after any mutating action. */
+function dropCachedOverview() {
+	cachedOverview = void 0;
+}
 function MarketSection({ t }) {
-	const [overview, setOverview] = (0, react.useState)(EMPTY_OVERVIEW);
-	const [loading, setLoading] = (0, react.useState)(true);
+	const [overview, setOverview] = (0, react.useState)(() => loadOverview().initial);
+	const [loading, setLoading] = (0, react.useState)(() => cachedOverview === void 0);
 	const [search, setSearch] = (0, react.useState)("");
 	const [tab, setTab] = (0, react.useState)("all");
 	const [category, setCategory] = (0, react.useState)("all");
@@ -523,9 +596,15 @@ function MarketSection({ t }) {
 	const [confirm, setConfirm] = (0, react.useState)(void 0);
 	const [editor, setEditor] = (0, react.useState)(void 0);
 	const [detail, setDetail] = (0, react.useState)(void 0);
+	const [progress, setProgress] = (0, react.useState)({
+		step: void 0,
+		error: void 0
+	});
 	const refresh = (0, react.useCallback)(async () => {
+		dropCachedOverview();
 		try {
-			setOverview(await fetchOverview());
+			const data = await loadOverview().promise;
+			setOverview(data);
 		} catch {
 			setToast({
 				key: Date.now(),
@@ -542,6 +621,7 @@ function MarketSection({ t }) {
 		setBusy(key);
 		try {
 			await postAction(path, body);
+			dropCachedOverview();
 			await refresh();
 			return true;
 		} catch (error) {
@@ -717,6 +797,7 @@ function MarketSection({ t }) {
 			t,
 			editor,
 			busy: busy !== void 0,
+			progress,
 			onClose: () => setEditor(void 0),
 			onSave: async (url, branch, local) => {
 				const key = editor.mode === "edit" ? `s:edit:${editor.source.id}` : `s:add:${url}`;
@@ -727,8 +808,14 @@ function MarketSection({ t }) {
 				};
 				if (editor.mode === "add") {
 					setBusy(key);
+					setProgress({
+						step: t("progressStarting"),
+						error: void 0
+					});
+					const poll = startProgressPolling(setProgress);
 					try {
 						const derived = (await postAction("sources/add", body))["source"]?.id;
+						dropCachedOverview();
 						await refresh();
 						setEditor(void 0);
 						if (derived !== void 0) setCategory(derived);
@@ -738,8 +825,13 @@ function MarketSection({ t }) {
 							key: Date.now(),
 							message: `${t("actionFail")}: ${error instanceof Error ? error.message : String(error)}`
 						});
+						setProgress({
+							step: void 0,
+							error: error instanceof Error ? error.message : String(error)
+						});
 						return false;
 					} finally {
+						poll.stop();
 						setBusy(void 0);
 					}
 				}
@@ -835,7 +927,7 @@ function SourceEditorModal(props) {
 			placeholder: t("branchPh"),
 			value: branch,
 			onChange: (event) => setBranch(event.target.value)
-		}), (0, react.createElement)("span", { className: market_module_default.fieldHint }, t("branchHint"))))
+		}), (0, react.createElement)("span", { className: market_module_default.fieldHint }, t("branchHint"))), props.progress.error === void 0 && props.progress.step === void 0 ? null : (0, react.createElement)("div", { className: props.progress.error === void 0 ? market_module_default.progress : market_module_default.progressError }, props.progress.error === void 0 ? (0, react.createElement)("span", { className: market_module_default.progressSpin }) : (0, react.createElement)("span", { className: market_module_default.progressFail }, "✕"), (0, react.createElement)("span", { className: market_module_default.progressText }, props.progress.error === void 0 ? props.progress.step : `${t("actionFail")}: ${props.progress.error}`)))
 	});
 }
 /** A green/gray switch control for suite enable state. */
