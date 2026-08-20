@@ -1,6 +1,6 @@
 # dsh-agent-plugins-market — 在 DeepSeek Harness 里使用 Claude Code 插件市场
 
-[English](README.md) | 简体中文
+[English](README.md) | 简体中文 | [文档站](https://sivan757.github.io/dsh-agent-plugins-market/)
 
 > **把 Claude Code / Codex / Cursor 的插件市场生态带进 DeepSeek Harness（DSH）：从 git 市场仓库安装并注入 Agent 插件——技能（skills）、MCP 服务器、hooks、斜杠命令——并自带 Web 界面市场页。**
 

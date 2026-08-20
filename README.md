@@ -1,6 +1,6 @@
 # dsh-agent-plugins-market — Claude Code plugin marketplaces for DeepSeek Harness
 
-English | [简体中文](README.zh.md)
+English | [简体中文](README.zh.md) | [Docs website](https://sivan757.github.io/dsh-agent-plugins-market/)
 
 > **Bring the Claude Code / Codex / Cursor plugin-marketplace ecosystem into DeepSeek Harness (DSH): install and inject agent plugins — skills, MCP servers, hooks and slash commands — from git marketplace repos, with a market page right inside the Web GUI.**
 
