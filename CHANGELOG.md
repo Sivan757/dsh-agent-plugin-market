@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 <!-- The 0.5.0 section will be created by the first release-please PR, -->
 <!-- covering all commits after the v0.4.5 bootstrap-sha. -->
 
+## [0.5.2](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.1...dsh-agent-plugins-market-v0.5.2) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ci:** format CHANGELOG.md for prettier compliance ([8dda251](https://github.com/Sivan757/dsh-agent-plugins-market/commit/8dda251d1b526aaa073cb2a2651404574c7ce976))
+* **ci:** merge npm publish into release-please workflow ([77248af](https://github.com/Sivan757/dsh-agent-plugins-market/commit/77248afccae4507c433b3352f7918d38ef992fc1))
+
 ## [0.5.1](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.0...dsh-agent-plugins-market-v0.5.1) (2026-08-21)
 
 ### Bug Fixes
