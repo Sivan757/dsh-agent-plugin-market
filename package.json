@@ -53,6 +53,10 @@
       "platform": "web"
     }
   },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.17.0",
   "license": "MIT",
   "repository": {
     "type": "git",
