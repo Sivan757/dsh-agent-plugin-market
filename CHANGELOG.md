@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 <!-- The 0.5.0 section will be created by the first release-please PR, -->
 <!-- covering all commits after the v0.4.5 bootstrap-sha. -->
 
+## [0.5.5](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.4...dsh-agent-plugins-market-v0.5.5) (2026-08-21)
+
+
+### Bug Fixes
+
+* **test:** skip markdown-crash test when local fixture path is absent ([cec8a95](https://github.com/Sivan757/dsh-agent-plugins-market/commit/cec8a95b087920b16b99e9c66123767fc1794799))
+
 ## [0.5.4](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.3...dsh-agent-plugins-market-v0.5.4) (2026-08-21)
 
 
