@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { fileURLToPath } from 'node:url'
 import { McpMountRegistry } from '../src/mcp-mounts.js'
 import type { Suite } from '../src/types.js'
+
+const CC_COMMANDS_ROOT = fileURLToPath(new URL('./fixtures/cc-commands', import.meta.url))
 
 interface MountedPlugin {
   config: Record<string, unknown>
@@ -76,7 +79,7 @@ describe('CommandMountRegistry (CC commands compat)', () => {
     const registered: Array<{ name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }> = []
     const ctx = { commands: { register: (def: { name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }) => { registered.push(def); return () => { registered.splice(registered.indexOf(def), 1) } } } }
     const registry = new (await import('../src/commands-mounts.js')).CommandMountRegistry(ctx as never)
-    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource('/Users/sivan/workspace/dsh-agent-plugins-market/tests/fixtures/cc-commands', 'cc', 'user')
+    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
     suites[0]!.enabled = true
     const diagnostics = await registry.reconcile(suites)
     expect(diagnostics).toEqual([])
@@ -103,7 +106,7 @@ describe('agents compat (agent-<name> skills)', () => {
     const userRoot = await mkdtemp(`${tmpdir()}/dsh-agent-plugins-agents-`)
     const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
-    await manager.mergeSources([{ id: 'cc', url: '/Users/sivan/workspace/dsh-agent-plugins-market/tests/fixtures/cc-commands', local: true }])
+    await manager.mergeSources([{ id: 'cc', url: CC_COMMANDS_ROOT, local: true }])
     await manager.install('cc', 'cc-commands')
     await manager.setEnabled('cc', 'cc-commands', true)
     const provider = new (await import('../src/skills-provider.js')).SuiteSkillProvider(manager)
@@ -129,7 +132,7 @@ describe('HooksMountRegistry (CC hooks compat)', () => {
       logger: { warn: () => {} },
     }
     const registry = new (await import('../src/hooks-mounts.js')).HooksMountRegistry(ctx as never)
-    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource('/Users/sivan/workspace/dsh-agent-plugins-market/tests/fixtures/cc-commands', 'cc', 'user')
+    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
     suites[0]!.enabled = true
     const diagnostics = await registry.reconcile(suites)
     expect(diagnostics).toEqual([])
