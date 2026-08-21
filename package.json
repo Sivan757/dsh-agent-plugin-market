@@ -28,6 +28,12 @@
     "build": "tsc -p tsconfig.json && pnpm run build:client",
     "build:client": "tsdown && node scripts/normalize-client-banner.mjs",
     "test": "vitest run",
+    "test:contract": "vitest run tests/market-contracts.test.ts tests/routes.test.ts",
+    "lint": "eslint src/application src/catalog src/contracts src/runtime src/client/features src/client/MarketSection.tsx src/client/McpStatusPanel.tsx src/client/SuiteDetail.tsx src/client/api.ts src/discovery.ts src/index.ts src/manager.ts src/mcp-status.ts src/routes.ts src/skills-provider.ts src/types.ts tests/catalog.test.ts tests/client-view-models.test.ts tests/discovery.test.ts tests/market-contracts.test.ts tests/mcp-status.test.ts tests/runtime-reconciler.test.ts tests/routes.test.ts tests/skills-provider.test.ts tests/source-discovery.test.ts tests/suite-detail-resource.test.ts",
+    "format": "prettier --write src/application src/catalog src/contracts src/runtime src/client/features src/client/MarketSection.tsx src/client/McpStatusPanel.tsx src/client/SuiteDetail.tsx src/client/api.ts src/discovery.ts src/index.ts src/manager.ts src/mcp-status.ts src/routes.ts src/skills-provider.ts src/types.ts tests/catalog.test.ts tests/client-view-models.test.ts tests/discovery.test.ts tests/market-contracts.test.ts tests/mcp-status.test.ts tests/runtime-reconciler.test.ts tests/routes.test.ts tests/skills-provider.test.ts tests/source-discovery.test.ts tests/suite-detail-resource.test.ts docs/adr/0001-catalog-centered-modular-refactor.md docs/design/engineering-refactor-plan.md docs/design/rendering-baseline.md CONTEXT.md",
+    "format:check": "prettier --check src/application src/catalog src/contracts src/runtime src/client/features src/client/MarketSection.tsx src/client/McpStatusPanel.tsx src/client/SuiteDetail.tsx src/client/api.ts src/discovery.ts src/index.ts src/manager.ts src/mcp-status.ts src/routes.ts src/skills-provider.ts src/types.ts tests/catalog.test.ts tests/client-view-models.test.ts tests/discovery.test.ts tests/market-contracts.test.ts tests/mcp-status.test.ts tests/runtime-reconciler.test.ts tests/routes.test.ts tests/skills-provider.test.ts tests/source-discovery.test.ts tests/suite-detail-resource.test.ts docs/adr/0001-catalog-centered-modular-refactor.md docs/design/engineering-refactor-plan.md docs/design/rendering-baseline.md CONTEXT.md",
+    "check:architecture": "depcruise --validate .dependency-cruiser.cjs src",
+    "check:refactor": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test:contract && pnpm run check:architecture",
     "prepack": "pnpm run build"
   },
   "dsh": {
@@ -103,15 +109,20 @@
     "@deepseek-ai/dsh-llm": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-mcp-client": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-skill": "^0.1.0-rc.8",
+    "@eslint/js": "^9.39.5",
     "@tsdown/css": "^0.22.14",
     "@types/node": "^22.15.0",
     "@types/react": "~18.3.1",
     "@types/react-dom": "^19.2.4",
+    "dependency-cruiser": "^18.2.0",
+    "eslint": "^9.39.5",
     "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
     "react": "^18.3.1",
     "react-dom": "~18.3.1",
     "tsdown": "^0.22.14",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
