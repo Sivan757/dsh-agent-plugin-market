@@ -53,7 +53,7 @@ dsh plugin --profile <name> add github:Sivan757/dsh-agent-plugins-market
 }
 ```
 
-The built entry point (`lib/`, `client/`) is committed to the repository, so GitHub installs work without a `prepare` step.
+Build artifacts (`lib/`, `client/`) are not committed; npm publishes them via `prepack`, and GitHub installs build them automatically through the `prepare` script (requires Node + pnpm toolchain on the installing machine).
 
 </details>
 

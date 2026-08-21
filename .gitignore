@@ -2,6 +2,7 @@ node_modules/
 lib/
 client/*.js
 client/*.map
+client/*.css
 *.tgz
 .DS_Store
 scripts/npm-token-setup.sh

@@ -53,7 +53,7 @@ dsh plugin --profile <名字> add github:Sivan757/dsh-agent-plugins-market
 }
 ```
 
-构建产物（`lib/`、`client/`）已提交到仓库，GitHub 安装无需 `prepare` 步骤。
+构建产物（`lib/`、`client/`）不再提交进仓库；npm 通过 `prepack` 发布，GitHub 安装时由 `prepare` 脚本自动构建（安装机需具备 Node + pnpm 工具链）。
 
 </details>
 

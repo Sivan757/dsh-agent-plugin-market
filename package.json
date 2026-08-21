@@ -34,7 +34,8 @@
     "format:check": "prettier --check src/application src/catalog src/contracts src/runtime src/client/features src/client/MarketSection.tsx src/client/McpStatusPanel.tsx src/client/SuiteDetail.tsx src/client/api.ts src/discovery.ts src/index.ts src/manager.ts src/mcp-status.ts src/routes.ts src/skills-provider.ts src/types.ts tests/catalog.test.ts tests/client-view-models.test.ts tests/discovery.test.ts tests/market-contracts.test.ts tests/mcp-status.test.ts tests/runtime-reconciler.test.ts tests/routes.test.ts tests/skills-provider.test.ts tests/source-discovery.test.ts tests/suite-detail-resource.test.ts docs/adr/0001-catalog-centered-modular-refactor.md docs/design/engineering-refactor-plan.md docs/design/rendering-baseline.md CONTEXT.md",
     "check:architecture": "depcruise --validate .dependency-cruiser.cjs src",
     "check:refactor": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test:contract && pnpm run check:architecture",
-    "prepack": "pnpm run build"
+    "prepack": "pnpm run build",
+    "prepare": "pnpm run build"
   },
   "dsh": {
     "bundle": {
