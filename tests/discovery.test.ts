@@ -3,8 +3,8 @@ import { mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { discoverSuitesInSource } from '../src/discovery.js'
-import { SuiteManager } from '../src/manager.js'
+import { discoverSuitesInSource } from '../src/catalog/suite-scanner.js'
+import { Catalog } from '../src/application/catalog.js'
 import { validateMcpJson, validatePluginManifest, expandPlaceholders, pathContainmentError } from '../src/validate.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -49,7 +49,7 @@ describe('discovery: Claude Code marketplace layout', () => {
 describe('overview: remote marketplace references', () => {
   it('includes the remote source URL on remote suite cards', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-remote-overview-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'cc', url: join(fixtures, 'cc-marketplace'), local: true }])
 
@@ -217,7 +217,7 @@ describe('discovery: manifest-less skill collection layout', () => {
 describe('suite detail and skill content (market detail endpoints)', () => {
   it('lists skills, mcp servers, and file lists from the v1 fixture', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-det-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'demo', url: join(fixtures, 'v1-suite'), local: true }])
     const detail = await manager.suiteDetail('demo', 'v1-suite')
@@ -243,7 +243,7 @@ describe('category-nested skill collections', () => {
 describe('suite detail: hooks preview entries', () => {
   it('flattens CC hooks.json into event/matcher/command entries', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-hooks-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'cc', url: join(fixtures, 'cc-commands'), local: true }])
     const detail = await manager.suiteDetail('cc', 'cc-commands')

@@ -15,7 +15,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { SkillCandidate, SkillDefinition, SkillLookupOptions, SkillProvider, SkillSource } from '@deepseek-ai/dsh-skill'
-import type { SuiteManager } from './manager.js'
+import type { Catalog } from './application/catalog.js'
 import { parseSkillFrontmatter, stripFrontmatter } from './skills-parse.js'
 import type { Suite, SuiteSkill } from './types.js'
 
@@ -42,7 +42,7 @@ interface LocatedSkill {
 export class SuiteSkillProvider implements SkillProvider {
   readonly name = 'agent-plugin'
 
-  constructor(private readonly manager: SuiteManager) {}
+  constructor(private readonly manager: Catalog) {}
 
   async list(options: SkillLookupOptions): Promise<SkillCandidate[]> {
     const located = await this.locate(options.cwd)

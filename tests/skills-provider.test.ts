@@ -3,18 +3,18 @@ import { mkdir, mkdtemp, writeFile, cp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { SuiteManager } from '../src/manager.js'
+import { Catalog } from '../src/application/catalog.js'
 import { SuiteSkillProvider, SUITE_PROJECT_SOURCE, SUITE_USER_SOURCE } from '../src/skills-provider.js'
 import { isModelInvocable } from '@deepseek-ai/dsh-skill'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixtures = join(here, 'fixtures')
 
-async function installUserSuite(fixtureDir: string): Promise<{ manager: SuiteManager; userRoot: string; sourceId: string; suiteId: string }> {
+async function installUserSuite(fixtureDir: string): Promise<{ manager: Catalog; userRoot: string; sourceId: string; suiteId: string }> {
   const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-user-'))
   const checkout = join(userRoot, '.sources', 'demo')
   await cp(fixtureDir, checkout, { recursive: true })
-  const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, '..', 'data'), onChanged: () => {} })
+  const manager = new Catalog({ userRoot, dataRoot: join(userRoot, '..', 'data'), onChanged: () => {} })
   await manager.load()
   await manager.mergeSources([{ id: 'demo', url: 'file:///demo' }])
   await manager.install('demo', fixtureDir.includes('v1-suite') ? 'v1-suite' : fixtureDir.includes('bad-mcp') ? 'bad-mcp' : 'demo-one')
@@ -43,7 +43,7 @@ describe('SuiteSkillProvider', () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-off-'))
     const checkout = join(userRoot, '.sources', 'demo')
     await cp(join(fixtures, 'v1-suite'), checkout, { recursive: true })
-    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'demo', url: 'file:///demo' }])
     await manager.install('demo', 'v1-suite')
@@ -63,7 +63,7 @@ describe('SuiteSkillProvider', () => {
       JSON.stringify({ version: 1, sources: [], installed: { 'p1/v1-suite': { enabled: true, installedAt: new Date(0).toISOString() } } }),
       'utf8'
     )
-    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     const provider = new SuiteSkillProvider(manager)
     const candidates = await provider.list({ cwd: projectRoot })
@@ -80,7 +80,7 @@ describe('local-directory sources (local: true)', () => {
     const staleCheckout = join(userRoot, '.sources', 'local-repo')
     await mkdir(staleCheckout, { recursive: true })
     await writeFile(join(staleCheckout, 'sentinel'), 'keep')
-    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'local-repo', url: localRepo, local: true }])
     await manager.install('local-repo', 'v1-suite')
@@ -103,7 +103,7 @@ describe('local-directory sources (local: true)', () => {
 
   it('reports a missing local directory instead of cloning it', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-local2-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'gone', url: join(tmpdir(), 'does-not-exist-xyz'), local: true }])
     const overview = await manager.overview()
@@ -116,7 +116,7 @@ describe('local-directory sources (local: true)', () => {
 describe('source editing (updateSource)', () => {
   it('switches a git source to a local path without touching directories', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-edit-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'demo', url: 'https://example.com/demo.git' }])
     await manager.updateSource('demo', { url: join(fixtures, 'v1-suite'), local: true })
@@ -129,7 +129,7 @@ describe('source editing (updateSource)', () => {
 
   it('rejects unknown source ids', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-edit2-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await expect(manager.updateSource('nope', { url: 'https://example.com/x.git' })).rejects.toThrow('unknown source')
   })
@@ -138,7 +138,7 @@ describe('source editing (updateSource)', () => {
 describe('source id auto-derivation', () => {
   it('derives a single-suite repo id from its suite manifest name', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-id-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     const source = await manager.addSource({ url: join(fixtures, 'v1-suite'), local: true })
     expect(source.id).toBe('v1-suite') // manifest name, not the fixtures basename
@@ -146,7 +146,7 @@ describe('source id auto-derivation', () => {
 
   it('prefers the suite repo JSON name even when the basename differs', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-id3-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     // Local dir whose basename (misc-repo) differs from the manifest name (vercel-plugin).
     const parent = await mkdtemp(join(tmpdir(), 'id3-p-'))
@@ -158,7 +158,7 @@ describe('source id auto-derivation', () => {
 
   it('derives a multi-suite repo id from its basename and dedupes collisions', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-id2-'))
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     // Two different parents, same basename -> both derive "agent-plugins"; the second gets a suffix.
     const parentA = await mkdtemp(join(tmpdir(), 'id2-a-'))

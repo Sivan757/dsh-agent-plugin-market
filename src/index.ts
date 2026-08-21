@@ -14,7 +14,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { SkillProviderControl } from '@deepseek-ai/dsh-skill'
 import { mountSuiteContext } from './context.js'
-import { SuiteManager } from './manager.js'
+import { Catalog } from './application/catalog.js'
 import { RuntimeReconciler } from './runtime/reconciler.js'
 import { inspectToolRegistry } from './runtime/tool-registry-observer.js'
 import { resolveDataRoot, resolveUserRoot } from './paths.js'
@@ -43,9 +43,9 @@ export function apply(ctx: Context, config: Config = {}): void {
 
   const reconcileMounts = (): void => {
     void (async () => {
-      const snapshot = await manager.readUserCatalog()
+      const snapshot = await catalog.readUserCatalog()
       const diagnostics = await runtime.reconcile(snapshot.enabledSuites)
-      manager.mcpDiagnostics = diagnostics.mcp
+      catalog.mcpDiagnostics = diagnostics.mcp
       for (const diagnostic of diagnostics.mcp) {
         ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" mcp server "${diagnostic.serverKey}": ${diagnostic.reason}`)
       }
@@ -68,24 +68,24 @@ export function apply(ctx: Context, config: Config = {}): void {
     reconcileMounts()
   }
 
-  const manager = new SuiteManager({ userRoot, dataRoot, onChanged })
+  const catalog = new Catalog({ userRoot, dataRoot, onChanged })
   ctx.inject(['tools'], toolsCtx => {
-    manager.setMcpToolSnapshotProvider(() => inspectToolRegistry((toolsCtx as { tools: unknown }).tools))
+    catalog.setMcpToolSnapshotProvider(() => inspectToolRegistry((toolsCtx as { tools: unknown }).tools))
   })
-  void manager.load().then(async () => {
-    await manager.mergeSources(config.sources ?? [])
+  void catalog.load().then(async () => {
+    await catalog.mergeSources(config.sources ?? [])
     reconcileMounts()
   })
 
   ctx.skills.registerProvider(control => {
     providerControl = control
-    return new SuiteSkillProvider(manager)
+    return new SuiteSkillProvider(catalog)
   })
 
-  const disposeContext = mountSuiteContext(ctx, manager)
+  const disposeContext = mountSuiteContext(ctx, catalog)
 
   ctx.inject(['webServer', 'loader'], hostCtx => {
-    hostCtx.effect(() => mountSuiteRoutes(hostCtx, manager), 'dsh-agent-plugins-market: http routes')
+    hostCtx.effect(() => mountSuiteRoutes(hostCtx, catalog), 'dsh-agent-plugins-market: http routes')
   })
 
   ctx.effect(

@@ -9,7 +9,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { deriveServerName } from './mcp-config.js'
-import type { SuiteManager } from './manager.js'
+import type { Catalog } from './application/catalog.js'
 import type { Suite } from './types.js'
 
 /** Structural tool registry surface this plugin touches. */
@@ -28,7 +28,7 @@ interface ToolsRegistry {
 }
 
 /** Mount the agent_plugins query tool. */
-export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => void {
+export function mountSuiteContext(ctx: Context, manager: Catalog): () => void {
   const disposers: Array<() => void> = []
   ctx.inject(['tools'], toolsCtx => {
     const tools = toolsCtx as unknown as { tools: ToolsRegistry }

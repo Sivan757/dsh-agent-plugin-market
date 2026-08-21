@@ -9,7 +9,7 @@
  */
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { repoName } from '../discovery.js'
+import { repoName } from '../discovery/manifests.js'
 import { discoverSourceList } from '../catalog/source-catalog.js'
 import { discoverSuitesInSource } from '../catalog/suite-scanner.js'
 import { gitClone, gitHead, gitPull, gitRemove } from '../git.js'

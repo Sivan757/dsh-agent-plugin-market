@@ -89,8 +89,8 @@ describe('CommandMountRegistry (CC commands compat)', () => {
         }
       }
     }
-    const registry = new (await import('../src/commands-mounts.js')).CommandMountRegistry(ctx as never)
-    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
+    const registry = new (await import('../src/runtime/commands-mounts.js')).CommandMountRegistry(ctx as never)
+    const suites = await (await import('../src/catalog/suite-scanner.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
     suites[0]!.enabled = true
     const diagnostics = await registry.reconcile(suites)
     expect(diagnostics).toEqual([])
@@ -118,11 +118,11 @@ describe('CommandMountRegistry (CC commands compat)', () => {
 
 describe('agents compat (agent-<name> skills)', () => {
   it('lists agent definitions as agent-* skills and renders a usable body', async () => {
-    const { SuiteManager } = await import('../src/manager.js')
+    const { Catalog } = await import('../src/application/catalog.js')
     const { mkdtemp } = await import('node:fs/promises')
     const { tmpdir } = await import('node:os')
     const userRoot = await mkdtemp(`${tmpdir()}/dsh-agent-plugins-agents-`)
-    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    const manager = new Catalog({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'cc', url: CC_COMMANDS_ROOT, local: true }])
     await manager.install('cc', 'cc-commands')
@@ -149,8 +149,8 @@ describe('HooksMountRegistry (CC hooks compat)', () => {
       },
       logger: { warn: () => {} }
     }
-    const registry = new (await import('../src/hooks-mounts.js')).HooksMountRegistry(ctx as never)
-    const suites = await (await import('../src/discovery.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
+    const registry = new (await import('../src/runtime/hooks-mounts.js')).HooksMountRegistry(ctx as never)
+    const suites = await (await import('../src/catalog/suite-scanner.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
     suites[0]!.enabled = true
     const diagnostics = await registry.reconcile(suites)
     expect(diagnostics).toEqual([])
