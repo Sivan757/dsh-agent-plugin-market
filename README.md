@@ -180,9 +180,15 @@ Yes — MIT licensed, published on [npm](https://www.npmjs.com/package/dsh-agent
 pnpm install
 pnpm run test        # vitest over fixture suites + multi-dialect parsing
 pnpm run typecheck
+pnpm run lint        # ESLint over the refactored source and tests
+pnpm run format:check
+pnpm run check:architecture
+pnpm run check:refactor
 pnpm run build       # tsc host + tsdown client + module-loader banner
 pnpm pack
 ```
+
+The internal modularization decision and staged migration are documented in [`docs/design/engineering-refactor-plan.md`](docs/design/engineering-refactor-plan.md) and [`docs/adr/0001-catalog-centered-modular-refactor.md`](docs/adr/0001-catalog-centered-modular-refactor.md).
 
 The docs website lives in [`docs-site/`](docs-site/) (Astro, deployed to GitHub Pages).
 

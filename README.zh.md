@@ -180,9 +180,15 @@ dsh plugin --profile <名字> add dsh-agent-plugins-market
 pnpm install
 pnpm run test        # vitest（fixture 套件 + 多范式解析）
 pnpm run typecheck
+pnpm run lint        # 对重构源码与测试执行 ESLint
+pnpm run format:check
+pnpm run check:architecture
+pnpm run check:refactor
 pnpm run build       # tsc 宿主 + tsdown 客户端 + 模块加载器包装
 pnpm pack            # 构建并打 tgz
 ```
+
+内部模块化决策与分阶段迁移计划见 [`docs/design/engineering-refactor-plan.md`](docs/design/engineering-refactor-plan.md) 和 [`docs/adr/0001-catalog-centered-modular-refactor.md`](docs/adr/0001-catalog-centered-modular-refactor.md)。
 
 文档站位于 [`docs-site/`](docs-site/)（Astro，部署到 GitHub Pages）。
 
