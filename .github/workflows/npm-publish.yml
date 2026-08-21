@@ -1,8 +1,13 @@
 name: npm-publish
 
+# Triggered by version tags pushed by release-please.
+# We use 'push: tags' instead of 'on: release' because releases created
+# by github-actions[bot] (release-please) do NOT trigger the 'release'
+# workflow event — GitHub prevents this to avoid recursive runs.
 on:
-  release:
-    types: [released]
+  push:
+    tags:
+      - 'dsh-agent-plugins-market-v*'
 
 # id-token: write is required for npm trusted publishing (OIDC).
 # No NPM_TOKEN secret needed — npm issues a short-lived OIDC token per run.
