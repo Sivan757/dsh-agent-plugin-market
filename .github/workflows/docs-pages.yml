@@ -20,13 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Install docs-site deps
-        run: |
-          corepack enable
-          pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
         working-directory: .
       - run: pnpm --dir docs-site exec astro build
       - uses: actions/upload-pages-artifact@v3
