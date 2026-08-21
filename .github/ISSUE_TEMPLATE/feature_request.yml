@@ -1,0 +1,80 @@
+name: Feature request / 功能请求
+description: Propose a focused improvement to the plugin, Web UI, runtime, documentation, or developer experience / 提议对插件、Web UI、运行时、文档或开发体验的聚焦改进
+title: '[Feature]: '
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the user problem before the implementation. A small, testable proposal is easier to evaluate.
+
+        请先描述用户问题，再描述实现方案。小而可测试的提案更容易评估。
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 领域
+      options:
+        - Host runtime or API / 宿主运行时或 API
+        - Catalog discovery or marketplace layout / 目录发现或市场布局
+        - MCP, hooks, commands, or skills / MCP、hooks、命令或技能
+        - Web UI or accessibility / Web UI 或无障碍
+        - Documentation or examples / 文档或示例
+        - Tests, packaging, or CI / 测试、打包或 CI
+        - Other / 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve / 要解决的问题
+      description: Who is affected, and what is difficult today? / 谁受到影响，目前哪里困难？
+      placeholder: Explain the use case and its impact. / 说明使用场景及其影响。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution / 建议方案
+      description: Describe the smallest useful behavior, not only an implementation detail. / 描述最小可用的行为，而不只是实现细节。
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / 考虑过的替代方案
+      description: What workarounds or other designs did you consider? / 你考虑过哪些临时方案或其他设计？
+    validations:
+      required: false
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and security impact / 兼容性与安全影响
+      description: Mention API, persisted state, performance, third-party content, or security implications. / 说明 API、持久化状态、性能、第三方内容或安全影响。
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context / 其他上下文
+      description: Add examples, links, mockups, or related issues. Do not include secrets. / 添加示例、链接、草图或相关 issue；不要包含秘密信息。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks / 提交前确认
+      options:
+        - label: I searched existing issues and did not find a duplicate. / 我已搜索现有 issue，确认不是重复提案。
+          required: true
+        - label: This request has one focused outcome. / 这个请求只有一个聚焦目标。
+          required: true
+        - label: I removed secrets and other private information. / 我已删除秘密信息和其他隐私内容。
+          required: true

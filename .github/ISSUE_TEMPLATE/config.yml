@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation and usage / 文档与使用
+    url: https://sivan757.github.io/dsh-agent-plugins-market/
+    about: Read the documentation before opening an issue / 创建 issue 前请先阅读文档
+  - name: Security vulnerability / 安全漏洞
+    url: https://github.com/Sivan757/dsh-agent-plugins-market/security/advisories/new
+    about: Report privately; do not use a public issue / 请私密报告，不要使用公开 issue

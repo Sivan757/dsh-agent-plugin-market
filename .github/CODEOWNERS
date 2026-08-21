@@ -1,0 +1,9 @@
+# Default reviewers / 默认审查者
+# Replace this owner if repository maintenance ownership changes. / 如果仓库维护者发生变化，请替换此 owner。
+* @Sivan757
+
+# Keep repository governance files under explicit ownership. / GitHub 治理文件由明确 owner 审查。
+/.github/ @Sivan757
+/CONTRIBUTING.md @Sivan757
+/CODE_OF_CONDUCT.md @Sivan757
+/SECURITY.md @Sivan757
