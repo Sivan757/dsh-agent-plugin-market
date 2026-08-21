@@ -6,11 +6,15 @@
  * status tabs, and the card grid. Colors ride the dsh --dsw-alias-* tokens
  * with light-mode fallbacks so the page follows the active theme.
  */
-import { createElement as h, useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react'
-import { Button, Input, Modal, Toast, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
-import { postAction, type OverviewData, type SourceOverview, type SuiteCardData } from './api.js'
+import { createElement as h, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Button, Modal, Toast } from '@deepseek-ai/dsh-client-ui-primitives'
+import { postAction, type OverviewData, type SuiteCardData } from './api.js'
 import { loadOverview, invalidateOverview, startSourceProgressPolling, type SourceProgressState } from './features/market/market-resource.js'
 import { deriveMarketViewModel, type MarketCategory, type MarketFilter } from './features/market/market-view-model.js'
+import { SourceTab } from './features/market/SourceTab.js'
+import { SourceEditorModal, type EditorState } from './features/market/SourceEditorModal.js'
+import { SuiteCard } from './features/market/SuiteCard.js'
+import { StatusIcon } from './ui/StatusIcon.js'
 import type { Translate } from './index.js'
 import { ErrorBoundary } from './ErrorBoundary.js'
 import { SuiteDetailModal } from './SuiteDetail.js'
@@ -43,8 +47,6 @@ interface ConfirmState {
   sourceId: string
   suiteId?: string
 }
-
-type EditorState = { mode: 'edit'; source: SourceOverview } | { mode: 'add' } | undefined
 
 function progressStepLabel(t: Translate, step: string): string {
   const key = PROGRESS_STEP_LABELS[step]
@@ -283,7 +285,6 @@ export function MarketSection({ t, mode = 'settings' }: MarketSectionProps): Rea
             suiteId: detail.suiteId,
             onClose: () => setDetail(undefined)
           }),
-
       editor === undefined
         ? null
         : h(SourceEditorModal, {
@@ -327,294 +328,4 @@ export function MarketSection({ t, mode = 'settings' }: MarketSectionProps): Rea
           })
     )
   })
-}
-
-type StatusIconKind = 'all' | 'installed' | 'uninstalled'
-
-function StatusIcon({ kind }: { kind: StatusIconKind }): ReactNode {
-  const common = { width: 16, height: 16, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true } as const
-  if (kind === 'installed') {
-    return h('svg', common, h('circle', { cx: 8, cy: 8, r: 5.5 }), h('path', { d: 'm5.5 8 1.7 1.7 3.4-3.4' }))
-  }
-  if (kind === 'uninstalled') {
-    return h('svg', common, h('path', { d: 'M8 2v8m-3-3 3 3 3-3M3 13h10' }))
-  }
-  return h('svg', common, h('path', { d: 'M2.5 5 8 2.5 13.5 5 8 7.5 2.5 5Zm0 3L8 10.5 13.5 8M2.5 11 8 13.5 13.5 11' }))
-}
-
-/** A source tab with a trailing delete control (deletion confirms at the section level). */
-function SourceTab(props: { t: Translate; active?: boolean; label: string; onSelect: () => void; onDelete?: () => void; onEdit?: () => void }): ReactNode {
-  const { t, active = false, label, onSelect, onDelete, onEdit } = props
-  return h(
-    'div',
-    { className: active ? css.srcTabOn : css.srcTab },
-    h('button', { type: 'button', className: css.srcTabMain, onClick: onSelect }, label),
-    onEdit === undefined
-      ? null
-      : h(
-          'button',
-          {
-            type: 'button',
-            className: css.srcTabEdit,
-            title: t('editSource'),
-            onClick: (event: { stopPropagation(): void }) => {
-              event.stopPropagation()
-              onEdit()
-            }
-          },
-          '✎'
-        ),
-    onDelete === undefined
-      ? null
-      : h(
-          'button',
-          {
-            type: 'button',
-            className: css.srcTabDel,
-            title: t('remove'),
-            onClick: (event: { stopPropagation(): void }) => {
-              event.stopPropagation()
-              onDelete()
-            }
-          },
-          '×'
-        )
-  )
-}
-
-function SourceEditorModal(props: {
-  t: Translate
-  editor: Exclude<EditorState, undefined>
-  busy: boolean
-  progress: SourceProgressState
-  onClose: () => void
-  onSave: (url: string, branch: string, local: boolean) => Promise<boolean>
-  onRemove: (id: string) => void
-}): ReactNode {
-  const { t, editor } = props
-  const [local, setLocal] = useState(editor.mode === 'edit' && editor.source.local === true)
-  const [url, setUrl] = useState(editor.mode === 'edit' ? editor.source.url : '')
-  const [branch, setBranch] = useState(editor.mode === 'edit' ? (editor.source.branch ?? '') : '')
-  const id = editor.mode === 'edit' ? editor.source.id : ''
-  const title = editor.mode === 'edit' ? t('editSourceTitle') : t('addSourceTitle')
-  return h(Modal, {
-    open: true,
-    onClose: props.onClose,
-    title,
-    description: t('editorHint'),
-    closeLabel: t('cancel'),
-    className: css.editorDialog,
-    footer: h(
-      'div',
-      { className: css.modalFooter },
-      h('div', { className: css.modalFooterLeft }, editor.mode === 'edit' ? h(Button, { variant: 'ghost', onClick: () => props.onRemove(id) }, `🗑 ${t('remove')}`) : null),
-      h(Button, { variant: 'ghost', onClick: props.onClose }, t('cancel')),
-      h(
-        Button,
-        {
-          variant: 'primary',
-          disabled: props.busy,
-          onClick: () => {
-            void props.onSave(url.trim(), branch.trim(), local)
-          }
-        },
-        t('save')
-      )
-    ),
-    children: h(
-      'div',
-      { className: css.editorForm },
-      h(
-        'div',
-        { className: css.modeRow },
-        h(
-          'button',
-          {
-            type: 'button',
-            className: local ? css.seg : css.segOn,
-            onClick: () => setLocal(false)
-          },
-          t('sourceModeGit')
-        ),
-        h(
-          'button',
-          {
-            type: 'button',
-            className: local ? css.segOn : css.seg,
-            onClick: () => setLocal(true)
-          },
-          t('sourceModeLocal')
-        )
-      ),
-      editor.mode === 'edit'
-        ? h(
-            'div',
-            { className: css.fieldGroup },
-            h('label', { className: css.fieldLabel }, t('sourceIdPh')),
-            h('div', { className: css.staticId }, h('span', { className: css.staticIdValue }, id), h('span', { className: css.fieldHint }, t('idFixed')))
-          )
-        : null,
-      h(
-        'div',
-        { className: css.fieldGroup },
-        h('label', { className: css.fieldLabel }, local ? t('sourceUrlLocalPh') : t('sourceUrlPh')),
-        h(Input, { placeholder: local ? t('sourceUrlLocalPh') : t('sourceUrlPh'), value: url, onChange: event => setUrl((event.target as HTMLInputElement).value) }),
-        h('span', { className: css.fieldHint }, local ? t('urlLocalHint') : t('urlGitHint'))
-      ),
-      local
-        ? null
-        : h(
-            'div',
-            { className: css.fieldGroup },
-            h('label', { className: css.fieldLabel }, t('branchPh')),
-            h(Input, { placeholder: t('branchPh'), value: branch, onChange: event => setBranch((event.target as HTMLInputElement).value) }),
-            h('span', { className: css.fieldHint }, t('branchHint'))
-          ),
-      props.progress.error === undefined && props.progress.step === undefined
-        ? null
-        : h(
-            'div',
-            {
-              className: props.progress.error === undefined ? css.progress : css.progressError
-            },
-            props.progress.error === undefined ? h('span', { className: css.progressSpin }) : h('span', { className: css.progressFail }, '✕'),
-            h('span', { className: css.progressText }, props.progress.error === undefined ? props.progress.step : `${t('actionFail')}: ${props.progress.error}`)
-          )
-    )
-  })
-}
-
-/** A green/gray switch control for suite enable state. */
-function ToggleSwitch(props: { on: boolean; disabled?: boolean; title?: string; onChange: () => void }): ReactNode {
-  return h(
-    'button',
-    {
-      type: 'button',
-      role: 'switch',
-      'aria-checked': props.on,
-      title: props.title,
-      disabled: props.disabled,
-      className: props.on ? css.switchOn : css.switchOff,
-      onClick: (event: { stopPropagation(): void }) => {
-        event.stopPropagation()
-        props.onChange()
-      }
-    },
-    h('span', { className: css.switchThumb })
-  )
-}
-
-function SuiteCard(props: {
-  t: Translate
-  suite: SuiteCardData
-  busy: boolean
-  onOpen: () => void
-  onInstall: () => void
-  onAddSource: () => void
-  onToggle: () => void
-  onRefresh: () => void
-  onUninstall: () => void
-}): ReactNode {
-  const { t, suite, busy } = props
-  const tags: Array<[string, number]> = (
-    [
-      [t('surfaceSkills'), suite.surfaces.skills],
-      [t('surfaceMcp'), suite.surfaces.mcp],
-      [t('surfaceHooks'), suite.surfaces.hooks],
-      [t('surfaceCommands'), suite.surfaces.commands],
-      [t('surfaceAgents'), suite.surfaces.agents],
-      [t('surfaceLsp'), suite.surfaces.lsp]
-    ] as Array<[string, number]>
-  ).filter(([, count]) => count > 0)
-  const layoutLabel =
-    suite.layout === 'agent-plugin-v1'
-      ? t('layoutV1')
-      : suite.layout === 'claude-code'
-        ? t('layoutCC')
-        : suite.layout === 'codex'
-          ? t('layoutCodex')
-          : suite.layout === 'universal'
-            ? t('layoutUniversal')
-            : suite.layout === 'cursor'
-              ? t('layoutCursor')
-              : suite.layout === 'kimi'
-                ? t('layoutKimi')
-                : suite.layout === 'remote'
-                  ? t('layoutRemote')
-                  : t('layoutSkills')
-  const isRemote = suite.remoteUrl !== undefined
-  const stop = (callback: () => void) => (event: { stopPropagation(): void }) => {
-    event.stopPropagation()
-    callback()
-  }
-  return h(
-    'article',
-    { className: css.card, onClick: props.onOpen },
-    h(
-      'div',
-      { className: css.cardTop },
-      h(
-        'div',
-        { className: css.cardTitle },
-        h('span', { className: css.cardName }, suite.name),
-        suite.version === undefined ? null : h('span', { className: css.version }, `v${suite.version}`)
-      ),
-      h(
-        'div',
-        { className: css.cardActions },
-        suite.installed
-          ? h(ToggleSwitch, {
-              on: suite.enabled,
-              disabled: busy,
-              title: suite.enabled ? t('disable') : t('enable'),
-              onChange: props.onToggle
-            })
-          : isRemote
-            ? h(
-                Button,
-                {
-                  variant: 'primary',
-                  size: 'sm',
-                  disabled: busy,
-                  title: suite.remoteUrl,
-                  onClick: stop(props.onAddSource)
-                },
-                t('addSource')
-              )
-            : h(
-                Button,
-                {
-                  variant: 'primary',
-                  size: 'sm',
-                  disabled: busy,
-                  onClick: stop(props.onInstall)
-                },
-                t('install')
-              ),
-        suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('refresh'), disabled: busy, onClick: stop(props.onRefresh) }, '↻') : null,
-        suite.installed ? h(Button, { variant: 'ghost', size: 'sm', title: t('uninstall'), disabled: busy, onClick: stop(props.onUninstall) }, '🗑') : null
-      )
-    ),
-    h('p', { className: css.desc }, suite.description ?? ''),
-    h(
-      'div',
-      { className: css.meta },
-      h('span', { className: css.src }, `${suite.sourceId} · ${isRemote ? t('remoteRef') : suite.dimension === 'user' ? t('dimensionUser') : t('dimensionProject')}`),
-      h('span', { className: css.tag }, layoutLabel),
-      suite.installed ? h('span', { className: suite.enabled ? css.okState : css.tag }, suite.enabled ? `✓ ${t('installedBadge')}` : t('installedBadge')) : null,
-      ...tags.map(([label, count]) => h('span', { key: label, className: css.tag }, `${label} ${count}`)),
-      suite.errors.length === 0
-        ? null
-        : h(Tooltip, {
-            label: suite.errors.slice(0, 8).join(t('sourceErrorSeparator')),
-            children: h('span', { className: css.warnLine }, `⚠ ${t('errors')} ${suite.errors.length}`) as unknown as ReactElement
-          }),
-      (suite.mcpErrors?.length ?? 0) === 0
-        ? null
-        : h(Tooltip, {
-            label: suite.mcpErrors!.slice(0, 8).join(t('sourceErrorSeparator')),
-            children: h('span', { className: css.warnLine }, `⚠ ${t('mcpSection')} ${suite.mcpErrors!.length}`) as unknown as ReactElement
-          })
-    )
-  )
 }
