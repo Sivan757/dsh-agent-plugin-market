@@ -1,587 +1,164 @@
 /**
- * SuiteManager: the host-authoritative orchestrator behind the market page.
+ * Compatibility facade for the former SuiteManager entry point.
  *
- * Owns the persisted state (sources + install entries), discovery over the
- * source checkouts, and every mutating action (source add/remove/refresh,
- * install/uninstall, enable/disable). Mutations serialize through a
- * single-flight queue so concurrent HTTP actions cannot interleave state
- * writes or git operations. After every mutation it calls `onChanged()`,
- * which is where the runtime consumers (skill registry invalidation, MCP
- * mount reconciliation) pick the new enabled set up.
+ * New host code can migrate to `application/catalog.ts` directly. This facade
+ * preserves the existing class name and method surface while delegating state,
+ * discovery, mutations, and snapshots to the Catalog application module.
  */
-import { mkdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { discoverLspEntries, discoverSourceList, discoverSuitesInSource, listMdFiles, repoName } from './discovery.js'
-import { gitClone, gitHead, gitPull, gitRemove } from './git.js'
-import { buildMcpStatus, type McpStatusPayload, type McpToolSnapshot } from './mcp-status.js'
-import { deriveSourceId, expandHome, isDirectory, resolveProjectRoot, sanitizeId, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from './paths.js'
-import { loadState, saveState, EMPTY_STATE } from './state.js'
-import type { InstalledEntry, OverviewPayload, SourceOverview, SourceRef, Suite, SuiteDimension, SuiteState } from './types.js'
+import type { McpStatusPayload } from './contracts/mcp-status.js'
+import type { OverviewPayload, SourceProgress, SourceOverview, SkillContent, SuiteDetail } from './contracts/market.js'
+import { Catalog, type CatalogOptions, type CatalogSnapshot } from './application/catalog.js'
+import type { McpToolSnapshot } from './mcp-status.js'
+import type { InstalledEntry, SourceRef, Suite, SuiteDimension } from './types.js'
 
-export interface ManagerOptions {
-  userRoot: string
-  dataRoot: string
-  onChanged: () => void
-}
+/** Construction options retained for callers of the legacy facade. */
+export type ManagerOptions = CatalogOptions
 
 export class SuiteManager {
-  private state: SuiteState = EMPTY_STATE
-  private mutationQueue: Promise<unknown> = Promise.resolve()
-  private readonly statePath: string
-  /** Cached `git rev-parse HEAD` per source id, so overview reads stay instant; cleared whenever a checkout may have moved. */
-  private readonly headCache = new Map<string, string>()
-  /** Latest MCP mount diagnostics (suiteId -> reasons), fed by the host reconcile. */
-  mcpDiagnostics: Array<{ suiteId: string; serverKey: string; reason: string }> = []
-  private toolSnapshotProvider: () => readonly McpToolSnapshot[] = () => []
+  private readonly catalog: Catalog
 
-  constructor(private readonly options: ManagerOptions) {
-    this.statePath = join(options.userRoot, STATE_FILE_NAME)
+  constructor(options: ManagerOptions) {
+    this.catalog = new Catalog(options)
   }
 
-  /** Install the host tool snapshot provider used by the MCP status surface. */
+  /** Install the host tool snapshot provider used by MCP status queries. */
   setMcpToolSnapshotProvider(provider: () => readonly McpToolSnapshot[]): void {
-    this.toolSnapshotProvider = provider
+    this.catalog.setMcpToolSnapshotProvider(provider)
   }
 
-  /** Build the flat MCP service inventory for the status surface. */
+  /** Latest MCP mount diagnostics, retained for the host reconcile callback. */
+  get mcpDiagnostics(): Array<{ suiteId: string; serverKey: string; reason: string }> {
+    return this.catalog.mcpDiagnostics
+  }
+
+  set mcpDiagnostics(value: Array<{ suiteId: string; serverKey: string; reason: string }>) {
+    this.catalog.mcpDiagnostics = value
+  }
+
+  /** Read the MCP status projection. */
   async mcpStatus(): Promise<McpStatusPayload> {
-    const suites = await this.discoverDimension('user', this.options.userRoot)
-    return buildMcpStatus(suites, this.mcpDiagnostics, this.toolSnapshotProvider())
+    return this.catalog.mcpStatus()
   }
 
   /** Load persisted state once at plugin activation. */
   async load(): Promise<void> {
-    this.state = await loadState(this.statePath)
+    return this.catalog.load()
   }
 
   get sources(): SourceRef[] {
-    return this.state.sources
+    return this.catalog.sources
   }
 
-  /** The user-dimension suite root this manager operates. */
+  /** The user-dimension suite root. */
   get userRoot(): string {
-    return this.options.userRoot
+    return this.catalog.userRoot
   }
 
-  /**
-   * One suite's full detail for the market detail modal: manifest fields,
-   * skill metadata, validated mcp.json servers, and per-surface file lists.
-   */
-  async suiteDetail(sourceId: string, suiteId: string): Promise<Record<string, unknown>> {
-    const suites = await this.discoverDimension('user', this.options.userRoot)
-    const suite = suites.find(entry => entry.sourceId === sourceId && entry.id === suiteId)
-    if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
-    const installed = this.state.installed[installKey(sourceId, suiteId)]
-    const remoteUrl = suite.remote?.url
-    return {
-      sourceId,
-      suiteId: suite.id,
-      name: suite.manifest.name,
-      version: suite.manifest.version ?? null,
-      description: suite.manifest.description ?? null,
-      author: suite.manifest.author ?? null,
-      keywords: suite.manifest.keywords ?? [],
-      layout: suite.manifest.layout,
-      dimension: suite.dimension,
-      root: remoteUrl ?? suite.root,
-      remoteUrl: remoteUrl ?? null,
-      installed: installed !== undefined,
-      enabled: installed?.enabled === true,
-      skills: suite.skills.map(skill => ({
-        name: skill.name,
-        description: skill.description,
-        ...skill.whenToUse === undefined ? {} : { whenToUse: skill.whenToUse },
-        path: skill.file,
-      })),
-      mcpServers: suite.mcp === undefined ? [] : Object.entries(suite.mcp.servers).map(([key, server]) => ({ key, ...server })),
-      hooks: remoteUrl === undefined ? await this.hooksPreviews(suite.root) : { count: 0, entries: [] },
-      commands: remoteUrl === undefined ? await this.commandPreviews(`${suite.root}/commands`) : [],
-      agents: remoteUrl === undefined ? await this.agentPreviews(`${suite.root}/agents`) : [],
-      lsp: remoteUrl === undefined ? await this.lspPreviews(suite.root) : [],
-      errors: suite.errors,
-      mcpErrors: this.mcpDiagnostics.filter(diagnostic => diagnostic.suiteId === suite.id).map(diagnostic => `${diagnostic.serverKey}: ${diagnostic.reason}`),
-    }
+  /** Read a coherent user-dimension catalog snapshot. */
+  async readUserCatalog(): Promise<CatalogSnapshot> {
+    return this.catalog.readUserCatalog()
   }
 
-  private async readPreview(path: string, capBytes = 64 * 1024): Promise<string> {
-    const text = await readFile(path, 'utf8')
-    return text.length > capBytes ? `${text.slice(0, capBytes)}\n… (truncated)` : text
+  /** Read a coherent project-dimension catalog snapshot. */
+  async readProjectCatalog(cwd: string): Promise<CatalogSnapshot> {
+    return this.catalog.readProjectCatalog(cwd)
   }
 
-  /** One skill's full SKILL.md text for the market detail modal. */
-  async skillContent(sourceId: string, suiteId: string, skillName: string): Promise<{ name: string; description: string; content: string; path: string }> {
-    const suites = await this.discoverDimension('user', this.options.userRoot)
-    const suite = suites.find(entry => entry.sourceId === sourceId && entry.id === suiteId)
-    if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
-    const skill = suite.skills.find(entry => entry.name === skillName)
-    if (skill === undefined) throw new Error(`skill "${skillName}" not found in suite "${suiteId}"`)
-    let content: string
-    try {
-      content = await readFile(skill.file, 'utf8')
-    } catch (error) {
-      throw new Error(`skill file unreadable: ${error instanceof Error ? error.message : String(error)}`)
-    }
-    return { name: skill.name, description: skill.description, content, path: skill.file }
+  /** Read one suite's detail projection. */
+  async suiteDetail(sourceId: string, suiteId: string): Promise<SuiteDetail> {
+    return this.catalog.suiteDetail(sourceId, suiteId)
   }
 
-  /** The full market overview: fresh discovery merged with install entries. */
+  /** Read one skill's full content. */
+  async skillContent(sourceId: string, suiteId: string, skillName: string): Promise<SkillContent> {
+    return this.catalog.skillContent(sourceId, suiteId, skillName)
+  }
+
+  /** Read the full market overview. */
   async overview(): Promise<OverviewPayload> {
-    const suites = await this.discoverDimension('user', this.options.userRoot)
-    const sourceRows: SourceOverview[] = []
-    for (const source of this.state.sources) {
-      const inFlight = this.currentSourceState?.sourceId === source.id ? this.currentSourceState : undefined
-      const checkout = this.sourceCheckoutPath(source)
-      let cloned = false
-      let lockCommit: string | undefined
-      let error: string | undefined
-      if (source.local === true) {
-        cloned = await isDirectory(checkout)
-        if (!cloned) error = `local source directory ${checkout} is missing`
-      } else if (inFlight !== undefined) {
-        // A mutation owns this source right now (clone/pull in progress): report
-        // its snapshot instead of racing git against the transient directory.
-        cloned = inFlight.cloned || await isDirectory(checkout)
-        lockCommit = inFlight.head
-      } else {
-        const cachedHead = this.headCache.get(source.id)
-        if (cachedHead !== undefined && await isDirectory(checkout)) {
-          cloned = true
-          lockCommit = cachedHead
-        } else {
-          try {
-            lockCommit = await gitHead(checkout)
-            cloned = true
-            this.headCache.set(source.id, lockCommit)
-          } catch {
-            // not cloned yet (or a broken checkout); the clone attempt records its own error on refresh
-          }
-        }
-      }
-      const sourceSuites = suites.filter(suite => suite.sourceId === source.id)
-      sourceRows.push({
-        id: source.id,
-        url: source.url,
-        ...source.branch === undefined ? {} : { branch: source.branch },
-        ...source.local === true ? { local: true } : {},
-        cloned,
-        ...lockCommit === undefined ? {} : { lockCommit },
-        ...error === undefined ? {} : { error },
-        suiteIds: sourceSuites.map(suite => suite.id),
-      })
-    }
-    const installed = new Set(Object.keys(this.state.installed))
-    const cards = suites.map(suite => ({
-      sourceId: suite.sourceId,
-      suiteId: suite.id,
-      name: suite.manifest.name,
-      version: suite.manifest.version,
-      description: suite.manifest.description,
-      keywords: suite.manifest.keywords ?? [],
-      surfaces: suite.surfaces,
-      enabled: suite.enabled,
-      installed: installed.has(installKey(suite.sourceId, suite.id)),
-      dimension: suite.dimension,
-      layout: suite.manifest.layout,
-      errors: suite.errors,
-      mcpErrors: this.mcpDiagnostics.filter(diagnostic => diagnostic.suiteId === suite.id).map(diagnostic => `${diagnostic.serverKey}: ${diagnostic.reason}`),
-    }))
-    return {
-      sources: sourceRows,
-      suites: cards,
-      totals: {
-        all: cards.length,
-        installed: cards.filter(card => card.installed).length,
-        enabled: cards.filter(card => card.enabled).length,
-      },
-      roots: { user: this.options.userRoot, data: this.options.dataRoot },
-    }
+    return this.catalog.overview()
   }
 
-  /** Enabled user-dimension suites (the MCP mount input). */
+  /** Enabled user-dimension suites. */
   async enabledUserSuites(): Promise<Suite[]> {
-    const suites = await this.discoverDimension('user', this.options.userRoot)
-    return suites.filter(suite => suite.enabled)
+    return this.catalog.enabledUserSuites()
   }
 
   /** Enabled user- and project-dimension suites for a workspace cwd. */
   async enabledSuitesForCwd(cwd: string): Promise<{ user: Suite[]; project: Suite[] }> {
-    const user = await this.enabledUserSuites()
-    const project = (await this.discoverDimension('project', await resolveProjectRoot(cwd))).filter(suite => suite.enabled)
-    return { user, project }
+    return this.catalog.enabledSuitesForCwd(cwd)
   }
 
-  /** All suites (any enabled state) of one dimension. */
+  /** All suites in one dimension. */
   async suitesForDimension(dimension: SuiteDimension, dimensionRoot: string): Promise<Suite[]> {
-    return this.discoverDimension(dimension, dimensionRoot)
+    return this.catalog.suitesForDimension(dimension, dimensionRoot)
   }
 
-  // ---- mutations ----
+  /** Subscribe to completed catalog mutations. */
+  subscribe(listener: () => void): () => void {
+    return this.catalog.subscribe(listener)
+  }
 
-  /**
-   * Add a source and clone it immediately. The id is derived from the suite
-   * repository's own JSON (marketplace plugin entry name first, then the
-   * root manifest name, then the repo basename), sanitized; collisions get a
-   * numeric suffix.
-   */
+  /** Add a source. */
   async addSource(input: { url: string; branch?: string; local?: boolean }): Promise<SourceRef> {
-    return this.enqueue(async () => {
-      const baseId = this.uniqueSourceId(deriveSourceId(input.url))
-      const source: SourceRef = {
-        id: baseId,
-        url: input.url,
-        ...input.branch === undefined ? {} : { branch: input.branch },
-        ...input.local === true ? { local: true } : {},
-      }
-      const checkout = this.sourceCheckoutPath(source)
-      if (input.local === true) {
-        if (!await isDirectory(checkout)) throw new Error(`local source directory ${checkout} is missing`)
-      } else {
-        this.beginSourceState(baseId, 'cloning', false)
-        try {
-          await this.ensureClone(source)
-        } catch (error) {
-          this.endSourceState()
-          throw error
-        }
-        this.updateSourceStep('reading')
-      }
-      source.id = this.uniqueSourceId(sanitizeId(await repoName(checkout)))
-      const head = await tryHead(checkout)
-      if (head !== undefined) this.headCache.set(source.id, head)
-      this.endSourceState()
-      this.state = { ...this.state, sources: [...this.state.sources, source] }
-      await saveState(this.statePath, this.state)
-      this.options.onChanged()
-      return source
-    })
+    return this.catalog.addSource(input)
   }
 
-  /**
-   * Progress snapshot of the source mutation currently in flight, if any.
-   * While present, `overview()` reports it instead of running git against
-   * the transient checkout directory.
-   */
-  private currentSourceState: { sourceId: string; step: string; cloned: boolean; head?: string } | undefined
-
-  /**
-   * Begin reporting progress for a source mutation: `step` names the active
-   * phase and `cloned` whether the checkout directory exists yet. The client
-   * polls this through the `progress` route while its add-source modal is
-   * open, and `overview()` merges the snapshot into the source row.
-   */
+  /** Begin source mutation progress. */
   beginSourceState(sourceId: string, step: string, cloned: boolean): void {
-    this.currentSourceState = { sourceId, step, cloned }
+    this.catalog.beginSourceState(sourceId, step, cloned)
   }
 
-  /** Advance the in-flight mutation's step (checkout state unchanged). */
+  /** Advance source mutation progress. */
   updateSourceStep(step: string): void {
-    if (this.currentSourceState !== undefined) {
-      this.currentSourceState = { ...this.currentSourceState, step }
-    }
+    this.catalog.updateSourceStep(step)
   }
 
-  /** Stop reporting progress; `overview()` falls back to on-disk inspection. */
+  /** End source mutation progress. */
   endSourceState(): void {
-    this.currentSourceState = undefined
+    this.catalog.endSourceState()
   }
 
-  /** Progress snapshot for the `progress` route (never throws). */
-  sourceProgress(): { active: boolean; sourceId: string; step: string } {
-    const state = this.currentSourceState
-    return state === undefined
-      ? { active: false, sourceId: '', step: '' }
-      : { active: true, sourceId: state.sourceId, step: state.step }
+  /** Read source mutation progress. */
+  sourceProgress(): SourceProgress {
+    return this.catalog.sourceProgress()
   }
 
-  private uniqueSourceId(derived: string): string {
-    if (!this.state.sources.some(source => source.id === derived)) return derived
-    for (let suffix = 2; ; suffix++) {
-      const candidate = `${derived}-${suffix}`
-      if (!this.state.sources.some(source => source.id === candidate)) return candidate
-    }
-  }
-
-  /**
-   * Update one source's url / branch / local flag. A git source whose URL
-   * changes drops its stale checkout (the next refresh clones the new URL);
-   * a local source's directory is never touched.
-   */
+  /** Update a source. */
   async updateSource(sourceId: string, patch: { url?: string; branch?: string; local?: boolean }): Promise<void> {
-    return this.enqueue(async () => {
-      const index = this.state.sources.findIndex(source => source.id === sourceId)
-      if (index === -1) throw new Error(`unknown source "${sourceId}"`)
-      const current = this.state.sources[index]!
-      const next: SourceRef = {
-        id: sourceId,
-        url: patch.url ?? current.url,
-        ...(patch.branch !== undefined ? { branch: patch.branch } : current.branch === undefined ? {} : { branch: current.branch }),
-        ...(patch.local !== undefined ? { local: patch.local } : current.local === undefined ? {} : { local: current.local }),
-      }
-      if (current.local !== true && patch.url !== undefined && patch.url !== current.url) {
-        this.headCache.delete(sourceId)
-        await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
-      }
-      this.state = { ...this.state, sources: this.state.sources.map((source, i) => i === index ? next : source) }
-      await saveState(this.statePath, this.state)
-      this.options.onChanged()
-    })
+    return this.catalog.updateSource(sourceId, patch)
   }
 
-  /** Remove a source: delete its checkout, forget its suites and install entries. */
+  /** Remove a source. */
   async removeSource(sourceId: string): Promise<void> {
-    return this.enqueue(async () => {
-      this.state = {
-        ...this.state,
-        sources: this.state.sources.filter(source => source.id !== sourceId),
-        installed: Object.fromEntries(Object.entries(this.state.installed).filter(([key]) => !key.startsWith(`${sourceId}/`))),
-      }
-      await saveState(this.statePath, this.state)
-      const source = this.state.sources.find(entry => entry.id === sourceId)
-      this.headCache.delete(sourceId)
-      if (source === undefined || source.local !== true) {
-        await gitRemove(sourceCheckoutDir(this.options.userRoot, sourceId))
-      }
-      this.options.onChanged()
-    })
+    return this.catalog.removeSource(sourceId)
   }
 
-  /** Refresh one source checkout (pull), or every source when `sourceId` is omitted. */
+  /** Refresh one source or all sources. */
   async refreshSource(sourceId?: string): Promise<void> {
-    return this.enqueue(async () => {
-      const targets = sourceId === undefined ? this.state.sources : this.state.sources.filter(source => source.id === sourceId)
-      for (const source of targets) {
-        if (source.local === true) {
-          if (!await isDirectory(expandHome(source.url))) {
-            throw new Error(`local source directory ${expandHome(source.url)} is missing`)
-          }
-          continue
-        }
-        const checkout = sourceCheckoutDir(this.options.userRoot, source.id)
-        this.headCache.delete(source.id)
-        try {
-          await gitHead(checkout)
-        } catch {
-          await this.ensureClone(source)
-          try {
-            this.headCache.set(source.id, await gitHead(checkout))
-          } catch {
-            // a failed head read simply means the next overview re-probes
-          }
-          continue
-        }
-        await gitPull(checkout)
-        try {
-          this.headCache.set(source.id, await gitHead(checkout))
-        } catch {
-          // a failed head read simply means the next overview re-probes
-        }
-      }
-      this.options.onChanged()
-    })
+    return this.catalog.refreshSource(sourceId)
   }
 
-  /** Install a suite: the source must be cloned; the suite dir becomes an enabled install entry. */
+  /** Install a suite. */
   async install(sourceId: string, suiteId: string): Promise<void> {
-    return this.enqueue(async () => {
-      const source = this.state.sources.find(entry => entry.id === sourceId)
-      if (source === undefined) throw new Error(`unknown source "${sourceId}"`)
-      const checkout = this.sourceCheckoutPath(source)
-      if (!await isDirectory(checkout)) await this.ensureClone(source)
-      const suites = await discoverSuitesInSource(checkout, sourceId, 'user')
-      const suite = suites.find(entry => entry.id === suiteId)
-      if (suite === undefined) throw new Error(`suite "${suiteId}" not found in source "${sourceId}"`)
-      if (suite.remote !== undefined) throw new Error(`suite "${suiteId}" is a remote reference (${suite.remote.url}); add its repository as a source before installing`)
-      await this.setInstalled(sourceId, suiteId, { enabled: true, installedAt: new Date().toISOString(), lockCommit: await tryHead(checkout) })
-      this.options.onChanged()
-    })
+    return this.catalog.install(sourceId, suiteId)
   }
 
-  /** Uninstall a suite: drop the install entry (the source clone stays for browsing). */
+  /** Uninstall a suite. */
   async uninstall(sourceId: string, suiteId: string): Promise<void> {
-    return this.enqueue(async () => {
-      const key = installKey(sourceId, suiteId)
-      if (this.state.installed[key] === undefined) throw new Error(`suite "${suiteId}" is not installed`)
-      const { [key]: _removed, ...rest } = this.state.installed
-      this.state = { ...this.state, installed: rest }
-      await saveState(this.statePath, this.state)
-      this.options.onChanged()
-    })
+    return this.catalog.uninstall(sourceId, suiteId)
   }
 
   /** Enable or disable an installed suite. */
   async setEnabled(sourceId: string, suiteId: string, enabled: boolean): Promise<void> {
-    return this.enqueue(async () => {
-      const key = installKey(sourceId, suiteId)
-      const entry = this.state.installed[key]
-      if (entry === undefined) throw new Error(`suite "${suiteId}" is not installed`)
-      await this.setInstalled(sourceId, suiteId, { ...entry, enabled })
-      this.options.onChanged()
-    })
+    return this.catalog.setEnabled(sourceId, suiteId, enabled)
   }
 
-  /** Append config-seeded sources missing from state and persist; clones lazily on first refresh/install. */
+  /** Merge config-seeded sources into persisted user state. */
   async mergeSources(sources: SourceRef[]): Promise<void> {
-    const existing = new Set(this.state.sources.map(source => source.id))
-    const additions = sources.filter(source => !existing.has(source.id))
-    if (additions.length === 0) return
-    this.state = { ...this.state, sources: [...this.state.sources, ...additions] }
-    await saveState(this.statePath, this.state)
-  }
-
-  private async setInstalled(sourceId: string, suiteId: string, entry: InstalledEntry): Promise<void> {
-    this.state = { ...this.state, installed: { ...this.state.installed, [installKey(sourceId, suiteId)]: entry } }
-    await saveState(this.statePath, this.state)
-  }
-
-  private async ensureClone(source: SourceRef): Promise<void> {
-    if (source.local === true) {
-      if (!await isDirectory(expandHome(source.url))) {
-        throw new Error(`local source directory ${expandHome(source.url)} is missing`)
-      }
-      return
-    }
-    const checkout = sourceCheckoutDir(this.options.userRoot, source.id)
-    await mkdir(sourcesDir(this.options.userRoot), { recursive: true })
-    await gitClone(source.url, source.branch, checkout)
-  }
-
-  /** The filesystem location one source is read from. */
-  private sourceCheckoutPath(source: SourceRef): string {
-    return source.local === true ? expandHome(source.url) : sourceCheckoutDir(this.options.userRoot, source.id)
-  }
-
-  private async discoverDimension(dimension: SuiteDimension, dimensionRoot: string): Promise<Suite[]> {
-    const discovered = await discoverSourceList(this.state.sources, dimension, dimensionRoot)
-    const suites: Suite[] = []
-    for (const suite of discovered) {
-      const installed = this.state.installed[installKey(suite.sourceId, suite.id)]
-      suites.push({
-        ...suite,
-        enabled: dimension === 'user' && installed?.enabled === true,
-        ...installed?.lockCommit === undefined ? {} : { lockCommit: installed.lockCommit },
-        ...installed?.installedAt === undefined ? {} : { installedAt: installed.installedAt },
-      })
-    }
-    return suites
-  }
-
-  private async commandPreviews(dir: string): Promise<Array<{ name: string; description?: string; content: string }>> {
-    const names = await listMdFiles(dir)
-    const previews: Array<{ name: string; description?: string; content: string }> = []
-    for (const name of names) {
-      const file = `${dir}/${name}`
-      try {
-        const content = await this.readPreview(file)
-        const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content)
-        let description: string | undefined
-        if (match !== null) {
-          const yaml = (await import('yaml')).parse(match[1])
-          if (typeof yaml === 'object' && yaml !== null) {
-            const desc = (yaml as Record<string, unknown>)['description']
-            if (typeof desc === 'string') description = desc
-          }
-        }
-        previews.push({ name: name.slice(0, -3), ...description === undefined ? {} : { description }, content })
-      } catch {
-        // unreadable command files are skipped in previews
-      }
-    }
-    return previews
-  }
-
-  private async agentPreviews(dir: string): Promise<Array<{ name: string; description?: string; content: string }>> {
-    const names = await listMdFiles(dir)
-    const previews: Array<{ name: string; description?: string; content: string }> = []
-    for (const name of names) {
-      const file = `${dir}/${name}`
-      try {
-        const content = await this.readPreview(file)
-        const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content)
-        let description: string | undefined
-        if (match !== null) {
-          const yaml = (await import('yaml')).parse(match[1])
-          if (typeof yaml === 'object' && yaml !== null) {
-            const desc = (yaml as Record<string, unknown>)['description']
-            if (typeof desc === 'string') description = desc
-          }
-        }
-        previews.push({ name: name.slice(0, -3), ...description === undefined ? {} : { description }, content })
-      } catch {
-        // unreadable agent files are skipped in previews
-      }
-    }
-    return previews
-  }
-
-  /** Parse CC hooks.json into flat {event, matcher, command} preview entries. */
-  private async hooksPreviews(root: string): Promise<{ count: number; entries: Array<{ event: string; matcher?: string; command: string }> }> {
-    for (const relative of ['hooks/hooks.json', 'hooks.json'] as const) {
-      let text: string
-      try {
-        text = await readFile(`${root}/${relative}`, 'utf8')
-      } catch {
-        continue
-      }
-      try {
-        const parsed: unknown = JSON.parse(text)
-        if (typeof parsed !== 'object' || parsed === null) continue
-        const hooks = (parsed as Record<string, unknown>)['hooks']
-        if (typeof hooks !== 'object' || hooks === null) continue
-        const entries: Array<{ event: string; matcher?: string; command: string }> = []
-        for (const [event, groups] of Object.entries(hooks as Record<string, unknown>)) {
-          if (!Array.isArray(groups)) continue
-          for (const group of groups) {
-            if (typeof group !== 'object' || group === null) continue
-            const record = group as Record<string, unknown>
-            const matcher = typeof record['matcher'] === 'string' ? record['matcher'] : undefined
-            const hooksList = record['hooks']
-            if (Array.isArray(hooksList)) {
-              for (const hook of hooksList) {
-                if (typeof hook !== 'object' || hook === null) continue
-                const hookRecord = hook as Record<string, unknown>
-                if (typeof hookRecord['command'] === 'string') {
-                  entries.push({ event, ...matcher === undefined ? {} : { matcher }, command: hookRecord['command'] })
-                }
-              }
-            }
-          }
-        }
-        return { count: entries.length, entries }
-      } catch {
-        // unparsable hook files yield zero entries
-      }
-    }
-    return { count: 0, entries: [] }
-  }
-
-  private async lspPreviews(root: string): Promise<Array<{ name: string; content: string }>> {
-    const previews: Array<{ name: string; content: string }> = []
-    for (const entry of await discoverLspEntries(root)) {
-      try {
-        previews.push({ name: entry.name, content: await this.readPreview(entry.path) })
-      } catch {
-        // unreadable LSP files are skipped in previews
-      }
-    }
-    return previews
-  }
-
-  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
-    const result = this.mutationQueue.then(operation, operation)
-    this.mutationQueue = result.catch(() => {})
-    return result
+    return this.catalog.mergeSources(sources)
   }
 }
 
-function installKey(sourceId: string, suiteId: string): string {
-  return `${sourceId}/${suiteId}`
-}
-
-/** Read a checkout's HEAD when it is a git repository; other checkouts have no lock commit. */
-async function tryHead(dir: string): Promise<string | undefined> {
-  try {
-    return await gitHead(dir)
-  } catch {
-    return undefined
-  }
-}
+/** Keep the internal type import available to declaration consumers during migration. */
+export type { InstalledEntry, SourceOverview }

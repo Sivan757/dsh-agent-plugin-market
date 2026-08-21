@@ -16,9 +16,6 @@ import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { SkillCandidate, SkillDefinition, SkillLookupOptions, SkillProvider, SkillSource } from '@deepseek-ai/dsh-skill'
 import type { SuiteManager } from './manager.js'
-import { loadState } from './state.js'
-import { resolveProjectRoot, STATE_FILE_NAME } from './paths.js'
-import { discoverSourceList } from './discovery.js'
 import { parseSkillFrontmatter, stripFrontmatter } from './skills-parse.js'
 import type { Suite, SuiteSkill } from './types.js'
 
@@ -80,21 +77,26 @@ export class SuiteSkillProvider implements SkillProvider {
         continue
       }
       const parsed = parseSkillFrontmatter(text, agentName)
-      const description = typeof parsed === 'string' ? suite.manifest.description ?? agentName : parsed.description
+      const description = typeof parsed === 'string' ? (suite.manifest.description ?? agentName) : parsed.description
       const skill: SuiteSkill = {
         name: `agent-${agentName}`,
         directory: dir,
         file,
         description,
         ...(typeof parsed !== 'string' && parsed.whenToUse !== undefined ? { whenToUse: parsed.whenToUse } : {}),
-        invocation: typeof parsed === 'string' ? { modelInvocable: true, userInvocable: false } : parsed.invocation,
+        invocation: typeof parsed === 'string' ? { modelInvocable: true, userInvocable: false } : parsed.invocation
       }
-      located.push({ rank: suite.dimension === 'project' ? PROJECT_RANK : USER_RANK, source: suite.dimension === 'project' ? SUITE_PROJECT_SOURCE : SUITE_USER_SOURCE, suite, skill })
+      located.push({
+        rank: suite.dimension === 'project' ? PROJECT_RANK : USER_RANK,
+        source: suite.dimension === 'project' ? SUITE_PROJECT_SOURCE : SUITE_USER_SOURCE,
+        suite,
+        skill
+      })
     }
     return located
   }
 
-  async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
+  async get(candidate: SkillCandidate, _options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
     const locator = candidate.locator as SkillLocator
     let text: string
     try {
@@ -111,7 +113,7 @@ export class SuiteSkillProvider implements SkillProvider {
         '',
         '```markdown',
         text,
-        '```',
+        '```'
       ].join('\n')
       return {
         name: candidate.name,
@@ -121,7 +123,7 @@ export class SuiteSkillProvider implements SkillProvider {
         provider: this.name,
         resourceBase: { kind: 'directory', path: locator.directory },
         path: locator.file,
-        content,
+        content
       }
     }
     const parsed = parseSkillFrontmatter(text, candidate.name)
@@ -130,13 +132,13 @@ export class SuiteSkillProvider implements SkillProvider {
     return {
       name: parsed.name,
       description: candidate.description,
-      ...parsed.whenToUse === undefined ? {} : { whenToUse: parsed.whenToUse },
+      ...(parsed.whenToUse === undefined ? {} : { whenToUse: parsed.whenToUse }),
       invocation: parsed.invocation,
       source: candidate.source,
       provider: this.name,
       resourceBase: { kind: 'directory', path: locator.directory },
       path: locator.file,
-      content,
+      content
     }
   }
 
@@ -144,14 +146,19 @@ export class SuiteSkillProvider implements SkillProvider {
     return {
       name: entry.skill.name,
       description: `[${entry.suite.manifest.name}] ${entry.skill.description}`,
-      ...entry.skill.whenToUse === undefined ? {} : { whenToUse: entry.skill.whenToUse },
+      ...(entry.skill.whenToUse === undefined ? {} : { whenToUse: entry.skill.whenToUse }),
       invocation: entry.skill.invocation,
       source: entry.source,
       provider: this.name,
       rank: entry.rank,
-      locator: { file: entry.skill.file, directory: entry.skill.directory, suiteRoot: entry.suite.root, kind: entry.skill.name.startsWith('agent-') ? 'agent' : 'skill' } satisfies SkillLocator,
+      locator: {
+        file: entry.skill.file,
+        directory: entry.skill.directory,
+        suiteRoot: entry.suite.root,
+        kind: entry.skill.name.startsWith('agent-') ? 'agent' : 'skill'
+      } satisfies SkillLocator,
       path: entry.skill.file,
-      resourceBase: { kind: 'directory', path: entry.skill.directory },
+      resourceBase: { kind: 'directory', path: entry.skill.directory }
     }
   }
 
@@ -162,21 +169,18 @@ export class SuiteSkillProvider implements SkillProvider {
       for (const skill of suite.skills) {
         located.push({ rank: USER_RANK, source: SUITE_USER_SOURCE, suite, skill })
       }
-      located.push(...await this.agentsOf(suite))
+      located.push(...(await this.agentsOf(suite)))
     }
     if (cwd !== undefined) {
-      located.push(...await this.locateProject(cwd))
+      located.push(...(await this.locateProject(cwd)))
     }
     return located
   }
 
   private async locateProject(cwd: string): Promise<LocatedSkill[]> {
-    const projectRoot = await resolveProjectRoot(cwd)
-    const state = await loadState(join(projectRoot, STATE_FILE_NAME))
+    const snapshot = await this.manager.readProjectCatalog(cwd)
     const located: LocatedSkill[] = []
-    const suites = await discoverSourceList(state.sources, 'project', projectRoot)
-    for (const suite of suites) {
-      if (state.installed[`${suite.sourceId}/${suite.id}`]?.enabled !== true) continue
+    for (const suite of snapshot.enabledSuites) {
       for (const skill of suite.skills) {
         located.push({ rank: PROJECT_RANK, source: SUITE_PROJECT_SOURCE, suite, skill })
       }

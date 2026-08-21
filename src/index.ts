@@ -13,12 +13,10 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import type { SkillProviderControl } from '@deepseek-ai/dsh-skill'
-import { CommandMountRegistry } from './commands-mounts.js'
-import { HooksMountRegistry } from './hooks-mounts.js'
 import { mountSuiteContext } from './context.js'
 import { SuiteManager } from './manager.js'
-import { McpMountRegistry } from './mcp-mounts.js'
-import { inspectToolRegistry } from './mcp-status.js'
+import { RuntimeReconciler } from './runtime/reconciler.js'
+import { inspectToolRegistry } from './runtime/tool-registry-observer.js'
 import { resolveDataRoot, resolveUserRoot } from './paths.js'
 import { mountSuiteRoutes } from './routes.js'
 import { SuiteSkillProvider } from './skills-provider.js'
@@ -41,38 +39,28 @@ export function apply(ctx: Context, config: Config = {}): void {
   const userRoot = resolveUserRoot(config.userRoot)
   const dataRoot = resolveDataRoot(config.dataRoot)
   let providerControl: SkillProviderControl | undefined
-  const mounts = new McpMountRegistry(ctx, dataRoot)
-  const commandMounts = new CommandMountRegistry(ctx)
-  const hookMounts = new HooksMountRegistry(ctx)
+  const runtime = new RuntimeReconciler(ctx, dataRoot)
 
   const reconcileMounts = (): void => {
     void (async () => {
-      try {
-        const diagnostics = await mounts.reconcile(await manager.enabledUserSuites())
-        manager.mcpDiagnostics = diagnostics
-        for (const diagnostic of diagnostics) {
-          ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" mcp server "${diagnostic.serverKey}": ${diagnostic.reason}`)
-        }
-      } catch (error) {
-        ctx.logger?.warn(`[dsh-agent-plugins-market] mcp reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+      const snapshot = await manager.readUserCatalog()
+      const diagnostics = await runtime.reconcile(snapshot.enabledSuites)
+      manager.mcpDiagnostics = diagnostics.mcp
+      for (const diagnostic of diagnostics.mcp) {
+        ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" mcp server "${diagnostic.serverKey}": ${diagnostic.reason}`)
       }
-      try {
-        const diagnostics = await commandMounts.reconcile(await manager.enabledUserSuites())
-        for (const diagnostic of diagnostics) {
-          if (diagnostic.reason !== '') ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" command "${diagnostic.command}": ${diagnostic.reason}`)
-        }
-      } catch (error) {
-        ctx.logger?.warn(`[dsh-agent-plugins-market] command reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+      for (const diagnostic of diagnostics.commands) {
+        if (diagnostic.reason !== '') ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" command "${diagnostic.command}": ${diagnostic.reason}`)
       }
-      try {
-        const diagnostics = await hookMounts.reconcile(await manager.enabledUserSuites())
-        for (const diagnostic of diagnostics) {
-          ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" hooks: ${diagnostic.reason}`)
-        }
-      } catch (error) {
-        ctx.logger?.warn(`[dsh-agent-plugins-market] hooks reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+      for (const diagnostic of diagnostics.hooks) {
+        ctx.logger?.warn(`[dsh-agent-plugins-market] suite "${diagnostic.suiteId}" hooks: ${diagnostic.reason}`)
       }
-    })()
+      for (const error of diagnostics.errors) {
+        ctx.logger?.warn(`[dsh-agent-plugins-market] ${error.surface} reconcile failed: ${error.reason}`)
+      }
+    })().catch(error => {
+      ctx.logger?.warn(`[dsh-agent-plugins-market] runtime reconcile failed: ${error instanceof Error ? error.message : String(error)}`)
+    })
   }
 
   const onChanged = (): void => {
@@ -81,7 +69,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   }
 
   const manager = new SuiteManager({ userRoot, dataRoot, onChanged })
-  ctx.inject(['tools'], (toolsCtx) => {
+  ctx.inject(['tools'], toolsCtx => {
     manager.setMcpToolSnapshotProvider(() => inspectToolRegistry((toolsCtx as { tools: unknown }).tools))
   })
   void manager.load().then(async () => {
@@ -89,21 +77,22 @@ export function apply(ctx: Context, config: Config = {}): void {
     reconcileMounts()
   })
 
-  ctx.skills.registerProvider((control) => {
+  ctx.skills.registerProvider(control => {
     providerControl = control
     return new SuiteSkillProvider(manager)
   })
 
   const disposeContext = mountSuiteContext(ctx, manager)
 
-  ctx.inject(['webServer', 'loader'], (hostCtx) => {
+  ctx.inject(['webServer', 'loader'], hostCtx => {
     hostCtx.effect(() => mountSuiteRoutes(hostCtx, manager), 'dsh-agent-plugins-market: http routes')
   })
 
-  ctx.effect(() => () => {
-    void mounts.disposeAll()
-    void hookMounts.disposeAll()
-    commandMounts.disposeAll()
-    disposeContext()
-  }, 'dsh-agent-plugins-market: lifecycle')
+  ctx.effect(
+    () => () => {
+      void runtime.dispose()
+      disposeContext()
+    },
+    'dsh-agent-plugins-market: lifecycle'
+  )
 }

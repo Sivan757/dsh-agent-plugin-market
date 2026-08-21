@@ -1,26 +1,21 @@
 /**
- * HTTP routes bridging the market page to the SuiteManager.
+ * HTTP routes bridging the market page to the application market service.
  *
- * This layer only parses requests, delegates to the manager, and serializes
+ * This layer only parses requests, delegates to the application service, and serializes
  * responses. Mutating routes accept same-origin POSTs exclusively: a
  * cross-site form or fetch cannot trigger a clone, an uninstall, or an
  * enable/disable against a local profile.
  */
 import { isAbsolute } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { MARKET_ROUTES } from './contracts/market.js'
 import { expandHome } from './paths.js'
-import type { SuiteManager } from './manager.js'
-import type { SourceRef } from './types.js'
+import type { MarketService } from './application/queries.js'
 
-const API_PREFIX = '/api/agent-plugins/'
 const MAX_BODY_BYTES = 64 * 1024
 
 export interface WebServerService {
-  register(route: {
-    kind: 'exact' | 'prefix'
-    path: string
-    handler: (request: IncomingMessage, response: ServerResponse) => void | Promise<void>
-  }): () => void
+  register(route: { kind: 'exact' | 'prefix'; path: string; handler: (request: IncomingMessage, response: ServerResponse) => void | Promise<void> }): () => void
 }
 
 interface RouteHost {
@@ -28,55 +23,57 @@ interface RouteHost {
 }
 
 /** Mount every route; returns the disposer releasing them all. */
-export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () => void {
+export function mountSuiteRoutes(hostCtx: unknown, manager: MarketService): () => void {
   const host = hostCtx as RouteHost
   const disposers: Array<() => void> = []
   const get = (path: string, handler: RouteHandler) => {
     disposers.push(host.webServer.register({ kind: 'exact', path, handler }))
   }
   const post = (path: string, handler: JsonAction) => {
-    disposers.push(host.webServer.register({
-      kind: 'exact',
-      path,
-      handler: (request, response) => {
-        if (!sameOrigin(request)) {
-          sendJson(response, 403, { ok: false, error: 'cross-origin request rejected' })
-          return
-        }
-        void (async () => {
-          const body = await readJsonBody(request)
-          if (body === undefined) {
-            sendJson(response, 400, { ok: false, error: 'invalid JSON body' })
+    disposers.push(
+      host.webServer.register({
+        kind: 'exact',
+        path,
+        handler: (request, response) => {
+          if (!sameOrigin(request)) {
+            sendJson(response, 403, { ok: false, error: 'cross-origin request rejected' })
             return
           }
-          try {
-            const value = await handler(body as Record<string, unknown>)
-            sendJson(response, 200, { ok: true, ...value })
-          } catch (error) {
-            sendJson(response, 400, { ok: false, error: error instanceof Error ? error.message : String(error) })
-          }
-        })()
-      },
-    }))
+          void (async () => {
+            const body = await readJsonBody(request)
+            if (body === undefined) {
+              sendJson(response, 400, { ok: false, error: 'invalid JSON body' })
+              return
+            }
+            try {
+              const value = await handler(body as Record<string, unknown>)
+              sendJson(response, 200, { ok: true, ...value })
+            } catch (error) {
+              sendJson(response, 400, { ok: false, error: error instanceof Error ? error.message : String(error) })
+            }
+          })()
+        }
+      })
+    )
   }
 
-  get(`${API_PREFIX}overview`, async (_request, response) => {
+  get(MARKET_ROUTES.overview, async (_request, response) => {
     sendJson(response, 200, await manager.overview())
   })
 
-  get(`${API_PREFIX}mcp-status`, async (_request, response) => {
+  get(MARKET_ROUTES.mcpStatus, async (_request, response) => {
     sendJson(response, 200, await manager.mcpStatus())
   })
 
-  get(`${API_PREFIX}progress`, async (_request, response) => {
+  get(MARKET_ROUTES.progress, async (_request, response) => {
     sendJson(response, 200, manager.sourceProgress())
   })
 
-  get(`${API_PREFIX}config`, async (_request, response) => {
+  get(MARKET_ROUTES.config, async (_request, response) => {
     sendJson(response, 200, { sources: manager.sources })
   })
 
-  get(`${API_PREFIX}suite`, async (request, response) => {
+  get(MARKET_ROUTES.suite, async (request, response) => {
     const query = queryOf(request)
     const sourceId = query.get('sourceId')
     const suiteId = query.get('suiteId')
@@ -91,7 +88,7 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     }
   })
 
-  get(`${API_PREFIX}skill`, async (request, response) => {
+  get(MARKET_ROUTES.skill, async (request, response) => {
     const query = queryOf(request)
     const sourceId = query.get('sourceId')
     const suiteId = query.get('suiteId')
@@ -107,7 +104,7 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     }
   })
 
-  post(`${API_PREFIX}sources/add`, async (body) => {
+  post(MARKET_ROUTES.addSource, async body => {
     const url = String(body['url'] ?? '').trim()
     if (url === '') throw new Error('missing source url')
     const local = body['local'] === true
@@ -118,13 +115,13 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     const branch = body['branch']
     const source = await manager.addSource({
       url: local ? expandHome(url) : url,
-      ...typeof branch === 'string' && branch.trim() !== '' ? { branch: branch.trim() } : {},
-      ...local ? { local: true } : {},
+      ...(typeof branch === 'string' && branch.trim() !== '' ? { branch: branch.trim() } : {}),
+      ...(local ? { local: true } : {})
     })
     return { source }
   })
 
-  post(`${API_PREFIX}sources/update`, async (body) => {
+  post(MARKET_ROUTES.updateSource, async body => {
     const id = body['id']
     if (typeof id !== 'string' || id === '') throw new Error('missing source id')
     const patch: { url?: string; branch?: string; local?: boolean } = {}
@@ -139,32 +136,32 @@ export function mountSuiteRoutes(hostCtx: unknown, manager: SuiteManager): () =>
     return {}
   })
 
-  post(`${API_PREFIX}sources/remove`, async (body) => {
+  post(MARKET_ROUTES.removeSource, async body => {
     const id = body['id']
     if (typeof id !== 'string' || id === '') throw new Error('missing source id')
     await manager.removeSource(id)
     return {}
   })
 
-  post(`${API_PREFIX}sources/refresh`, async (body) => {
+  post(MARKET_ROUTES.refreshSource, async body => {
     const id = body['id']
     await manager.refreshSource(typeof id === 'string' && id !== '' ? id : undefined)
     return {}
   })
 
-  post(`${API_PREFIX}install`, async (body) => {
+  post(MARKET_ROUTES.install, async body => {
     const { sourceId, suiteId } = parseTarget(body)
     await manager.install(sourceId, suiteId)
     return {}
   })
 
-  post(`${API_PREFIX}uninstall`, async (body) => {
+  post(MARKET_ROUTES.uninstall, async body => {
     const { sourceId, suiteId } = parseTarget(body)
     await manager.uninstall(sourceId, suiteId)
     return {}
   })
 
-  post(`${API_PREFIX}set-enabled`, async (body) => {
+  post(MARKET_ROUTES.setEnabled, async body => {
     const { sourceId, suiteId } = parseTarget(body)
     const enabled = body['enabled']
     if (typeof enabled !== 'boolean') throw new Error('missing boolean enabled')
@@ -199,7 +196,7 @@ function sameOrigin(request: IncomingMessage): boolean {
 }
 
 function readJsonBody(request: IncomingMessage): Promise<unknown | undefined> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     let size = 0
     const chunks: Buffer[] = []
     request.on('data', (chunk: Buffer) => {

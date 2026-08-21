@@ -133,40 +133,5 @@ export interface SuiteState {
   installed: Record<string, InstalledEntry>
 }
 
-/** Card-shaped view for the market UI. */
-export interface SuiteOverviewCard {
-  sourceId: string
-  suiteId: string
-  name: string
-  version?: string
-  description?: string
-  keywords: string[]
-  surfaces: SuiteSurfaceCounts
-  enabled: boolean
-  installed: boolean
-  dimension: SuiteDimension
-  layout: SuiteLayoutKind
-  errors: string[]
-  /** Live MCP mount failures for this suite (reason per failed server). */
-  mcpErrors: string[]
-}
-
-export interface SourceOverview {
-  id: string
-  url: string
-  branch?: string
-  /** Local-directory source (read directly, never cloned or deleted). */
-  local?: boolean
-  /** Whether the checkout (or local directory) is present. */
-  cloned: boolean
-  lockCommit?: string
-  error?: string
-  suiteIds: string[]
-}
-
-export interface OverviewPayload {
-  sources: SourceOverview[]
-  suites: SuiteOverviewCard[]
-  totals: { all: number; installed: number; enabled: number }
-  roots: { user: string; data: string }
-}
+/** Browser-safe market records are shared from the transport contracts. */
+export type { OverviewPayload, SourceOverview, SuiteOverviewCard } from './contracts/market.js'
