@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 <!-- The 0.5.0 section will be created by the first release-please PR, -->
 <!-- covering all commits after the v0.4.5 bootstrap-sha. -->
 
+## [0.5.3](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.2...dsh-agent-plugins-market-v0.5.3) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ci:** add pnpm/action-setup step to publish job ([f72782b](https://github.com/Sivan757/dsh-agent-plugins-market/commit/f72782baa03c572bdc4b7d881cf3742e4029ea37))
+
 ## [0.5.2](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.1...dsh-agent-plugins-market-v0.5.2) (2026-08-21)
 
 
