@@ -58,7 +58,11 @@ describe('SuiteSkillProvider', () => {
     const projectAgentPlugins = join(projectRoot, '.dsh', 'agent-plugins')
     await cp(join(fixtures, 'v1-suite'), join(projectAgentPlugins, '.sources', 'p1', 'v1-suite'), { recursive: true })
     await mkdir(join(projectRoot, '.git'), { recursive: true })
-    await writeFile(join(projectAgentPlugins, 'state.json'), JSON.stringify({ version: 1, sources: [], installed: { 'p1/v1-suite': { enabled: true, installedAt: new Date(0).toISOString() } } }), 'utf8')
+    await writeFile(
+      join(projectAgentPlugins, 'state.json'),
+      JSON.stringify({ version: 1, sources: [], installed: { 'p1/v1-suite': { enabled: true, installedAt: new Date(0).toISOString() } } }),
+      'utf8'
+    )
     const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     const provider = new SuiteSkillProvider(manager)
@@ -73,6 +77,9 @@ describe('local-directory sources (local: true)', () => {
   it('discovers, installs, injects, and never deletes the local directory', async () => {
     const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-local-'))
     const localRepo = join(fixtures, 'v1-suite')
+    const staleCheckout = join(userRoot, '.sources', 'local-repo')
+    await mkdir(staleCheckout, { recursive: true })
+    await writeFile(join(staleCheckout, 'sentinel'), 'keep')
     const manager = new SuiteManager({ userRoot, dataRoot: join(userRoot, 'data'), onChanged: () => {} })
     await manager.load()
     await manager.mergeSources([{ id: 'local-repo', url: localRepo, local: true }])
@@ -87,7 +94,8 @@ describe('local-directory sources (local: true)', () => {
     const candidates = await provider.list({})
     expect(candidates.map(candidate => candidate.name)).toEqual(['greet'])
     await manager.removeSource('local-repo')
-    // The local directory must survive removal.
+    // The local directory and any stale checkout path must survive removal.
+    expect(await (await import('node:fs/promises')).stat(join(staleCheckout, 'sentinel'))).toBeTruthy()
     const marker = join(localRepo, 'plugin.json')
     expect(await (await import('node:fs/promises')).stat(marker)).toBeTruthy()
     expect(await manager.overview()).toMatchObject({ totals: { all: 0, installed: 0, enabled: 0 } })

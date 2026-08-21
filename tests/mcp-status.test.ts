@@ -13,15 +13,15 @@ function suite(overrides: Partial<Suite> = {}): Suite {
       schema: 'native-client',
       servers: {
         app: { type: 'stdio', command: 'node', args: ['server.mjs'], env: { API_TOKEN: 'secret' } },
-        docs: { type: 'streamable-http', url: 'https://example.test/mcp', headers: { Authorization: 'Bearer secret' } },
-      },
+        docs: { type: 'streamable-http', url: 'https://example.test/mcp', headers: { Authorization: 'Bearer secret' } }
+      }
     },
     surfaces: { skills: 0, mcp: 2, hooks: 0, commands: 0, agents: 0, lsp: 0 },
     dimension: 'user',
     enabled: true,
     installedAt: new Date().toISOString(),
     errors: [],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -32,8 +32,8 @@ describe('MCP status aggregation', () => {
       [{ suiteId: 'codex', serverKey: 'docs', reason: 'connection refused' }],
       [
         { name: 'mcp__codex__app__read_file', description: 'Read a file' },
-        { name: 'mcp__filesystem__read_file', description: 'Read a file' },
-      ],
+        { name: 'mcp__filesystem__read_file', description: 'Read a file' }
+      ]
     )
     expect(payload.totals).toMatchObject({ all: 3, connected: 2, failed: 1 })
     const app = payload.entries.find(entry => entry.serverKey === 'app')!
@@ -51,8 +51,16 @@ describe('MCP status aggregation', () => {
   it('reads MCP tools from the optional tool-layer snapshot adapter', () => {
     const runtime = {
       layers: {
-        merge: (_scope: undefined, pick: (layer: { tools: { entries: () => Array<[string, unknown]> } }) => unknown) => pick({ tools: { entries: () => [['mcp__filesystem__read_file', { description: 'Read a file' }], ['bash', { description: 'Shell' }]] } }),
-      },
+        merge: (_scope: undefined, pick: (layer: { tools: { entries: () => Array<[string, unknown]> } }) => unknown) =>
+          pick({
+            tools: {
+              entries: () => [
+                ['mcp__filesystem__read_file', { description: 'Read a file' }],
+                ['bash', { description: 'Shell' }]
+              ]
+            }
+          })
+      }
     }
     expect(inspectToolRegistry(runtime)).toEqual([{ name: 'mcp__filesystem__read_file', description: 'Read a file' }])
   })

@@ -19,11 +19,22 @@ describe('configured source discovery', () => {
 
   it('does not count unmanaged checkout directories in the overview catalog', async () => {
     const root = await createUserRoot()
-    const suites = await discoverSourceList([
-      { id: 'configured', url: 'https://example.test/configured.git' },
-    ], 'user', root)
+    const suites = await discoverSourceList([{ id: 'configured', url: 'https://example.test/configured.git' }], 'user', root)
 
     expect(suites.map(suite => suite.sourceId)).toEqual(['configured'])
+  })
+
+  it('reports source mutation progress without touching discovery state', async () => {
+    const root = await createUserRoot()
+    const manager = new SuiteManager({ userRoot: root, dataRoot: join(root, 'data'), onChanged: () => {} })
+
+    expect(manager.sourceProgress()).toEqual({ active: false, sourceId: '', step: '' })
+    manager.beginSourceState('configured', 'cloning', false)
+    expect(manager.sourceProgress()).toEqual({ active: true, sourceId: 'configured', step: 'cloning' })
+    manager.updateSourceStep('reading')
+    expect(manager.sourceProgress()).toEqual({ active: true, sourceId: 'configured', step: 'reading' })
+    manager.endSourceState()
+    expect(manager.sourceProgress()).toEqual({ active: false, sourceId: '', step: '' })
   })
 
   it('keeps overview totals aligned with configured source rows', async () => {

@@ -46,6 +46,19 @@ describe('discovery: Claude Code marketplace layout', () => {
   })
 })
 
+describe('overview: remote marketplace references', () => {
+  it('includes the remote source URL on remote suite cards', async () => {
+    const userRoot = await mkdtemp(join(tmpdir(), 'dsh-agent-plugins-remote-overview-'))
+    const manager = new SuiteManager({ userRoot, dataRoot: `${userRoot}/data`, onChanged: () => {} })
+    await manager.load()
+    await manager.mergeSources([{ id: 'cc', url: join(fixtures, 'cc-marketplace'), local: true }])
+
+    const overview = await manager.overview()
+    const remote = overview.suites.find(suite => suite.suiteId === 'external-one')
+    expect(remote).toMatchObject({ remoteUrl: 'https://github.com/example/external.git' })
+  })
+})
+
 describe('discovery: Codex marketplace and nested bundles', () => {
   it('reads .agents/plugins/marketplace.json with Codex source objects, validating MCP', async () => {
     const suites = await discoverSuitesInSource(join(fixtures, 'codex-bundled'), 'cb', 'user')
@@ -115,8 +128,8 @@ describe('validate: manifest and mcp.json', () => {
       $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',
       mcpServers: {
         bad: { type: 'stdio', command: '../outside' },
-        good: { type: 'stdio', command: './bin/ok' },
-      },
+        good: { type: 'stdio', command: './bin/ok' }
+      }
     })
     expect(errors.some(error => error.includes('bad'))).toBe(true)
     expect(Object.keys(config!.servers)).toEqual(['good'])
@@ -125,7 +138,7 @@ describe('validate: manifest and mcp.json', () => {
   it('rejects unknown mcp.json $schema wholesale', async () => {
     const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
       $schema: 'https://example.com/mcp.json',
-      mcpServers: {},
+      mcpServers: {}
     })
     expect(config).toBeUndefined()
     expect(errors.length).toBeGreaterThan(0)
@@ -137,25 +150,37 @@ describe('validate: manifest and mcp.json', () => {
   })
 
   it('reads a top-level server map leniently (Claude Code .mcp.json shorthand)', async () => {
-    const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
-      github: { type: 'http', url: 'https://api.example.com/mcp', headers: { Authorization: 'Bearer ${TOKEN:-x}' } },
-    }, { strict: false })
+    const { config, errors } = await validateMcpJson(
+      '/tmp/fixture-root',
+      {
+        github: { type: 'http', url: 'https://api.example.com/mcp', headers: { Authorization: 'Bearer ${TOKEN:-x}' } }
+      },
+      { strict: false }
+    )
     expect(errors).toEqual([])
     expect(config!.servers['github']).toMatchObject({ type: 'streamable-http', url: 'https://api.example.com/mcp' })
   })
 
   it('treats a command-only server as stdio (Claude Code default)', async () => {
-    const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
-      mcpServers: { local: { command: 'bun', args: ['start'] } },
-    }, { strict: false })
+    const { config, errors } = await validateMcpJson(
+      '/tmp/fixture-root',
+      {
+        mcpServers: { local: { command: 'bun', args: ['start'] } }
+      },
+      { strict: false }
+    )
     expect(errors).toEqual([])
     expect(config!.servers['local']).toMatchObject({ type: 'stdio', command: 'bun' })
   })
 
   it('normalizes the Claude Code local transport to stdio', async () => {
-    const { config, errors } = await validateMcpJson('/tmp/fixture-root', {
-      mcpServers: { script: { type: 'local', command: 'node', args: ['server.js'] } },
-    }, { strict: false })
+    const { config, errors } = await validateMcpJson(
+      '/tmp/fixture-root',
+      {
+        mcpServers: { script: { type: 'local', command: 'node', args: ['server.js'] } }
+      },
+      { strict: false }
+    )
     expect(errors).toEqual([])
     expect(config!.servers['script']).toMatchObject({ type: 'stdio', command: 'node' })
   })
@@ -188,7 +213,6 @@ describe('discovery: manifest-less skill collection layout', () => {
     expect(suites[0]!.skills[0]!.description).toContain('order CRUD code')
   })
 })
-
 
 describe('suite detail and skill content (market detail endpoints)', () => {
   it('lists skills, mcp servers, and file lists from the v1 fixture', async () => {
