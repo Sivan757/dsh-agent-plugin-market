@@ -5,3 +5,6 @@ docs-site/
 tests/fixtures/
 pnpm-lock.yaml
 *.tgz
+# release-please maintains this file in its own format
+CHANGELOG.md
+.release-please-manifest.json
