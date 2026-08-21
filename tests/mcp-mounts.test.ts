@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { fileURLToPath } from 'node:url'
-import { McpMountRegistry } from '../src/mcp-mounts.js'
+import { McpMountRegistry } from '../src/runtime/mcp-mounts.js'
 import type { Suite } from '../src/types.js'
 
 const CC_COMMANDS_ROOT = fileURLToPath(new URL('./fixtures/cc-commands', import.meta.url))
@@ -127,7 +127,7 @@ describe('agents compat (agent-<name> skills)', () => {
     await manager.mergeSources([{ id: 'cc', url: CC_COMMANDS_ROOT, local: true }])
     await manager.install('cc', 'cc-commands')
     await manager.setEnabled('cc', 'cc-commands', true)
-    const provider = new (await import('../src/skills-provider.js')).SuiteSkillProvider(manager)
+    const provider = new (await import('../src/runtime/skills-provider.js')).SuiteSkillProvider(manager)
     const candidates = await provider.list({})
     const names = candidates.map(candidate => candidate.name)
     expect(names).toContain('agent-codex-rescue')

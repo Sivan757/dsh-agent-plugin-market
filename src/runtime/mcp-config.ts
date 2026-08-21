@@ -11,8 +11,8 @@
  */
 import { createHash } from 'node:crypto'
 import type { StdioConfig, StreamableHttpConfig } from '@deepseek-ai/dsh-mcp-client'
-import { expandPlaceholders, resolveCwd } from './validate.js'
-import type { McpServer, McpServerSse, McpServerStdio, McpServerStreamableHttp, Suite } from './types.js'
+import { expandPlaceholders, resolveCwd } from '../validate.js'
+import type { McpServer, McpServerSse, McpServerStdio, McpServerStreamableHttp, Suite } from '../types.js'
 
 /** The max length `dsh-mcp-client` accepts for a serverName. */
 const SERVER_NAME_MAX = 32

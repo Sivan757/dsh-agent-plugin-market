@@ -7,9 +7,9 @@
  * disposal only.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import { CommandMountRegistry, type CommandMountDiagnostic } from '../commands-mounts.js'
-import { HooksMountRegistry, type HooksMountDiagnostic } from '../hooks-mounts.js'
-import { McpMountRegistry, type McpMountDiagnostic } from '../mcp-mounts.js'
+import { CommandMountRegistry, type CommandMountDiagnostic } from './commands-mounts.js'
+import { HooksMountRegistry, type HooksMountDiagnostic } from './hooks-mounts.js'
+import { McpMountRegistry, type McpMountDiagnostic } from './mcp-mounts.js'
 import type { Suite } from '../types.js'
 
 /** Diagnostics returned by one runtime reconciliation pass. */

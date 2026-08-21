@@ -15,9 +15,9 @@
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { SkillCandidate, SkillDefinition, SkillLookupOptions, SkillProvider, SkillSource } from '@deepseek-ai/dsh-skill'
-import type { Catalog } from './application/catalog.js'
-import { parseSkillFrontmatter, stripFrontmatter } from './skills-parse.js'
-import type { Suite, SuiteSkill } from './types.js'
+import type { Catalog } from '../application/catalog.js'
+import { parseSkillFrontmatter, stripFrontmatter } from '../skills-parse.js'
+import type { Suite, SuiteSkill } from '../types.js'
 
 export const SUITE_PROJECT_SOURCE = 'agent-plugin-project' satisfies SkillSource
 export const SUITE_USER_SOURCE = 'agent-plugin-user' satisfies SkillSource

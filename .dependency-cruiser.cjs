@@ -4,7 +4,7 @@ module.exports = {
       name: 'client-cannot-import-host',
       severity: 'error',
       from: { path: '^src/client' },
-      to: { path: '^src/(application|catalog|context|git|hooks-mounts|mcp-config|mcp-mounts|mcp-status|paths|routes|runtime|skills-provider|state|types)(/|\\.)' }
+      to: { path: '^src/(application|catalog|context|git|paths|routes|runtime|state|types|validate|skills-parse)(/|\\.)' }
     },
     {
       name: 'client-cannot-import-node',
@@ -16,7 +16,7 @@ module.exports = {
       name: 'catalog-cannot-import-host-or-client',
       severity: 'error',
       from: { path: '^src/catalog' },
-      to: { path: '^src/(application|client|context|index|routes|runtime|skills-provider)(/|\\.)' }
+      to: { path: '^src/(application|client|context|index|routes|runtime)(/|\\.)' }
     },
     {
       name: 'runtime-cannot-import-client-or-routes',

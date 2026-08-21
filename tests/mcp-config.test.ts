@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveServerName, toMcpMounts } from '../src/mcp-config.js'
+import { deriveServerName, toMcpMounts } from '../src/runtime/mcp-config.js'
 import type { Suite } from '../src/types.js'
 
 function suite(overrides: Partial<Suite> = {}): Suite {

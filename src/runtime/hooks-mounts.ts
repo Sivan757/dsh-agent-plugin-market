@@ -14,7 +14,7 @@ import { stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type * as HooksBridge from '@deepseek-ai/dsh-hooks-claude-code'
-import type { Suite } from './types.js'
+import type { Suite } from '../types.js'
 
 export interface HooksMountDiagnostic {
   suiteId: string

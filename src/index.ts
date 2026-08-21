@@ -19,7 +19,7 @@ import { RuntimeReconciler } from './runtime/reconciler.js'
 import { inspectToolRegistry } from './runtime/tool-registry-observer.js'
 import { resolveDataRoot, resolveUserRoot } from './paths.js'
 import { mountSuiteRoutes } from './routes.js'
-import { SuiteSkillProvider } from './skills-provider.js'
+import { SuiteSkillProvider } from './runtime/skills-provider.js'
 import type { SourceRef } from './types.js'
 
 export const name = 'dsh-agent-plugins-market'

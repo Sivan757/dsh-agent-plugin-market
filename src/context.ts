@@ -8,7 +8,7 @@
  * dimension, skill names per plugin, and MCP server prefixes.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import { deriveServerName } from './mcp-config.js'
+import { deriveServerName } from './runtime/mcp-config.js'
 import type { Catalog } from './application/catalog.js'
 import type { Suite } from './types.js'
 
