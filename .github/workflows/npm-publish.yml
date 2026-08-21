@@ -4,6 +4,8 @@ on:
   release:
     types: [released]
 
+# id-token: write is required for npm trusted publishing (OIDC).
+# No NPM_TOKEN secret needed — npm issues a short-lived OIDC token per run.
 permissions:
   contents: read
   id-token: write
@@ -11,6 +13,8 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Must match the environment name configured in the npm trusted publisher settings.
+    environment: npm
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,7 +38,7 @@ jobs:
       - name: Build published artifacts
         run: pnpm run build
 
-      - name: Publish to npm
+      - name: Publish to npm via OIDC trusted publishing
+        # --provenance attaches the build attestation; npm authenticates
+        # via the OIDC token issued by GitHub Actions, not a static token.
         run: pnpm publish --no-git-checks --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
