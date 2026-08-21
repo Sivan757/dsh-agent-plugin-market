@@ -52,8 +52,11 @@ The `Catalog` module is the seam after normalized suite discovery and before hos
 - [x] Stage 3: one-snapshot runtime reconciliation and isolated tool-registry observation.
 - [x] Stage 4: market/MCP view models, shared resource helpers, stale-request protection, and a repeat-filtering baseline.
 - [x] Stage 5 initial gate: ESLint, Prettier, dependency-cruiser, contract checks, and CI quality workflow.
+- [x] Stage 6: SuiteManager + discovery facades deleted; callers migrated to `application/Catalog` directly.
+- [x] Stage 7: directory alignment — runtime mounts, model, and catalog modules relocated into their target layers; MarketSection split into feature components and shared `ui/` controls.
+- [x] Stage 8: test stability — React `act` environment configured, parallel-test interference eliminated via serial file execution, MarketSection render smoke tests, coverage baseline established.
 
-The legacy `SuiteManager` facade remains intentionally because the host composition, runtime consumers, and existing tests still use its stable surface; its deletion condition is recorded below. Browser Performance-panel and React Profiler measurements remain a release follow-up because the current automated baseline measures pure view-model work, not browser paint or React commits.
+The `SuiteManager` facade has been deleted; all callers (routes, skill provider, context tool, host composition) now use `application/Catalog` directly. Browser Performance-panel and React Profiler measurements remain a release follow-up because the current automated baseline measures pure view-model work, not browser paint or React commits.
 
 ## Target module map
 
@@ -224,7 +227,7 @@ Browser-safe contracts become the only client/host protocol source. Host present
 
 Persisted `state.json` stays readable throughout the migration. Any structural state change requires an explicit version decision and a migration or deliberate rejection policy.
 
-The `SuiteManager` facade is deleted only after routes, the skill provider, the context tool, and host composition no longer depend on it directly.
+The `SuiteManager` facade has been deleted — routes, the skill provider, the context tool, and host composition no longer depend on it directly. The `discovery.ts` compat re-export facade was deleted at the same time; callers import from `catalog/` modules directly.
 
 ## Staged delivery plan
 
