@@ -12,7 +12,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type * as McpClient from '@deepseek-ai/dsh-mcp-client'
 import { toMcpMounts } from './mcp-config.js'
-import type { Suite } from '../types.js'
+import type { Suite } from '../model/types.js'
 
 export interface McpMountDiagnostic {
   suiteId: string

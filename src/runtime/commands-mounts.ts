@@ -14,8 +14,8 @@ import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { parse as parseYaml } from 'yaml'
-import { parseSkillFrontmatter, stripFrontmatter } from '../skills-parse.js'
-import type { Suite } from '../types.js'
+import { parseSkillFrontmatter, stripFrontmatter } from '../catalog/skills-parse.js'
+import type { Suite } from '../model/types.js'
 
 export interface CommandMountDiagnostic {
   suiteId: string

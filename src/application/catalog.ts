@@ -9,17 +9,17 @@
  */
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { repoName } from '../discovery/manifests.js'
+import { repoName } from '../catalog/manifests.js'
 import { discoverSourceList } from '../catalog/source-catalog.js'
 import { discoverSuitesInSource } from '../catalog/suite-scanner.js'
-import { gitClone, gitHead, gitPull, gitRemove } from '../git.js'
+import { gitClone, gitHead, gitPull, gitRemove } from '../catalog/git.js'
 import { buildMcpStatus, type McpToolSnapshot } from '../runtime/mcp-status.js'
 import type { McpStatusPayload } from '../contracts/mcp-status.js'
 import type { OverviewPayload, SkillContent, SourceOverview, SuiteDetail } from '../contracts/market.js'
 import { buildSuiteDetail, readSkillContent } from './details.js'
-import { deriveSourceId, expandHome, isDirectory, resolveProjectRoot, sanitizeId, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from '../paths.js'
-import { loadState, saveState, EMPTY_STATE } from '../state.js'
-import type { InstalledEntry, SourceRef, Suite, SuiteDimension, SuiteState } from '../types.js'
+import { deriveSourceId, expandHome, isDirectory, resolveProjectRoot, sanitizeId, sourceCheckoutDir, sourcesDir, STATE_FILE_NAME } from '../catalog/paths.js'
+import { loadState, saveState, EMPTY_STATE } from '../model/state.js'
+import type { InstalledEntry, SourceRef, Suite, SuiteDimension, SuiteState } from '../model/types.js'
 
 /** Dependencies and host callback used by the catalog application module. */
 export interface CatalogOptions {

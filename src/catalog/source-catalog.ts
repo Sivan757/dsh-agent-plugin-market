@@ -7,8 +7,8 @@
  */
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { expandHome, isDirectory, sourcesDir } from '../paths.js'
-import type { SourceRef, Suite, SuiteDimension } from '../types.js'
+import { expandHome, isDirectory, sourcesDir } from './paths.js'
+import type { SourceRef, Suite, SuiteDimension } from '../model/types.js'
 import { discoverSuitesInSource } from './suite-scanner.js'
 
 /** Discover suites from the selected configured or project checkouts. */

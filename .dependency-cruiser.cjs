@@ -4,7 +4,7 @@ module.exports = {
       name: 'client-cannot-import-host',
       severity: 'error',
       from: { path: '^src/client' },
-      to: { path: '^src/(application|catalog|context|git|paths|routes|runtime|state|types|validate|skills-parse)(/|\\.)' }
+      to: { path: '^src/(application|catalog|context|routes|runtime)(/|\\.)' }
     },
     {
       name: 'client-cannot-import-node',

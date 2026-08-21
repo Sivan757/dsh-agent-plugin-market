@@ -1,7 +1,7 @@
 /** Narrow application interfaces consumed by the HTTP transport adapter. */
 import type { McpStatusPayload } from '../contracts/mcp-status.js'
 import type { OverviewPayload, SkillContent, SourceProgress, SuiteDetail } from '../contracts/market.js'
-import type { SourceRef } from '../types.js'
+import type { SourceRef } from '../model/types.js'
 
 /** Read-only market operations required by HTTP routes. */
 export interface MarketQueries {

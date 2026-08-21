@@ -14,9 +14,9 @@ import { fileURLToPath } from 'node:url'
 // The 2020-12 dist build's d.ts resolves to a CJS namespace under NodeNext;
 // the runtime default export is the class itself (module.exports = Ajv2020).
 import Ajv2020Default from 'ajv/dist/2020.js'
-import type { McpServer, McpSuiteConfig } from './types.js'
+import type { McpServer, McpSuiteConfig } from '../model/types.js'
 
-const SCHEMAS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'schemas', '1.0.0')
+const SCHEMAS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'schemas', '1.0.0')
 
 /** Structural slice of the Ajv 2020 instance this module uses. */
 interface Ajv2020Like {

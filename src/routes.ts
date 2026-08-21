@@ -9,7 +9,7 @@
 import { isAbsolute } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { MARKET_ROUTES } from './contracts/market.js'
-import { expandHome } from './paths.js'
+import { expandHome } from './catalog/paths.js'
 import type { MarketService } from './application/queries.js'
 
 const MAX_BODY_BYTES = 64 * 1024

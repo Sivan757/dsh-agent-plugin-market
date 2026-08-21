@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fileURLToPath } from 'node:url'
 import { McpMountRegistry } from '../src/runtime/mcp-mounts.js'
-import type { Suite } from '../src/types.js'
+import type { Suite } from '../src/model/types.js'
 
 const CC_COMMANDS_ROOT = fileURLToPath(new URL('./fixtures/cc-commands', import.meta.url))
 

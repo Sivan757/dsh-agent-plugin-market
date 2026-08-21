@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildMcpStatus, inspectToolRegistry } from '../src/runtime/mcp-status.js'
-import type { Suite } from '../src/types.js'
+import type { Suite } from '../src/model/types.js'
 
 function suite(overrides: Partial<Suite> = {}): Suite {
   return {

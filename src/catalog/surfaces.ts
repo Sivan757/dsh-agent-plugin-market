@@ -11,11 +11,11 @@
  */
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
-import { parseSkillFrontmatter } from '../skills-parse.js'
-import { isDirectory } from '../paths.js'
-import { validateMcpJson } from '../validate.js'
+import { parseSkillFrontmatter } from './skills-parse.js'
+import { isDirectory } from './paths.js'
+import { validateMcpJson } from './validate.js'
 import { declaredMcpServers } from './manifests.js'
-import type { McpSuiteConfig, SuiteSkill, SuiteSurfaceCounts } from '../types.js'
+import type { McpSuiteConfig, SuiteSkill, SuiteSurfaceCounts } from '../model/types.js'
 
 const DOT_DIRS = new Set(['.git', '.github', '.claude', '.cursor', '.kimi', '.plugin', '.sources', 'node_modules'])
 

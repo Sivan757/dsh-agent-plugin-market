@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { discoverSuitesInSource } from '../src/catalog/suite-scanner.js'
 import { Catalog } from '../src/application/catalog.js'
-import { validateMcpJson, validatePluginManifest, expandPlaceholders, pathContainmentError } from '../src/validate.js'
+import { validateMcpJson, validatePluginManifest, expandPlaceholders, pathContainmentError } from '../src/catalog/validate.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixtures = join(here, 'fixtures')

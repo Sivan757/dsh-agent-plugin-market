@@ -1,7 +1,7 @@
 import { deriveServerName } from './mcp-config.js'
 import type { McpStatusEntry, McpStatusPayload, McpStatusState } from '../contracts/mcp-status.js'
 import { inspectToolRegistry, type McpToolSnapshot } from './tool-registry-observer.js'
-import type { McpServer, Suite } from '../types.js'
+import type { McpServer, Suite } from '../model/types.js'
 
 export type { McpStatusEntry, McpStatusPayload, McpStatusKind, McpStatusState } from '../contracts/mcp-status.js'
 export { inspectToolRegistry }

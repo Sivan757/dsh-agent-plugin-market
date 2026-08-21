@@ -17,9 +17,9 @@
  */
 import { readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import { sanitizeId } from '../paths.js'
-import { isRecognizedSchema, validatePluginManifest } from '../validate.js'
-import type { SuiteManifest } from '../types.js'
+import { sanitizeId } from './paths.js'
+import { isRecognizedSchema, validatePluginManifest } from './validate.js'
+import type { SuiteManifest } from '../model/types.js'
 
 export type ManifestKind = 'agent-plugin-v1' | 'universal' | 'claude-code' | 'cursor' | 'kimi' | 'codex'
 

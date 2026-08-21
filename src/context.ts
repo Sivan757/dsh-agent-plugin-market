@@ -10,7 +10,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { deriveServerName } from './runtime/mcp-config.js'
 import type { Catalog } from './application/catalog.js'
-import type { Suite } from './types.js'
+import type { Suite } from './model/types.js'
 
 /** Structural tool registry surface this plugin touches. */
 interface ToolsRegistry {

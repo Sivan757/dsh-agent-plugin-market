@@ -17,10 +17,10 @@ import { mountSuiteContext } from './context.js'
 import { Catalog } from './application/catalog.js'
 import { RuntimeReconciler } from './runtime/reconciler.js'
 import { inspectToolRegistry } from './runtime/tool-registry-observer.js'
-import { resolveDataRoot, resolveUserRoot } from './paths.js'
+import { resolveDataRoot, resolveUserRoot } from './catalog/paths.js'
 import { mountSuiteRoutes } from './routes.js'
 import { SuiteSkillProvider } from './runtime/skills-provider.js'
-import type { SourceRef } from './types.js'
+import type { SourceRef } from './model/types.js'
 
 export const name = 'dsh-agent-plugins-market'
 export const inject = ['skills', 'commands']

@@ -134,4 +134,4 @@ export interface SuiteState {
 }
 
 /** Browser-safe market records are shared from the transport contracts. */
-export type { OverviewPayload, SourceOverview, SuiteOverviewCard } from './contracts/market.js'
+export type { OverviewPayload, SourceOverview, SuiteOverviewCard } from '../contracts/market.js'

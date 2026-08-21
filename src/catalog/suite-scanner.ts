@@ -7,10 +7,10 @@
  */
 import { readdir, stat } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
-import { isDirectory, sanitizeId } from '../paths.js'
-import type { Suite, SuiteDimension, SuiteManifest } from '../types.js'
-import { declaredSkillsPath, detectManifest, marketplaceEntryDir, readManifest, readMarketplace, repoName, syntheticManifestName } from '../discovery/manifests.js'
-import { countSurfaces, discoverLspEntries, discoverMcp, discoverSkills, listMdFiles, type LspEntry } from '../discovery/surfaces.js'
+import { isDirectory, sanitizeId } from './paths.js'
+import type { Suite, SuiteDimension, SuiteManifest } from '../model/types.js'
+import { declaredSkillsPath, detectManifest, marketplaceEntryDir, readManifest, readMarketplace, repoName, syntheticManifestName } from './manifests.js'
+import { countSurfaces, discoverLspEntries, discoverMcp, discoverSkills, listMdFiles, type LspEntry } from './surfaces.js'
 
 export { repoName, listMdFiles, discoverLspEntries }
 export type { LspEntry }
