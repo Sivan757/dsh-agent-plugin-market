@@ -19,10 +19,12 @@ function fakeContext(): { ctx: Record<string, unknown>; mounts: Map<string, Moun
       mounts.set(serverName, mounted)
       return {
         await: async () => {},
-        dispose: async () => { mounted.disposed = true },
+        dispose: async () => {
+          mounted.disposed = true
+        }
       }
     },
-    logger: { warn: () => {} },
+    logger: { warn: () => {} }
   }
   return { ctx, mounts }
 }
@@ -36,12 +38,12 @@ function suite(id: string, serverKey: string): Suite {
     skills: [],
     mcp: {
       schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',
-      servers: { [serverKey]: { type: 'stdio', command: 'tool' } },
+      servers: { [serverKey]: { type: 'stdio', command: 'tool' } }
     },
     surfaces: { skills: 0, mcp: 1, hooks: 0, commands: 0, agents: 0, lsp: 0 },
     dimension: 'user',
     enabled: true,
-    errors: [],
+    errors: []
   }
 }
 
@@ -77,7 +79,16 @@ describe('McpMountRegistry', () => {
 describe('CommandMountRegistry (CC commands compat)', () => {
   it('registers commands/*.md and forwards the template as a model follow-up', async () => {
     const registered: Array<{ name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }> = []
-    const ctx = { commands: { register: (def: { name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }) => { registered.push(def); return () => { registered.splice(registered.indexOf(def), 1) } } } }
+    const ctx = {
+      commands: {
+        register: (def: { name: string; description: string; input?: { hint: string }; handler: (inv: { agent: unknown; rawInput: string }) => unknown }) => {
+          registered.push(def)
+          return () => {
+            registered.splice(registered.indexOf(def), 1)
+          }
+        }
+      }
+    }
     const registry = new (await import('../src/commands-mounts.js')).CommandMountRegistry(ctx as never)
     const suites = await (await import('../src/discovery.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')
     suites[0]!.enabled = true
@@ -90,7 +101,14 @@ describe('CommandMountRegistry (CC commands compat)', () => {
     expect(registered[1]!.description).toContain('[cc-commands]')
     expect(registered[1]!.input).toEqual({ hint: '子代理' })
     let followup: { content: Array<{ type: string; text: string }> } | undefined
-    const result = registered[0]!.handler({ agent: { followup: (message: { content: Array<{ type: string; text: string }> }) => { followup = message } }, rawInput: '--wait focus' })
+    const result = registered[0]!.handler({
+      agent: {
+        followup: (message: { content: Array<{ type: string; text: string }> }) => {
+          followup = message
+        }
+      },
+      rawInput: '--wait focus'
+    })
     expect(result).toMatchObject({ kind: 'success' })
     expect(followup!.content[0]!.text).toContain('Raw arguments: `--wait focus`')
     registry.disposeAll()
@@ -129,7 +147,7 @@ describe('HooksMountRegistry (CC hooks compat)', () => {
         mounted.push({ config })
         return { await: async () => {}, dispose: async () => {} }
       },
-      logger: { warn: () => {} },
+      logger: { warn: () => {} }
     }
     const registry = new (await import('../src/hooks-mounts.js')).HooksMountRegistry(ctx as never)
     const suites = await (await import('../src/discovery.js')).discoverSuitesInSource(CC_COMMANDS_ROOT, 'cc', 'user')

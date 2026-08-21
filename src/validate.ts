@@ -50,7 +50,7 @@ export async function validateAgainstSchema(schemaId: string, document: unknown)
   const validate = instance.getSchema(schemaId)
   if (validate === undefined) return [`no bundled validator for ${schemaId}`]
   validate(document)
-  return (validate.errors ?? []).map((error) => `${error.instancePath === '' ? 'root' : error.instancePath} ${error.message ?? 'invalid'}`)
+  return (validate.errors ?? []).map(error => `${error.instancePath === '' ? 'root' : error.instancePath} ${error.message ?? 'invalid'}`)
 }
 
 /** Whether a `$schema` value selects the local v1.0.0 ruleset. */
@@ -95,7 +95,7 @@ export async function validatePluginManifest(raw: unknown): Promise<string[]> {
   if (!isRecognizedSchema(record['$schema'])) {
     errors.push(`unrecognized $schema ${JSON.stringify(record['$schema'])}; this manager supports agent-plugins 1.0.0 only`)
   }
-  errors.push(...await validateAgainstSchema(PLUGIN_SCHEMA_ID, raw))
+  errors.push(...(await validateAgainstSchema(PLUGIN_SCHEMA_ID, raw)))
   return errors
 }
 

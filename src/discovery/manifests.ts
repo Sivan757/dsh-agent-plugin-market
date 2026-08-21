@@ -38,7 +38,7 @@ const MANIFEST_PATHS: Record<ManifestKind, string> = {
   'claude-code': join('.claude-plugin', 'plugin.json'),
   cursor: join('.cursor-plugin', 'plugin.json'),
   kimi: join('.kimi-plugin', 'plugin.json'),
-  codex: join('.codex-plugin', 'plugin.json'),
+  codex: join('.codex-plugin', 'plugin.json')
 }
 
 /** The highest-precedence manifest file a directory carries, if any. */
@@ -79,7 +79,11 @@ interface ParsedRecord {
  * is schema-validated (fail-closed); the others are structurally read with
  * light tolerance, and `hint` (a marketplace plugin entry) fills in gaps.
  */
-export async function readManifest(root: string, errors: string[], hint: { name?: string; version?: string; description?: string } | undefined): Promise<SuiteManifest | undefined> {
+export async function readManifest(
+  root: string,
+  errors: string[],
+  hint: { name?: string; version?: string; description?: string } | undefined
+): Promise<SuiteManifest | undefined> {
   const candidate = await detectManifest(root)
   if (candidate === undefined) return undefined
   let raw: unknown
@@ -94,24 +98,33 @@ export async function readManifest(root: string, errors: string[], hint: { name?
     return undefined
   }
   const record = raw as ParsedRecord
-  const problems = candidate.kind === 'agent-plugin-v1'
-    ? await validatePluginManifest(raw)
-    : []
+  const problems = candidate.kind === 'agent-plugin-v1' ? await validatePluginManifest(raw) : []
   errors.push(...problems.map(problem => `${candidate.path}: ${problem}`))
   const name = pickString(record.name) ?? hint?.name ?? syntheticManifestName(root)
   const version = pickString(record.version) ?? hint?.version
   const description = pickString(record.description) ?? hint?.description
   const author = record.author as { name?: string; url?: string } | undefined
   return {
-    layout: candidate.kind === 'agent-plugin-v1' ? 'agent-plugin-v1' : candidate.kind === 'universal' ? 'universal' : candidate.kind === 'claude-code' ? 'claude-code' : candidate.kind === 'cursor' ? 'cursor' : candidate.kind === 'kimi' ? 'kimi' : 'codex',
+    layout:
+      candidate.kind === 'agent-plugin-v1'
+        ? 'agent-plugin-v1'
+        : candidate.kind === 'universal'
+          ? 'universal'
+          : candidate.kind === 'claude-code'
+            ? 'claude-code'
+            : candidate.kind === 'cursor'
+              ? 'cursor'
+              : candidate.kind === 'kimi'
+                ? 'kimi'
+                : 'codex',
     path: candidate.path,
     id: sanitizeId(name),
     name,
-    ...version === undefined ? {} : { version },
-    ...description === undefined ? {} : { description },
+    ...(version === undefined ? {} : { version }),
+    ...(description === undefined ? {} : { description }),
     ...(author?.name !== undefined ? { author: author.name } : pickString(record.homepage) !== undefined ? { author: pickString(record.homepage) } : {}),
     keywords: Array.isArray(record.keywords) ? (record.keywords as unknown[]).filter((entry): entry is string => typeof entry === 'string') : [],
-    ...isRecognizedSchema(record.$schema) ? { schemaVersion: record.$schema as string } : {},
+    ...(isRecognizedSchema(record.$schema) ? { schemaVersion: record.$schema as string } : {})
   }
 }
 
@@ -152,8 +165,8 @@ export async function readMarketplace(checkoutDir: string): Promise<Marketplace 
       const plugins = record['plugins']
       if (!Array.isArray(plugins)) continue
       return {
-        ...typeof record['name'] === 'string' ? { name: record['name'] } : {},
-        entries: plugins as MarketplaceEntry[],
+        ...(typeof record['name'] === 'string' ? { name: record['name'] } : {}),
+        entries: plugins as MarketplaceEntry[]
       }
     } catch {
       continue

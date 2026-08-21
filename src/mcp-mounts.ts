@@ -41,7 +41,10 @@ export class McpMountRegistry {
   private readonly live = new Map<string, LiveMount>()
   private readonly names = new Map<string, string>()
 
-  constructor(private readonly ctx: Context, private readonly pluginDataRoot: string) {}
+  constructor(
+    private readonly ctx: Context,
+    private readonly pluginDataRoot: string
+  ) {}
 
   /** Mount/unmount MCP servers to match the enabled suites exactly. */
   async reconcile(enabledSuites: Suite[]): Promise<McpMountDiagnostic[]> {

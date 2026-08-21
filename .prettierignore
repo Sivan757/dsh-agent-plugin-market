@@ -1,0 +1,7 @@
+node_modules/
+lib/
+client/
+docs-site/
+tests/fixtures/
+pnpm-lock.yaml
+*.tgz

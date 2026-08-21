@@ -18,10 +18,10 @@ function suite(overrides: Partial<Suite> = {}): Suite {
       servers: {
         db: { type: 'stdio', command: './bin/db', args: ['--root', '${PLUGIN_ROOT}'], env: { CACHE: '${PLUGIN_DATA}/cache' }, cwd: './data' },
         web: { type: 'streamable-http', url: 'https://example.com/mcp', headers: { Authorization: 'Bearer ${MCP_TOKEN}' } },
-        legacy: { type: 'sse', url: 'https://example.com/sse' },
-      },
+        legacy: { type: 'sse', url: 'https://example.com/sse' }
+      }
     },
-    ...overrides,
+    ...overrides
   }
 }
 

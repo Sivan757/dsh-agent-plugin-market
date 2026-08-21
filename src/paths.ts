@@ -82,7 +82,11 @@ export async function isDirectory(path: string): Promise<boolean> {
 
 /** Sanitize a plugin or server id into `[a-z0-9-]` (lowercased). */
 export function sanitizeId(raw: string): string {
-  const cleaned = raw.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '').replace(/-{2,}/g, '-')
+  const cleaned = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '')
+    .replace(/-{2,}/g, '-')
   return cleaned === '' ? 'unnamed' : cleaned
 }
 

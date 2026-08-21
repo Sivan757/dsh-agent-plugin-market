@@ -71,15 +71,15 @@ Build artifacts (`lib/`, `client/`) are not committed; npm publishes them via `p
 
 ## Supported plugin layouts
 
-| Layout | Manifest | Notes |
-| --- | --- | --- |
-| agent-plugins.org v1 | `plugin.json` | vendored 1.0.0 JSON Schema validation + spec §4 path rules |
-| Claude Code market | `.claude-plugin/marketplace.json` + `.claude-plugin/plugin.json` | marketplace `plugins[].source` relative paths |
-| Universal | `.plugin/plugin.json` | multi-client repos (e.g. vercel-plugin) |
-| Cursor | `.cursor-plugin/plugin.json` | declared skills paths |
-| Kimi | `.kimi-plugin/plugin.json` | inline mcpServers |
-| Codex | `.codex-plugin/plugin.json` | — |
-| Skill collection (manifest-less) | none (synthetic) | flat `SKILL.md` directory collections |
+| Layout                           | Manifest                                                         | Notes                                                      |
+| -------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| agent-plugins.org v1             | `plugin.json`                                                    | vendored 1.0.0 JSON Schema validation + spec §4 path rules |
+| Claude Code market               | `.claude-plugin/marketplace.json` + `.claude-plugin/plugin.json` | marketplace `plugins[].source` relative paths              |
+| Universal                        | `.plugin/plugin.json`                                            | multi-client repos (e.g. vercel-plugin)                    |
+| Cursor                           | `.cursor-plugin/plugin.json`                                     | declared skills paths                                      |
+| Kimi                             | `.kimi-plugin/plugin.json`                                       | inline mcpServers                                          |
+| Codex                            | `.codex-plugin/plugin.json`                                      | —                                                          |
+| Skill collection (manifest-less) | none (synthetic)                                                 | flat `SKILL.md` directory collections                      |
 
 One repo may carry several dialects at once (vercel/vercel-plugin ships all of them); the suite identity comes from the highest-precedence manifest while surfaces are scanned from the directories. `mcp.json` is validated strictly against the agent-plugins.org schema; `.mcp.json` is parsed leniently — top-level server-map shorthand, `type: http` / `local` / omitted `type` (stdio by `command`) normalization, `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${NAME:-default}` placeholders, and unknown transports are tolerated per server. The marketplace manifest is authoritative for the suite set; manifest-less marketplace entries that carry skills and manifest-bearing container dirs not listed there are supplemented. Remote URL entries show as "remote reference" cards (metadata + source URL, not directly installable; add the repo as a source to install).
 

@@ -78,7 +78,7 @@ export async function discoverSkills(root: string, errors: string[], declared?: 
 }
 
 async function parseOneSkill(file: string, directory: string, fallbackName: string, errors: string[]): Promise<SuiteSkill | undefined> {
-  if (!await isFile(file)) return undefined
+  if (!(await isFile(file))) return undefined
   let text: string
   try {
     text = await readFile(file, 'utf8')
@@ -96,8 +96,8 @@ async function parseOneSkill(file: string, directory: string, fallbackName: stri
     directory,
     file,
     description: parsed.description,
-    ...parsed.whenToUse === undefined ? {} : { whenToUse: parsed.whenToUse },
-    invocation: parsed.invocation,
+    ...(parsed.whenToUse === undefined ? {} : { whenToUse: parsed.whenToUse }),
+    invocation: parsed.invocation
   }
 }
 
@@ -105,7 +105,7 @@ async function parseOneSkill(file: string, directory: string, fallbackName: stri
 export async function discoverMcp(root: string, errors: string[]): Promise<McpSuiteConfig | undefined> {
   for (const name of ['mcp.json', '.mcp.json']) {
     const path = join(root, name)
-    if (!await isFile(path)) continue
+    if (!(await isFile(path))) continue
     let raw: unknown
     try {
       raw = JSON.parse(await readFile(path, 'utf8'))
@@ -139,7 +139,7 @@ export async function countSurfaces(root: string, skills: SuiteSkill[], mcp: Mcp
     hooks,
     commands,
     agents,
-    lsp,
+    lsp
   }
 }
 
@@ -214,9 +214,7 @@ async function listChildDirs(dir: string): Promise<string[]> {
   } catch {
     return []
   }
-  return entries
-    .filter(entry => entry.isDirectory() && !DOT_DIRS.has(entry.name) && !entry.name.startsWith('.'))
-    .map(entry => join(dir, entry.name))
+  return entries.filter(entry => entry.isDirectory() && !DOT_DIRS.has(entry.name) && !entry.name.startsWith('.')).map(entry => join(dir, entry.name))
 }
 
 async function isFile(path: string): Promise<boolean> {

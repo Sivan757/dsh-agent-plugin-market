@@ -36,7 +36,7 @@ function normalizeState(record: Record<string, unknown>): SuiteState {
         if (id === '' || url === '') return []
         const branch = typeof source['branch'] === 'string' ? source['branch'] : undefined
         const local = source['local'] === true
-        return [{ id, url, ...branch === undefined ? {} : { branch }, ...local ? { local: true } : {} }]
+        return [{ id, url, ...(branch === undefined ? {} : { branch }), ...(local ? { local: true } : {}) }]
       })
     : []
   const installed: Record<string, InstalledEntry> = {}
@@ -47,7 +47,7 @@ function normalizeState(record: Record<string, unknown>): SuiteState {
       installed[key] = {
         enabled: entry['enabled'] === true,
         lockCommit: typeof entry['lockCommit'] === 'string' ? entry['lockCommit'] : undefined,
-        installedAt: typeof entry['installedAt'] === 'string' ? entry['installedAt'] : new Date(0).toISOString(),
+        installedAt: typeof entry['installedAt'] === 'string' ? entry['installedAt'] : new Date(0).toISOString()
       }
     }
   }

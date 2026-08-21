@@ -11,7 +11,7 @@ describe('state: persisted suite state', () => {
     await saveState(path, {
       version: 1,
       sources: [{ id: 'demo', url: 'https://example.com/demo.git', branch: 'main' }],
-      installed: { 'demo/mysql': { enabled: true, lockCommit: 'abc123', installedAt: '2026-01-01T00:00:00.000Z' } },
+      installed: { 'demo/mysql': { enabled: true, lockCommit: 'abc123', installedAt: '2026-01-01T00:00:00.000Z' } }
     })
     const loaded = await loadState(path)
     expect(loaded.sources).toHaveLength(1)
@@ -33,7 +33,7 @@ describe('state: persisted suite state', () => {
     await saveState(path, {
       version: 1,
       sources: [{ id: '', url: 'x' }, { id: 'ok', url: 'https://example.com/ok.git' }, 'junk'],
-      installed: {},
+      installed: {}
     } as never)
     const loaded = await loadState(path)
     expect(loaded.sources).toEqual([{ id: 'ok', url: 'https://example.com/ok.git' }])
@@ -47,7 +47,7 @@ describe('state: local source round-trip', () => {
     await saveState(path, {
       version: 1,
       sources: [{ id: 'local-repo', url: '/tmp/whatever', local: true }],
-      installed: {},
+      installed: {}
     })
     const loaded = await loadState(path)
     expect(loaded.sources).toEqual([{ id: 'local-repo', url: '/tmp/whatever', local: true }])

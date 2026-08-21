@@ -27,7 +27,10 @@ export function isSkillName(name: string): boolean {
  * → "presentations"), or `undefined` when nothing usable remains.
  */
 export function normalizeSkillName(name: string): string | undefined {
-  const normalized = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  const normalized = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
   return normalized === '' ? undefined : normalized
 }
 
@@ -94,11 +97,11 @@ export function parseSkillFrontmatter(text: string, expectedName: string | undef
   return {
     name,
     description: description.trim(),
-    ...whenToUse === undefined ? {} : { whenToUse },
+    ...(whenToUse === undefined ? {} : { whenToUse }),
     invocation: {
       modelInvocable: disableModel !== true,
-      userInvocable: userInvocable !== false,
-    },
+      userInvocable: userInvocable !== false
+    }
   }
 }
 

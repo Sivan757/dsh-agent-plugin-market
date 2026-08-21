@@ -21,7 +21,9 @@ describe('SearchFilterToolbar', () => {
   it('uses one accessible control row and switches presentation modes', () => {
     function Harness() {
       const [view, setView] = useState<SearchFilterToolbarView>('grid')
-      return h('div', {},
+      return h(
+        'div',
+        {},
         h(SearchFilterToolbar, {
           search: '',
           searchLabel: 'Search services',
@@ -29,14 +31,14 @@ describe('SearchFilterToolbar', () => {
           onSearchChange: () => {},
           filters: [
             { id: 'all', label: 'All', count: 3, icon: h('svg'), active: true, onSelect: () => {} },
-            { id: 'plugin', label: 'Plugin', count: 2, icon: h('svg'), active: false, onSelect: () => {} },
+            { id: 'plugin', label: 'Plugin', count: 2, icon: h('svg'), active: false, onSelect: () => {} }
           ],
           view,
           gridLabel: 'Grid',
           listLabel: 'List',
-          onViewChange: setView,
+          onViewChange: setView
         }),
-        h('output', { 'data-view': view }, view),
+        h('output', { 'data-view': view }, view)
       )
     }
 

@@ -3,13 +3,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../src/client/MarketSection.js', () => ({
-  MarketSection: () => null,
+  MarketSection: () => null
 }))
 
-import {
-  LEGACY_PAGE_MODE_SURFACE_EVENT,
-  mountLegacyPageMode,
-} from '../src/client/page-mode.js'
+import { LEGACY_PAGE_MODE_SURFACE_EVENT, mountLegacyPageMode } from '../src/client/page-mode.js'
 
 describe('legacy market page mode', () => {
   afterEach(() => {
@@ -20,7 +17,7 @@ describe('legacy market page mode', () => {
   it('mounts a localized page entry when the settings surface is absent', async () => {
     document.body.innerHTML = [
       '<div data-pane="sidebar"><div><button class="newSession">New session</button></div></div>',
-      '<div data-pane="conversation"><div data-conversation-body="true">Conversation</div></div>',
+      '<div data-pane="conversation"><div data-conversation-body="true">Conversation</div></div>'
     ].join('')
     let settingsAvailable = false
     let nav = 'Agent Plugins 市场'
@@ -30,8 +27,10 @@ describe('legacy market page mode', () => {
       isSettingsSurfaceAvailable: () => settingsAvailable,
       subscribeLocale: listener => {
         onLocale = listener
-        return () => { onLocale = undefined }
-      },
+        return () => {
+          onLocale = undefined
+        }
+      }
     })
     await new Promise(resolve => setTimeout(resolve, 0))
 

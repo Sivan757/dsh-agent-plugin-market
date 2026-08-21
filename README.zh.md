@@ -71,15 +71,15 @@ dsh plugin --profile <名字> add github:Sivan757/dsh-agent-plugins-market
 
 ## 兼容的套件布局
 
-| 布局 | 清单文件 | 说明 |
-| --- | --- | --- |
-| agent-plugins.org v1 | `plugin.json` | 内置 1.0.0 JSON Schema 校验 + 规范 §4 路径约束 |
-| Claude Code 市场 | `.claude-plugin/marketplace.json` + 套件 `.claude-plugin/plugin.json` | marketplace `plugins[].source` 相对路径 |
-| 通用（universal） | `.plugin/plugin.json` | 多客户端共存仓库（如 vercel-plugin） |
-| Cursor | `.cursor-plugin/plugin.json` | 声明式 skills 路径 |
-| Kimi | `.kimi-plugin/plugin.json` | 内联 mcpServers |
-| Codex | `.codex-plugin/plugin.json` | — |
-| 技能集合（无清单） | 无（合成） | 扁平 `SKILL.md` 目录集合 |
+| 布局                 | 清单文件                                                              | 说明                                           |
+| -------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
+| agent-plugins.org v1 | `plugin.json`                                                         | 内置 1.0.0 JSON Schema 校验 + 规范 §4 路径约束 |
+| Claude Code 市场     | `.claude-plugin/marketplace.json` + 套件 `.claude-plugin/plugin.json` | marketplace `plugins[].source` 相对路径        |
+| 通用（universal）    | `.plugin/plugin.json`                                                 | 多客户端共存仓库（如 vercel-plugin）           |
+| Cursor               | `.cursor-plugin/plugin.json`                                          | 声明式 skills 路径                             |
+| Kimi                 | `.kimi-plugin/plugin.json`                                            | 内联 mcpServers                                |
+| Codex                | `.codex-plugin/plugin.json`                                           | —                                              |
+| 技能集合（无清单）   | 无（合成）                                                            | 扁平 `SKILL.md` 目录集合                       |
 
 一个仓库可同时携带多种清单（如 vercel/vercel-plugin 全部都有）；套件身份取优先级最高的清单，内容面（skills/commands/agents/hooks/mcp）按目录扫描。`mcp.json` 严格按 agent-plugins.org schema 校验；`.mcp.json` 宽容解析——支持顶层 server map 简写、`type: http`/`local`/省略 type（按 command 判 stdio）归一化、`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${NAME:-default}` 占位符，未知 transport 逐 server 容错。marketplace 清单权威决定套件集合；无清单但含技能的市场条目与容器内未列出的清单插件也会被补全。远程 URL 引用条目以「远程引用」卡片展示（元信息 + 源 URL，不可直接安装，可添加对应仓库为源后安装）。
 

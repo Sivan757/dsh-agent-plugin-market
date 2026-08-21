@@ -60,9 +60,7 @@ function toStdio(serverName: string, suite: Suite, server: McpServerStdio, plugi
   const command = server.command.startsWith('./') ? joinInside(suite.root, server.command.slice(2)) : server.command
   const pluginData = joinInside(pluginDataRoot, suite.id)
   const args = (server.args ?? []).map(arg => expandPlaceholders(arg, suite.root, pluginData))
-  const env = Object.fromEntries(
-    Object.entries(server.env ?? {}).map(([key, value]) => [key, expandPlaceholders(value, suite.root, pluginData)]),
-  )
+  const env = Object.fromEntries(Object.entries(server.env ?? {}).map(([key, value]) => [key, expandPlaceholders(value, suite.root, pluginData)]))
   const cwd = server.cwd === undefined ? suite.root : resolveCwd(expandPlaceholders(server.cwd, suite.root, pluginData), suite.root, pluginData)
   return {
     transport: 'stdio',
@@ -72,22 +70,20 @@ function toStdio(serverName: string, suite: Suite, server: McpServerStdio, plugi
     env,
     cwd,
     toolCallTimeoutMs: 60_000,
-    failOnStartupError: false,
+    failOnStartupError: false
   }
 }
 
 function toHttp(serverName: string, suite: Suite, server: McpServerStreamableHttp, pluginDataRoot: string): StreamableHttpConfig {
   const pluginData = joinInside(pluginDataRoot, suite.id)
-  const headers = Object.fromEntries(
-    Object.entries(server.headers ?? {}).map(([key, value]) => [key, expandPlaceholders(value, suite.root, pluginData)]),
-  )
+  const headers = Object.fromEntries(Object.entries(server.headers ?? {}).map(([key, value]) => [key, expandPlaceholders(value, suite.root, pluginData)]))
   return {
     transport: 'streamable-http',
     serverName,
     url: server.url,
     headers,
     toolCallTimeoutMs: 60_000,
-    failOnStartupError: false,
+    failOnStartupError: false
   }
 }
 
@@ -102,7 +98,10 @@ function joinInside(root: string, segment: string): string {
 
 /** Sanitize one token into `[A-Za-z0-9_-]`. */
 function sanitizeToken(raw: string): string {
-  const cleaned = raw.replace(/[^A-Za-z0-9_-]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '')
+  const cleaned = raw
+    .replace(/[^A-Za-z0-9_-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
   return cleaned === '' ? 'server' : cleaned
 }
 

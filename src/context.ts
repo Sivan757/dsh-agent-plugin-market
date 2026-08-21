@@ -30,7 +30,7 @@ interface ToolsRegistry {
 /** Mount the agent_plugins query tool. */
 export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => void {
   const disposers: Array<() => void> = []
-  ctx.inject(['tools'], (toolsCtx) => {
+  ctx.inject(['tools'], toolsCtx => {
     const tools = toolsCtx as unknown as { tools: ToolsRegistry }
     if (typeof tools.tools?.register !== 'function') return
     const parameters = {
@@ -38,10 +38,10 @@ export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => vo
       properties: {
         action: { type: 'string', enum: ['list', 'info'], description: 'list: 列出全部 Agent Plugins；info: 查看单个 Agent Plugins 详情' },
         suiteId: { type: 'string', description: 'info 动作时必填：Agent Plugins id' },
-        sourceId: { type: 'string', description: 'info 动作时可选：Agent Plugins 所属仓库源 id' },
+        sourceId: { type: 'string', description: 'info 动作时可选：Agent Plugins 所属仓库源 id' }
       },
       required: ['action'],
-      additionalProperties: false,
+      additionalProperties: false
     }
     const outputSchema = {
       type: 'object',
@@ -49,8 +49,8 @@ export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => vo
         suites: { type: 'array', items: { type: 'object' } },
         skills: { type: 'array', items: { type: 'object' } },
         mcpServers: { type: 'array', items: { type: 'object' } },
-        note: { type: 'string' },
-      },
+        note: { type: 'string' }
+      }
     }
     const dispose = tools.tools.register({
       name: 'agent_plugins',
@@ -62,15 +62,15 @@ export function mountSuiteContext(ctx: Context, manager: SuiteManager): () => vo
         render: (_args, value) => {
           const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
           return [{ type: 'text', text }]
-        },
+        }
       },
-      execute: async (args) => {
+      execute: async args => {
         const record = args as Record<string, unknown>
         const action = record['action']
         if (action === 'list') return listPayload(await manager.enabledUserSuites())
         if (action === 'info') return infoPayload(await manager.enabledUserSuites(), record)
         return { suites: [], skills: [], mcpServers: [], note: `unknown action ${JSON.stringify(action)}` }
-      },
+      }
     })
     disposers.push(dispose)
   })
@@ -88,13 +88,13 @@ function listPayload(suites: Suite[]): Record<string, unknown> {
       name: suite.manifest.name,
       version: suite.manifest.version ?? null,
       description: suite.manifest.description ?? null,
-      layout: suite.manifest.layout,
+      layout: suite.manifest.layout
     })),
     skills: suites.flatMap(suite => suite.skills.map(skill => ({ suiteId: suite.id, name: skill.name, description: `[${suite.manifest.name}] ${skill.description}` }))),
-    mcpServers: suites.flatMap(suite => suite.mcp === undefined
-      ? []
-      : Object.keys(suite.mcp.servers).map(key => ({ suiteId: suite.id, server: key, tools: `mcp__${deriveServerName(suite.id, key)}__*` }))),
-    note: '技能正文通过 skill 工具按 name 加载；MCP 工具名形如 mcp__<plugin>__<server>__<tool>。',
+    mcpServers: suites.flatMap(suite =>
+      suite.mcp === undefined ? [] : Object.keys(suite.mcp.servers).map(key => ({ suiteId: suite.id, server: key, tools: `mcp__${deriveServerName(suite.id, key)}__*` }))
+    ),
+    note: '技能正文通过 skill 工具按 name 加载；MCP 工具名形如 mcp__<plugin>__<server>__<tool>。'
   }
 }
 

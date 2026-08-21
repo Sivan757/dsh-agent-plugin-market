@@ -57,7 +57,7 @@ export class CommandMountRegistry {
     const diagnostics: CommandMountDiagnostic[] = []
     const wanted = new Map<string, CommandSpec & { suiteId: string; suiteName: string }>()
     for (const suite of enabledSuites) {
-      for (const spec of [...await readCommands(suite.root), ...await readAgents(suite.root)]) {
+      for (const spec of [...(await readCommands(suite.root)), ...(await readAgents(suite.root))]) {
         const key = `${suite.id}/${spec.name}`
         wanted.set(key, { ...spec, suiteId: suite.id, suiteName: suite.manifest.name })
       }
@@ -79,17 +79,13 @@ export class CommandMountRegistry {
         const disposer = host.commands.register({
           name: spec.name,
           description: `[${spec.suiteName}] ${spec.description}`,
-          ...spec.hint === undefined ? {} : { input: { hint: spec.hint } },
-          handler: (invocation) => {
+          ...(spec.hint === undefined ? {} : { input: { hint: spec.hint } }),
+          handler: invocation => {
             const agent = invocation.agent as InboxAgent
-            const text = [
-              `[Agent Plugins 命令 /${spec.name}（来自 ${spec.suiteId}）]`,
-              '',
-              spec.body.replaceAll('$ARGUMENTS', invocation.rawInput.trim()),
-            ].join('\n')
+            const text = [`[Agent Plugins 命令 /${spec.name}（来自 ${spec.suiteId}）]`, '', spec.body.replaceAll('$ARGUMENTS', invocation.rawInput.trim())].join('\n')
             agent.followup({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'dsh-agent-plugins-market' } })
             return { kind: 'success', text: `/${spec.name} 已转交模型执行（${spec.suiteId}）` }
-          },
+          }
         })
         this.live.set(key, disposer)
       } catch (error) {
@@ -186,6 +182,9 @@ function commandMeta(text: string): CommandMeta | undefined {
 }
 
 function firstLine(text: string): string | undefined {
-  const line = text.split('\n').map(line => line.trim()).find(line => line !== '')
+  const line = text
+    .split('\n')
+    .map(line => line.trim())
+    .find(line => line !== '')
   return line
 }

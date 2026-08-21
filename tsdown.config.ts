@@ -17,5 +17,5 @@ export default defineConfig({
   css: { inject: true },
   outExtensions: ({ format }) => (format === 'cjs' ? { js: '.js' } : {}),
   dts: false,
-  sourcemap: true,
+  sourcemap: true
 })

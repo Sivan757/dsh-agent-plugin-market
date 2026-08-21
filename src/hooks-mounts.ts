@@ -73,7 +73,7 @@ export class HooksMountRegistry {
     try {
       const handle = mountCtx.plugin(bridge, {
         configPath,
-        pluginRoot: suite.root,
+        pluginRoot: suite.root
       })
       await handle.await()
       this.live.set(suite.id, handle)

@@ -42,7 +42,7 @@ const wrapped = [
   '\t\treturn module.exports;',
   '}',
   '});',
-  '',
+  ''
 ].join('\n')
 
 writeFileSync(bundlePath, wrapped)
