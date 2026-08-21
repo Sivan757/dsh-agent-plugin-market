@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 <!-- The 0.5.0 section will be created by the first release-please PR, -->
 <!-- covering all commits after the v0.4.5 bootstrap-sha. -->
 
+## [0.5.1](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.0...dsh-agent-plugins-market-v0.5.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ci:** remove explicit pnpm version (use packageManager field) + run full check:refactor in CI ([25efc90](https://github.com/Sivan757/dsh-agent-plugins-market/commit/25efc90eabb35ecfaa4a30607b2cbfc14981ea40))
+* **ci:** trigger npm-publish on tag push instead of release event ([afd46ef](https://github.com/Sivan757/dsh-agent-plugins-market/commit/afd46ef8e2e52e6eaff89884d84b22840fadc181))
+
 ## [0.5.0](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.4.6...dsh-agent-plugins-market-v0.5.0) (2026-08-21)
 
 
