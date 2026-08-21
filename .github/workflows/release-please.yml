@@ -14,26 +14,4 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          release-type: node
-          package-name: dsh-agent-plugins-market
-          # Bootstrap: only scan commits after this SHA (the v0.4.5 release commit).
-          # Without this, release-please would scan all 80 historical commits
-          # since the repo has zero git tags.
-          bootstrap-sha: d97ba73a998ac0cb1d97c03c16f0db9c21e6c087
-          # In 0.x: feat bumps minor, fix/perf bump patch.
-          # This is release-please's default for pre-1.0 packages.
-          versioning-strategy: default
-          # Conventional commit → changelog section mapping.
-          changelog-types: |
-            [
-              { "type": "feat", "section": "Features" },
-              { "type": "fix", "section": "Bug Fixes" },
-              { "type": "perf", "section": "Performance" },
-              { "type": "refactor", "section": "Refactor" },
-              { "type": "revert", "section": "Reverts" },
-              { "type": "docs", "section": "Documentation" },
-              { "type": "test", "section": "Tests" },
-              { "type": "chore", "section": "Miscellaneous" },
-              { "type": "ci", "section": "CI", "hidden": true },
-              { "type": "build", "section": "Build", "hidden": true }
-            ]
+          config-file: .release-please-config.json
