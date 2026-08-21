@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 import { describe, expect, it } from 'vitest'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { createElement as h } from 'react'
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 
+// Points at a locally-installed suite for a real-world markdown crash test.
+// This path only exists on the maintainer's machine; the test skips in CI
+// and any other environment where the directory is absent.
 const ROOT = '/Users/sivan/.dsh/agent-plugins/.sources/mattpocock/skills'
 
 function skillFiles(): string[] {
@@ -28,7 +31,7 @@ function skillFiles(): string[] {
 }
 
 describe('MarkdownText renders all mattpocock skill bodies', () => {
-  it('does not throw on any SKILL.md', () => {
+  it.runIf(existsSync(ROOT))('does not throw on any SKILL.md', () => {
     const files = skillFiles()
     expect(files.length).toBeGreaterThan(0)
     const crashed: string[] = []
