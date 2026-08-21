@@ -11,26 +11,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.5.1](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.0...dsh-agent-plugins-market-v0.5.1) (2026-08-21)
 
-
 ### Bug Fixes
 
-* **ci:** remove explicit pnpm version (use packageManager field) + run full check:refactor in CI ([25efc90](https://github.com/Sivan757/dsh-agent-plugins-market/commit/25efc90eabb35ecfaa4a30607b2cbfc14981ea40))
-* **ci:** trigger npm-publish on tag push instead of release event ([afd46ef](https://github.com/Sivan757/dsh-agent-plugins-market/commit/afd46ef8e2e52e6eaff89884d84b22840fadc181))
+- **ci:** remove explicit pnpm version (use packageManager field) + run full check:refactor in CI ([25efc90](https://github.com/Sivan757/dsh-agent-plugins-market/commit/25efc90eabb35ecfaa4a30607b2cbfc14981ea40))
+- **ci:** trigger npm-publish on tag push instead of release event ([afd46ef](https://github.com/Sivan757/dsh-agent-plugins-market/commit/afd46ef8e2e52e6eaff89884d84b22840fadc181))
 
 ## [0.5.0](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.4.6...dsh-agent-plugins-market-v0.5.0) (2026-08-21)
 
-
 ### Features
 
-* add MCP status surface and shared catalog toolbar ([4930e73](https://github.com/Sivan757/dsh-agent-plugins-market/commit/4930e7375cc73784879e9a0f1a28772651fbdae3))
-
+- add MCP status surface and shared catalog toolbar ([4930e73](https://github.com/Sivan757/dsh-agent-plugins-market/commit/4930e7375cc73784879e9a0f1a28772651fbdae3))
 
 ### Bug Fixes
 
-* align DSH dependencies to rc.8 and repair CI ([1e4e634](https://github.com/Sivan757/dsh-agent-plugins-market/commit/1e4e634f8396572c71ecb85d50f9d0d8e589a545))
-* **ci:** add release-please-manifest.json (required by v4) ([22056a7](https://github.com/Sivan757/dsh-agent-plugins-market/commit/22056a7f6d1546ceb2301367cdaa56c14a367920))
-* **ci:** move changelog-types to top-level config for all commit types ([61ddc1b](https://github.com/Sivan757/dsh-agent-plugins-market/commit/61ddc1b8ec3bf1203d85298e8a3ca713ae01c995))
-* **ci:** use release-please config file and fix PR creation permission ([98345d4](https://github.com/Sivan757/dsh-agent-plugins-market/commit/98345d49711ce7214eb15d44dd9c2070774d278f))
+- align DSH dependencies to rc.8 and repair CI ([1e4e634](https://github.com/Sivan757/dsh-agent-plugins-market/commit/1e4e634f8396572c71ecb85d50f9d0d8e589a545))
+- **ci:** add release-please-manifest.json (required by v4) ([22056a7](https://github.com/Sivan757/dsh-agent-plugins-market/commit/22056a7f6d1546ceb2301367cdaa56c14a367920))
+- **ci:** move changelog-types to top-level config for all commit types ([61ddc1b](https://github.com/Sivan757/dsh-agent-plugins-market/commit/61ddc1b8ec3bf1203d85298e8a3ca713ae01c995))
+- **ci:** use release-please config file and fix PR creation permission ([98345d4](https://github.com/Sivan757/dsh-agent-plugins-market/commit/98345d49711ce7214eb15d44dd9c2070774d278f))
 
 ## [0.4.5] - 2025-08-21
 
