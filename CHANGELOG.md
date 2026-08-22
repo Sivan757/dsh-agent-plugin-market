@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 <!-- The 0.5.0 section will be created by the first release-please PR, -->
 <!-- covering all commits after the v0.4.5 bootstrap-sha. -->
 
+## [0.5.6](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.5...dsh-agent-plugins-market-v0.5.6) (2026-08-22)
+
+
+### Bug Fixes
+
+* **ci:** split publish back to npm-publish.yml (matches npm trusted publisher config) ([57fb47d](https://github.com/Sivan757/dsh-agent-plugins-market/commit/57fb47dd9b3696e03050e428dcd8f870c2500791))
+
 ## [0.5.5](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.5.4...dsh-agent-plugins-market-v0.5.5) (2026-08-21)
 
 
