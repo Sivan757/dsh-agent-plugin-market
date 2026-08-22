@@ -9,6 +9,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 <!-- The 0.5.0 section will be created by the first release-please PR, -->
 <!-- covering all commits after the v0.4.5 bootstrap-sha. -->
 
+## [0.5.0](https://github.com/Sivan757/dsh-agent-plugins-market/compare/dsh-agent-plugins-market-v0.4.6...dsh-agent-plugins-market-v0.5.0) (2026-08-22)
+
+
+### Features
+
+* add MCP status surface and shared catalog toolbar ([4930e73](https://github.com/Sivan757/dsh-agent-plugins-market/commit/4930e7375cc73784879e9a0f1a28772651fbdae3))
+
+
+### Bug Fixes
+
+* align DSH dependencies to rc.8 and repair CI ([1e4e634](https://github.com/Sivan757/dsh-agent-plugins-market/commit/1e4e634f8396572c71ecb85d50f9d0d8e589a545))
+
 ## [0.4.5] - 2025-08-21
 
 ### Documentation
