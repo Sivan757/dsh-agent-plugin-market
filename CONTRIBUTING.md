@@ -124,6 +124,24 @@ PR 工作流会自动运行重构门禁、完整测试和构建。任何必需�
 - 第三方市场 fixture 应保持最小且确定，不要加入真实凭据或依赖网络的测试。
 - 如果改动影响发现逻辑或安装状态，请分别覆盖用户维度和项目维度。
 
+## Commit types / 提交类型
+
+Conventional commit types drive automated versioning and the CHANGELOG through [release-please](https://github.com/googleapis/release-please). The full policy is [ADR-0002](docs/adr/0002-versioning-and-release-policy.md); the short version:
+
+- **`feat:` / `fix:`** — user-visible behavior changes only. These bump the version and appear in the CHANGELOG, so they open a release PR.
+- **`refactor:` / `test:` / `ci:` / `docs:` / `chore:` / `build:`** — everything else. Never write `fix(ci):` or `feat(ci):`: a scoped `fix` still bumps patch.
+- CI, docs, and tooling changes never need a bumping type; the release workflow also ignores those paths.
+
+If a commit message would look wrong in the CHANGELOG, it has the wrong type.
+
+Conventional Commit 类型决定自动化版本号和 CHANGELOG（由 [release-please](https://github.com/googleapis/release-please) 驱动）。完整规则见 [ADR-0002](docs/adr/0002-versioning-and-release-policy.md)，简版：
+
+- **`feat:` / `fix:`** — 仅限用户可见的行为变化。会升级版本并出现在 CHANGELOG 中，因此会打开 release PR。
+- **`refactor:` / `test:` / `ci:` / `docs:` / `chore:` / `build:`** — 其余一切变更。不要写 `fix(ci):` 或 `feat(ci):`：带 scope 的 `fix` 仍会 bump patch。
+- CI、文档、工具链变更不需要 bump 类型；发布工作流也忽略这些路径。
+
+如果一条提交信息放在 CHANGELOG 里显得奇怪，那说明类型选错了。
+
 ## Pull request process / PR 流程
 
 - Create a branch from `main` and keep the branch focused.
