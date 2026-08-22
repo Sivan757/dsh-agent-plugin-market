@@ -1,4 +1,4 @@
-name: release
+name: release-please
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 jobs:
   release-please:
@@ -20,38 +19,3 @@ jobs:
         id: release-please
         with:
           config-file: .release-please-config.json
-
-  publish:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
-    runs-on: ubuntu-latest
-    # Must match the environment name configured in npm trusted publisher settings.
-    environment: npm
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        # Version is pinned via packageManager field in package.json.
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          registry-url: https://registry.npmjs.org/
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run full quality gates
-        run: pnpm run check:refactor && pnpm run test
-
-      - name: Build published artifacts
-        run: pnpm run build
-
-      - name: Publish to npm via OIDC trusted publishing
-        run: pnpm publish --no-git-checks --provenance
